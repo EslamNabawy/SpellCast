@@ -96,6 +96,55 @@
       <button type="button" class="btn btn-quiet" id="resetSessionBtn">Reset session</button>
       <button type="button" class="btn btn-danger-quiet" id="resetAllBtn">Reset all data…</button>
     </div>
+
+    <div class="custom-words-section">
+      <h3 class="panel-title" style="margin-top:18px">My words</h3>
+      <p class="panel-hint">Add your own words. They enter the Anki-like review — forgotten words return in ~10 min, remembered words in days.</p>
+      <form class="add-word-form" id="addWordForm" autocomplete="off">
+        <input type="text" id="customWordInput" class="answer-input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false" style="text-align:left">
+        <div class="add-word-row">
+          <select id="customWordCategory" aria-label="Category for new word">
+            <option value="nouns">Nouns</option>
+            <option value="verbs">Verbs</option>
+            <option value="adjectives">Adjectives</option>
+            <option value="adverbs">Adverbs</option>
+            <option value="commonlyMisspelled">Commonly misspelled</option>
+            <option value="advanced">Advanced</option>
+            <option value="animals">Animals</option>
+            <option value="food">Food</option>
+            <option value="science">Science</option>
+            <option value="technology">Technology</option>
+            <option value="nature">Nature</option>
+            <option value="sports">Sports</option>
+          </select>
+          <select id="customWordDifficulty" aria-label="Difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button type="submit" class="btn btn-primary" id="addWordBtn">Add</button>
+        </div>
+      </form>
+      <p class="panel-hint" id="customWordError" hidden style="color:var(--incorrect); margin-top:8px"></p>
+      <div class="new-category-row" style="display:flex; gap:8px; margin-top:10px">
+        <input type="text" id="newCategoryInput" class="answer-input" placeholder="New category name" style="text-align:left; flex:1; padding:9px 12px; font-size:14px">
+        <button type="button" class="btn btn-quiet" id="createCategoryBtn">Create category</button>
+      </div>
+      <ul class="bucket-list" id="customWordsList" style="margin-top:12px"></ul>
+      <div class="import-export-row" style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+        <button type="button" class="btn btn-quiet" id="exportBtn">Export JSON</button>
+        <button type="button" class="btn btn-quiet" id="importBtn">Import JSON</button>
+        <input type="file" id="importFile" accept=".json" hidden>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="reviewModeSelect">Review mode</label>
+        <select id="reviewModeSelect">
+          <option value="mixed">Mixed — due + new</option>
+          <option value="dueOnly">Due only — Anki style</option>
+        </select>
+      </div>
+      <div class="srs-stats" id="srsStats" style="margin-top:12px; font-size:12.5px; color:var(--ink-soft); display:flex; gap:8px; flex-wrap:wrap"></div>
+    </div>
   </section>
 
   <!-- ============ DASHBOARD ============ -->
