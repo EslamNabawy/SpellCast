@@ -1165,11 +1165,12 @@ button {
 
 @media (min-width: 900px) {
   .app {
-    max-width: 1280px;
+    max-width: 1320px;
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr) 280px;
+    grid-template-columns: 280px minmax(480px, 680px) 280px;
     gap: 20px;
     align-items: start;
+    justify-content: center;
     padding: 24px 20px 48px;
   }
 
@@ -1183,9 +1184,14 @@ button {
   }
   .header-inner {
     padding: 14px 18px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-stats {
+    gap: 10px;
   }
 
-  /* SHARED SIDE PANEL SHELL — symmetric look */
+  /* SHARED SIDE PANEL SHELL — perfectly symmetric */
   .settings-panel,
   .dashboard {
     background: var(--paper-raised);
@@ -1193,17 +1199,17 @@ button {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     padding: 18px 16px;
+    align-self: start;
   }
 
-  /* LEFT PANEL — settings always visible, symmetric */
+  /* LEFT PANEL — settings expanded, symmetric */
   .settings-panel {
     grid-column: 1;
     grid-row: 2 / span 5;
     display: block !important;
     position: sticky;
-    top: 88px;
+    top: 84px;
     margin-top: 0;
-    align-self: start;
   }
   .settings-panel[hidden] {
     display: block !important;
@@ -1213,7 +1219,7 @@ button {
   }
   .settings-form {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
   .settings-panel::before {
     content: "Settings";
@@ -1228,64 +1234,78 @@ button {
     border-bottom: 1px solid var(--line-soft);
   }
   .settings-actions {
-    margin-top: 18px;
+    margin-top: 16px;
     padding-top: 16px;
     flex-direction: column;
+    gap: 10px;
   }
   .settings-actions .btn {
     width: 100%;
     justify-content: center;
+    min-height: 42px;
   }
 
-  /* CENTER COLUMN — perfectly centered */
+  /* CENTER STACK — all centered, equal width, no drift */
   .session-line {
     grid-column: 2;
     grid-row: 2;
-    margin: 2px 0 0;
+    margin: 0;
     text-align: center;
     width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    min-height: 20px;
   }
   .game-card {
     grid-column: 2;
     grid-row: 3;
-    margin-top: 0;
+    margin: 0;
     min-height: 460px;
     width: 100%;
+    max-width: 680px;
     justify-content: center;
+    align-items: center;
     padding: 48px 32px 36px;
+    justify-self: center;
   }
   .footer-actions {
     grid-column: 2;
     grid-row: 4;
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
-    justify-content: stretch;
     width: 100%;
+    max-width: 680px;
+    justify-self: center;
+    align-items: center;
   }
-  .footer-actions .btn-quiet,
-  .footer-actions .btn-secondary {
+  .footer-actions .btn {
     width: 100%;
     justify-content: center;
+    min-height: 42px;
+    white-space: nowrap;
   }
   .expand-panel {
     grid-column: 2;
     width: 100%;
-    margin-top: 0;
+    max-width: 680px;
+    justify-self: center;
+    margin: 0;
   }
 
-  /* RIGHT PANEL — stats vertical, symmetric to left */
+  /* RIGHT PANEL — stats vertical, mirrors left exactly */
   .dashboard {
     grid-column: 3;
     grid-row: 2 / span 2;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 0;
+    gap: 12px;
+    margin: 0;
     position: sticky;
-    top: 88px;
+    top: 84px;
     padding: 18px 16px;
-    align-self: start;
   }
   .dashboard::before {
     content: "Live Stats";
@@ -1294,7 +1314,7 @@ button {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-faint);
-    margin: -2px 0 6px;
+    margin: -2px 0 2px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--line-soft);
     width: 100%;
@@ -1307,19 +1327,23 @@ button {
     width: 100%;
     min-height: 56px;
     border-radius: var(--radius-sm);
+    gap: 12px;
   }
   .dashboard .stat-label {
     font-size: 11px;
     text-align: left;
     flex: 1;
+    line-height: 1;
   }
   .dashboard .stat-value {
     font-size: 22px;
     text-align: right;
-    min-width: 48px;
+    min-width: 52px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* toast centered over center column */
+  /* toast centered over viewport */
   .toast-region {
     top: 78px;
     left: 50%;
@@ -1329,9 +1353,7 @@ button {
 
 @media (min-width: 1180px) {
   .app {
-    max-width: 1320px;
     grid-template-columns: 300px minmax(0, 680px) 300px;
-    justify-content: center;
     column-gap: 24px;
   }
 }
