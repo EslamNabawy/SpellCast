@@ -1156,3 +1156,115 @@ button {
   .header-stats { gap: 6px; }
   .pill { padding: 5px 8px; font-size: 12px; }
 }
+
+/* ==========================================================================
+   DESKTOP THREE-COLUMN LAYOUT
+   Mobile: single column (existing). Desktop >=900px: left settings panel,
+   center game, right score panel. Settings expanded left, score right.
+   ========================================================================== */
+
+@media (min-width: 900px) {
+  .app {
+    max-width: 1280px;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr) 280px;
+    gap: 16px 20px;
+    align-items: start;
+  }
+
+  .header {
+    grid-column: 1 / -1;
+    position: sticky;
+    top: 0;
+  }
+
+  /* LEFT PANEL — settings always visible */
+  .settings-panel {
+    grid-column: 1;
+    grid-row: 2 / span 6;
+    display: block !important;
+    position: sticky;
+    top: 84px;
+    margin-top: 0;
+  }
+  .settings-panel[hidden] {
+    display: block !important;
+  }
+  #settingsToggle {
+    display: none;
+  }
+  .settings-form {
+    grid-template-columns: 1fr;
+  }
+  .settings-panel::before {
+    content: "Settings";
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  /* CENTER COLUMN — game flow */
+  .session-line {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 4px;
+  }
+  .game-card {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 0;
+    min-height: 440px;
+  }
+  .footer-actions {
+    grid-column: 2;
+    grid-row: 4;
+    justify-content: center;
+  }
+  .expand-panel {
+    grid-column: 2;
+  }
+
+  /* RIGHT PANEL — score / stats vertical */
+  .dashboard {
+    grid-column: 3;
+    grid-row: 2 / span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 0;
+    position: sticky;
+    top: 84px;
+  }
+  .dashboard::before {
+    content: "Live Stats";
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: -2px;
+  }
+  .stat-card {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+  }
+  .stat-label {
+    font-size: 11px;
+  }
+  .stat-value {
+    font-size: 22px;
+  }
+
+  /* toast stays centered overlay */
+  .toast-region {
+    top: 70px;
+  }
+}

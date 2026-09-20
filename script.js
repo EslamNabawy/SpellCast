@@ -95,6 +95,94 @@ const WORDS = {
       "chiaroscuro", "bureaucratic", "unparalleled", "inextricable",
       "pharmaceutical", "counterintuitive"
     ]
+  },
+  animals: {
+    easy: [
+      "lion", "tiger", "zebra", "panda", "koala", "camel", "turtle",
+      "rabbit", "monkey", "parrot", "dolphin", "penguin", "giraffe", "jaguar"
+    ],
+    medium: [
+      "cheetah", "gorilla", "leopard", "squirrel", "crocodile", "flamingo",
+      "kangaroo", "octopus", "pelican", "chimpanzee", "hedgehog", "armadillo"
+    ],
+    hard: [
+      "rhinoceros", "hippopotamus", "platypus", "orangutan", "chameleon",
+      "caterpillar", "nightingale", "albatross", "chrysalis", "axolotl"
+    ]
+  },
+  food: {
+    easy: [
+      "pizza", "pasta", "banana", "orange", "tomato", "cheese", "cookie",
+      "burger", "salad", "sushi", "bagel", "donut", "waffle", "pancake"
+    ],
+    medium: [
+      "spaghetti", "chocolate", "cinnamon", "broccoli", "strawberry",
+      "pineapple", "sandwich", "casserole", "guacamole", "croissant",
+      "lasagna", "margarine"
+    ],
+    hard: [
+      "mayonnaise", "mozzarella", "prosciutto", "cauliflower", "pomegranate",
+      "asparagus", "bouillabaisse", "charcuterie", "pumpernickel", "connoisseur"
+    ]
+  },
+  science: {
+    easy: [
+      "atom", "cell", "gravity", "energy", "magnet", "planet", "orbit",
+      "fossil", "climate", "oxygen", "protein", "virus"
+    ],
+    medium: [
+      "molecule", "electron", "neutron", "galaxy", "ecosystem", "evolution",
+      "photosynthesis", "chromosome", "laboratory", "hypothesis", "quantum", "isotope"
+    ],
+    hard: [
+      "electromagnetic", "photosynthesis", "thermodynamics", "crystallography",
+      "astrophysics", "bioluminescence", "paleontology", "spectroscopy",
+      "neurotransmitter", "deoxyribonucleic"
+    ]
+  },
+  technology: {
+    easy: [
+      "keyboard", "monitor", "battery", "router", "browser", "network",
+      "printer", "software", "hardware", "sensor"
+    ],
+    medium: [
+      "algorithm", "database", "encryption", "interface", "protocol",
+      "bandwidth", "firewall", "malware", "pixel", "bluetooth", "satellite", "semiconductor"
+    ],
+    hard: [
+      "cryptocurrency", "virtualization", "microprocessor", "asynchronous",
+      "authentication", "infrastructure", "blockchain", "interoperability",
+      "cybersecurity", "telecommunications"
+    ]
+  },
+  nature: {
+    easy: [
+      "forest", "desert", "river", "meadow", "valley", "canyon", "island",
+      "glacier", "volcano", "waterfall"
+    ],
+    medium: [
+      "wilderness", "ecosystem", "peninsula", "archipelago", "tundra",
+      "savanna", "wetland", "aurora", "estuary", "geyser", "lagoon", "mangrove"
+    ],
+    hard: [
+      "archipelago", "biodiversity", "precipitation", "photosynthesis",
+      "topography", "cataclysmic", "equinox", "solstice", "biodegradable", "deforestation"
+    ]
+  },
+  sports: {
+    easy: [
+      "soccer", "tennis", "hockey", "cricket", "rugby", "boxing",
+      "archery", "bowling", "cycling", "karate"
+    ],
+    medium: [
+      "tournament", "championship", "athlete", "gymnastics", "marathon",
+      "badminton", "volleyball", "handball", "fencing", "triathlon", "sprint", "defense"
+    ],
+    hard: [
+      "decathlon", "steeplechase", "sportsmanship", "ambidextrous",
+      "physiotherapy", "tactician", "quarterback", "interception",
+      "recreational", "professionalism"
+    ]
   }
 };
 
@@ -104,7 +192,13 @@ const CATEGORY_LABELS = {
   adjectives: "Adjectives",
   adverbs: "Adverbs",
   commonlyMisspelled: "Commonly Misspelled",
-  advanced: "Advanced"
+  advanced: "Advanced",
+  animals: "Animals",
+  food: "Food",
+  science: "Science",
+  technology: "Technology",
+  nature: "Nature",
+  sports: "Sports"
 };
 
 const CATEGORY_KEYS = Object.keys(WORDS);
@@ -190,8 +284,13 @@ const state = {
   sessionWords: 0,
   sessionBucketAdds: 0,
 
-  categoryStats: {} // { nouns: { correct: n, total: n }, ... }
+  categoryStats: {}, // { nouns: { correct: n, total: n }, ... }
 
+  // no-repeat pool
+  wordPool: [],
+  poolIndex: 0,
+  recentQueue: [], // last 30 words to avoid immediate repeats
+  maxRecent: 30
 };
 
 let seeTimerHandle = null;
@@ -293,17 +392,60 @@ const dom = {
 };
 
 // ================================
-// WORD SELECTION
+// WORD SELECTION — no repeat until pool exhausted
 // ================================
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function buildPool() {
+  const pool = [];
+  const cats = state.category === "all" ? CATEGORY_KEYS : [state.category];
+  cats.forEach((cat) => {
+    const list = WORDS[cat][state.difficulty] || [];
+    list.forEach((w) => pool.push({ word: w, category: cat }));
+  });
+  shuffleArray(pool);
+  state.wordPool = pool;
+  state.poolIndex = 0;
+}
 
 function pickCategory() {
   if (state.category !== "all") return state.category;
   return CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
 }
 
-function randomWordFromCategory(categoryKey, difficulty) {
-  const pool = WORDS[categoryKey][difficulty];
-  return pool[Math.floor(Math.random() * pool.length)];
+function getNextFreshWord() {
+  // rebuild if empty or exhausted
+  if (!state.wordPool.length || state.poolIndex >= state.wordPool.length) {
+    buildPool();
+  }
+  // try to avoid recent queue repeats
+  let attempts = 0;
+  let candidate = null;
+  const recentSet = new Set(state.recentQueue);
+  while (attempts < state.wordPool.length) {
+    if (state.poolIndex >= state.wordPool.length) buildPool();
+    candidate = state.wordPool[state.poolIndex++];
+    if (!recentSet.has(candidate.word) || state.wordPool.length <= state.maxRecent) break;
+    // if candidate is recent, push it to end and try next
+    attempts++;
+    // rotate: move candidate to end so we don't lose it
+    state.wordPool.push(candidate);
+    candidate = null;
+  }
+  if (!candidate) {
+    candidate = state.wordPool[state.poolIndex++ % state.wordPool.length];
+  }
+  // track recent
+  state.recentQueue.push(candidate.word);
+  if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+  return candidate;
 }
 
 // Returns { word, category, fromBucket }
@@ -319,12 +461,21 @@ function selectNextWord() {
       for (let i = 0; i < weight; i++) weighted.push(entry);
     });
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
+    // also track recent to avoid immediate bucket repeats
+    if (!state.recentQueue.includes(chosen.word) || state.bucket.length === 1) {
+      state.recentQueue.push(chosen.word);
+      if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+    }
     return { word: chosen.word, category: chosen.category, fromBucket: true };
   }
 
-  const categoryKey = pickCategory();
-  const word = randomWordFromCategory(categoryKey, state.difficulty);
-  return { word, category: categoryKey, fromBucket: false };
+  const picked = getNextFreshWord();
+  return { word: picked.word, category: picked.category, fromBucket: false };
+}
+
+function resetWordPool() {
+  buildPool();
+  state.recentQueue = [];
 }
 
 // ================================
@@ -973,6 +1124,7 @@ function resetSession() {
   state.categoryStats = {};
   state.bucket = [];
   saveBucket();
+  resetWordPool();
 
   applyStreakTheme(0);
   renderStats();
@@ -1039,11 +1191,13 @@ function attachEventListeners() {
   dom.categorySelect.addEventListener("change", () => {
     state.category = dom.categorySelect.value;
     saveLocal(LS_KEYS.preferredCategory, state.category);
+    resetWordPool();
   });
 
   dom.difficultySelect.addEventListener("change", () => {
     state.difficulty = dom.difficultySelect.value;
     saveLocal(LS_KEYS.preferredDifficulty, state.difficulty);
+    resetWordPool();
   });
 
   dom.durationSelect.addEventListener("change", () => {
@@ -1129,6 +1283,7 @@ function attachEventListeners() {
 function init() {
   loadAllPersisted();
   applySettingsToForm();
+  buildPool();
   applyStreakTheme(0);
   renderStats();
   renderBucketPanel();
