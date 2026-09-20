@@ -1158,34 +1158,52 @@ button {
 }
 
 /* ==========================================================================
-   DESKTOP THREE-COLUMN LAYOUT
-   Mobile: single column (existing). Desktop >=900px: left settings panel,
-   center game, right score panel. Settings expanded left, score right.
+   DESKTOP THREE-COLUMN LAYOUT — symmetric, aligned
+   Mobile: single column. Desktop >=900px: 280 | 1fr | 280 symmetric
+   Left = settings (expanded), Center = game, Right = stats
    ========================================================================== */
 
 @media (min-width: 900px) {
   .app {
     max-width: 1280px;
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr) 280px;
-    gap: 16px 20px;
+    grid-template-columns: 280px minmax(0, 1fr) 280px;
+    gap: 20px;
     align-items: start;
+    padding: 24px 20px 48px;
   }
 
   .header {
     grid-column: 1 / -1;
     position: sticky;
     top: 0;
+    z-index: 20;
+    padding-bottom: 0;
+    background: var(--paper);
+  }
+  .header-inner {
+    padding: 14px 18px;
   }
 
-  /* LEFT PANEL — settings always visible */
+  /* SHARED SIDE PANEL SHELL — symmetric look */
+  .settings-panel,
+  .dashboard {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: 18px 16px;
+  }
+
+  /* LEFT PANEL — settings always visible, symmetric */
   .settings-panel {
     grid-column: 1;
-    grid-row: 2 / span 6;
+    grid-row: 2 / span 5;
     display: block !important;
     position: sticky;
-    top: 84px;
+    top: 88px;
     margin-top: 0;
+    align-self: start;
   }
   .settings-panel[hidden] {
     display: block !important;
@@ -1195,42 +1213,68 @@ button {
   }
   .settings-form {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   .settings-panel::before {
     content: "Settings";
     display: block;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink-soft);
-    margin-bottom: 12px;
-    padding-bottom: 10px;
+    color: var(--ink-faint);
+    margin: -2px 0 14px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--line-soft);
   }
+  .settings-actions {
+    margin-top: 18px;
+    padding-top: 16px;
+    flex-direction: column;
+  }
+  .settings-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
 
-  /* CENTER COLUMN — game flow */
+  /* CENTER COLUMN — perfectly centered */
   .session-line {
     grid-column: 2;
     grid-row: 2;
-    margin-top: 4px;
+    margin: 2px 0 0;
+    text-align: center;
+    width: 100%;
   }
   .game-card {
     grid-column: 2;
     grid-row: 3;
     margin-top: 0;
-    min-height: 440px;
+    min-height: 460px;
+    width: 100%;
+    justify-content: center;
+    padding: 48px 32px 36px;
   }
   .footer-actions {
     grid-column: 2;
     grid-row: 4;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    justify-content: stretch;
+    width: 100%;
+  }
+  .footer-actions .btn-quiet,
+  .footer-actions .btn-secondary {
+    width: 100%;
     justify-content: center;
   }
   .expand-panel {
     grid-column: 2;
+    width: 100%;
+    margin-top: 0;
   }
 
-  /* RIGHT PANEL — score / stats vertical */
+  /* RIGHT PANEL — stats vertical, symmetric to left */
   .dashboard {
     grid-column: 3;
     grid-row: 2 / span 2;
@@ -1239,32 +1283,55 @@ button {
     gap: 10px;
     margin-top: 0;
     position: sticky;
-    top: 84px;
+    top: 88px;
+    padding: 18px 16px;
+    align-self: start;
   }
   .dashboard::before {
     content: "Live Stats";
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-faint);
-    margin-bottom: -2px;
+    margin: -2px 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    width: 100%;
   }
-  .stat-card {
+  .dashboard .stat-card {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
+    width: 100%;
+    min-height: 56px;
+    border-radius: var(--radius-sm);
   }
-  .stat-label {
+  .dashboard .stat-label {
     font-size: 11px;
+    text-align: left;
+    flex: 1;
   }
-  .stat-value {
+  .dashboard .stat-value {
     font-size: 22px;
+    text-align: right;
+    min-width: 48px;
   }
 
-  /* toast stays centered overlay */
+  /* toast centered over center column */
   .toast-region {
-    top: 70px;
+    top: 78px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 1180px) {
+  .app {
+    max-width: 1320px;
+    grid-template-columns: 300px minmax(0, 680px) 300px;
+    justify-content: center;
+    column-gap: 24px;
   }
 }
