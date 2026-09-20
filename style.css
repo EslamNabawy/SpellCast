@@ -479,10 +479,20 @@ button {
 
 .session-chip-correct {
   color: var(--correct);
+  background: var(--correct-tint);
+  border: 1px solid rgba(45,106,79,0.12);
 }
 
 .session-chip-incorrect {
   color: var(--incorrect);
+  background: var(--incorrect-tint);
+  border: 1px solid rgba(179,84,46,0.12);
+}
+
+#sessionWordCount {
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-glow);
+  color: var(--accent-strong);
 }
 
 .game-top-bar .session-dot {
@@ -507,27 +517,38 @@ button {
 .game-card {
   position: relative;
   margin-top: 18px;
-  min-height: 420px;
-  padding: 16px 24px 18px;
-  background: var(--paper-raised);
+  min-height: 460px;
+  padding: 18px 26px 18px;
+  background: linear-gradient(180deg, var(--paper-raised) 0%, #FCFCFA 100%);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  border-radius: 24px;
+  box-shadow: 0 1px 3px rgba(31,36,33,0.06), 0 12px 32px rgba(31,36,33,0.08), 0 0 0 1px rgba(31,36,33,0.02);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   text-align: center;
   overflow: hidden;
-  transition: box-shadow var(--dur-med) var(--ease);
-  gap: 12px;
+  transition: box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease);
+  gap: 14px;
+}
+
+.game-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+  opacity: 0.9;
 }
 
 /* expanded look: phases take remaining center space */
 .game-card .phase {
   flex: 1;
   justify-content: center;
-  padding: 12px 0 8px;
+  padding: 16px 0 12px;
+  width: 100%;
+  max-width: 520px;
 }
 
 .game-footer-actions {
@@ -603,18 +624,33 @@ button {
 
 .ready-copy {
   color: var(--ink-soft);
-  font-size: 15px;
-  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.phase-ready .btn-large {
+  margin-top: 4px;
+  box-shadow: 0 4px 14px var(--accent-glow);
+  min-width: 160px;
 }
 
 /* ---- see phase ---- */
 
 .word-display {
   font-family: var(--font-display);
-  font-size: clamp(30px, 7vw, 44px);
-  font-weight: 700;
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 800;
   color: var(--ink);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  padding: 16px 28px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(31,36,33,0.04);
+  min-width: 200px;
   animation: wordAppear var(--dur-med) var(--ease);
 }
 
@@ -625,12 +661,13 @@ button {
 
 .timer-track {
   width: 100%;
-  max-width: 280px;
-  height: 8px;
+  max-width: 320px;
+  height: 10px;
   border-radius: 999px;
   background: var(--line-soft);
   overflow: hidden;
-  margin-top: 6px;
+  margin-top: 10px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .timer-fill {
@@ -653,42 +690,59 @@ button {
 .your-turn {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent-strong);
   margin: 0;
+  padding: 6px 12px;
+  background: var(--accent-tint);
+  border-radius: 999px;
 }
 
 .mystery-mark {
   font-family: var(--font-display);
-  font-size: 44px;
+  font-size: 48px;
   font-weight: 700;
   color: var(--line);
   line-height: 1;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 1px dashed var(--line);
+  border-radius: 50%;
+  margin: 2px 0;
 }
 
 .type-instruction {
   color: var(--ink-soft);
   font-size: 14px;
-  margin: -6px 0 4px;
+  font-weight: 500;
+  margin: -2px 0 6px;
 }
 
 .answer-form {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
+  align-items: center;
 }
 
 .answer-input {
   flex: 1;
-  padding: 13px 16px;
-  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  border-radius: 12px;
   border: 1.5px solid var(--line);
   background: var(--paper);
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 600;
   text-align: center;
-  transition: border-color var(--dur-fast) var(--ease);
+  letter-spacing: -0.01em;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  box-shadow: 0 1px 2px rgba(31,36,33,0.04);
 }
 
 .answer-input:focus-visible {
@@ -700,14 +754,15 @@ button {
 /* ---- result phases ---- */
 
 .result-icon {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .phase-result-correct .result-icon {
@@ -728,24 +783,33 @@ button {
 }
 
 .result-headline {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
   color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 .result-word {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 800;
   margin: 0;
+  padding: 8px 20px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  letter-spacing: -0.02em;
 }
 
 .result-points {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--correct);
-  margin: -6px 0 0;
+  margin: -4px 0 0;
+  padding: 4px 14px;
+  background: var(--correct-tint);
+  border-radius: 999px;
   animation: pointsRise var(--dur-med) var(--ease);
 }
 
