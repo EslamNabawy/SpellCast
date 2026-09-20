@@ -252,9 +252,11 @@ const LS_KEYS = {
   preferredDifficulty: "spellsprint.preferredDifficulty",
   preferredDuration: "spellsprint.preferredDuration",
   soundEnabled: "spellsprint.soundEnabled",
+  soundVolume: "spellsprint.soundVolume",
   bucket: "spellsprint.bucket",
   customWords: "spellsprint.customWords",
-  srsCards: "spellsprint.srsCards"
+  srsCards: "spellsprint.srsCards",
+  darkMode: "spellsprint.darkMode"
 };
 
 // ================================
@@ -297,7 +299,15 @@ const state = {
   // custom + SRS
   customWords: [], // [{word, category, difficulty, addedAt}]
   srsCards: {}, // word -> {word, category, difficulty, interval, ease, due, reps, lapses, lastReviewed}
-  reviewMode: "mixed" // mixed | dueOnly
+  reviewMode: "mixed", // mixed | dueOnly
+
+  // UX enhancements
+  darkMode: false,
+  soundVolume: 0.5,
+  sessionStartTime: null,
+  sessionTimerHandle: null,
+  wordsSeen: [], // track words shown in session for "X of Y"
+  skippedWords: new Set()
 };
 
 let seeTimerHandle = null;
@@ -326,6 +336,9 @@ const dom = {
   soundToggle: document.getElementById("soundToggle"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   resetAllBtn: document.getElementById("resetAllBtn"),
+  themeToggle: document.getElementById("themeToggle"),
+  themeIcon: document.getElementById("themeIcon"),
+  themeLabel: document.getElementById("themeLabel"),
 
   customWordInput: document.getElementById("customWordInput"),
   customWordCategory: document.getElementById("customWordCategory"),
@@ -350,22 +363,30 @@ const dom = {
   sessionWordCount: document.getElementById("sessionWordCount"),
   sessionCorrectCount: document.getElementById("sessionCorrectCount"),
   sessionIncorrectCount: document.getElementById("sessionIncorrectCount"),
+  phaseProgress: document.getElementById("phaseProgress"),
 
   gameCard: document.getElementById("gameCard"),
   scoreFloat: document.getElementById("scoreFloat"),
   categoryTag: document.getElementById("categoryTag"),
+  sessionTimer: document.getElementById("sessionTimer"),
 
   phaseReady: document.getElementById("phaseReady"),
   startBtn: document.getElementById("startBtn"),
+  readyHint: document.getElementById("readyHint"),
 
   phaseSee: document.getElementById("phaseSee"),
   wordDisplay: document.getElementById("wordDisplay"),
+  seeHint: document.getElementById("seeHint"),
   timerFill: document.getElementById("timerFill"),
   timerCaption: document.getElementById("timerCaption"),
 
   phaseType: document.getElementById("phaseType"),
+  typeInstruction: document.getElementById("typeInstruction"),
   answerForm: document.getElementById("answerForm"),
   answerInput: document.getElementById("answerInput"),
+  skipBtn: document.getElementById("skipBtn"),
+  checkBtn: document.getElementById("checkBtn"),
+  typeHint: document.getElementById("typeHint"),
 
   phaseCorrect: document.getElementById("phaseCorrect"),
   correctHeadline: document.getElementById("correctHeadline"),
@@ -379,6 +400,7 @@ const dom = {
   incorrectYourAnswer: document.getElementById("incorrectYourAnswer"),
   streakTransitionNote: document.getElementById("streakTransitionNote"),
   nextAfterIncorrectBtn: document.getElementById("nextAfterIncorrectBtn"),
+  backAfterIncorrectBtn: document.getElementById("backAfterIncorrectBtn"),
 
   toastRegion: document.getElementById("toastRegion"),
 
@@ -409,8 +431,15 @@ const dom = {
   resetAllCancelBtn: document.getElementById("resetAllCancelBtn"),
   resetAllConfirmBtn: document.getElementById("resetAllConfirmBtn"),
 
+  resetSessionOverlay: document.getElementById("resetSessionOverlay"),
+  resetSessionCancelBtn: document.getElementById("resetSessionCancelBtn"),
+  resetSessionConfirmBtn: document.getElementById("resetSessionConfirmBtn"),
+
   srAnnouncer: document.getElementById("srAnnouncer"),
-  confettiLayer: document.getElementById("confettiLayer")
+  confettiLayer: document.getElementById("confettiLayer"),
+
+  volumeField: document.getElementById("volumeField"),
+  volumeSlider: document.getElementById("volumeSlider")
 };
 
 // ================================
@@ -538,6 +567,25 @@ function setPhase(phase) {
   dom.phaseType.hidden = phase !== "type";
   dom.phaseCorrect.hidden = phase !== "correct";
   dom.phaseIncorrect.hidden = phase !== "incorrect";
+  // manage focus and hints
+  if (phase === "ready") {
+    dom.startBtn.focus();
+    if (dom.seeHint) dom.seeHint.style.display = "none";
+    if (dom.readyHint) dom.readyHint.style.display = "";
+  } else if (phase === "see") {
+    dom.wordDisplay.focus();
+    if (dom.readyHint) dom.readyHint.style.display = "none";
+    if (dom.seeHint) dom.seeHint.style.display = "";
+  } else if (phase === "type") {
+    requestAnimationFrame(() => dom.answerInput.focus());
+    if (dom.typeHint) dom.typeHint.style.display = "";
+  } else if (phase === "correct") {
+    dom.nextAfterCorrectBtn.focus();
+    if (dom.typeHint) dom.typeHint.style.display = "none";
+  } else if (phase === "incorrect") {
+    dom.backAfterIncorrectBtn.focus();
+    if (dom.typeHint) dom.typeHint.style.display = "none";
+  }
 }
 
 function beginRound() {
@@ -549,6 +597,13 @@ function beginRound() {
   dom.wordDisplay.textContent = picked.word;
   dom.timerCaption.textContent = (state.duration / 1000).toFixed(1) + " seconds";
 
+  announce(`Word: ${picked.word}. Category: ${CATEGORY_LABELS[picked.category]}.`);
+
+  dom.categoryTag.classList.remove("bump");
+  void dom.categoryTag.offsetWidth;
+  dom.categoryTag.classList.add("bump");
+
+  startSessionTimer();
   setPhase("see");
   runSeeTimer(state.duration);
 }
@@ -598,8 +653,47 @@ function goToTypePhase() {
   clearSeeTimer();
   setPhase("type");
   dom.answerInput.value = "";
-  // defer focus slightly so hidden->visible transition doesn't fight it
-  requestAnimationFrame(() => dom.answerInput.focus());
+  if (state.currentWord) state.wordsSeen.push(state.currentWord.word);
+  if (dom.phaseProgress) dom.phaseProgress.textContent = `Word ${state.wordsSeen.length + 1} of ${poolSize()}`;
+}
+
+function poolSize() {
+  const cats = state.category === "all" ? CATEGORY_KEYS : [state.category];
+  let total = 0;
+  cats.forEach(cat => {
+    const list = WORDS[cat][state.difficulty] || [];
+    total += list.length;
+  });
+  // add custom words in category
+  if (state.category === "all") {
+    total += state.customWords.length;
+  } else {
+    total += state.customWords.filter(c => c.category === state.category).length;
+  }
+  // subtract already seen (no-repeat)
+  return Math.max(1, total);
+}
+
+function startSessionTimer() {
+  state.sessionStartTime = Date.now();
+  dom.sessionTimer.textContent = "0:00";
+  if (dom.sessionTimer) dom.sessionTimer.style.opacity = "1";
+  function tick() {
+    const elapsed = Math.floor((Date.now() - state.sessionStartTime) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    dom.sessionTimer.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+    state.sessionTimerHandle = requestAnimationFrame(tick);
+  }
+  state.sessionTimerHandle = requestAnimationFrame(tick);
+}
+
+function stopSessionTimer() {
+  if (state.sessionTimerHandle) {
+    cancelAnimationFrame(state.sessionTimerHandle);
+    state.sessionTimerHandle = null;
+  }
+  if (dom.sessionTimer) dom.sessionTimer.style.opacity = "0";
 }
 
 // ================================
@@ -773,15 +867,13 @@ function ensureCategory(catKey, label) {
   WORDS[catKey] = { easy: [], medium: [], hard: [] };
   CATEGORY_LABELS[catKey] = label || catKey.charAt(0).toUpperCase() + catKey.slice(1);
   if (!CATEGORY_KEYS.includes(catKey)) CATEGORY_KEYS.push(catKey);
-  // add option to selects if exists
-  [dom.categorySelect, dom.customWordCategory].forEach(sel => {
-    if (!sel) return;
-    if ([...sel.options].some(o=>o.value===catKey)) return;
+  // add option to select if exists
+  if (dom.categorySelect) {
     const opt = document.createElement("option");
     opt.value = catKey;
     opt.textContent = CATEGORY_LABELS[catKey];
-    sel.appendChild(opt);
-  });
+    dom.categorySelect.appendChild(opt);
+  }
 }
 
 function rebuildCustomWordsIntoWORDS() {
@@ -849,6 +941,8 @@ function loadAllPersisted() {
   state.difficulty = loadLocal(LS_KEYS.preferredDifficulty, "medium");
   state.duration = loadLocal(LS_KEYS.preferredDuration, 2000);
   state.soundEnabled = loadLocal(LS_KEYS.soundEnabled, false);
+  state.soundVolume = loadLocal(LS_KEYS.soundVolume, 0.5);
+  state.darkMode = loadLocal(LS_KEYS.darkMode, false);
   // inject customs into WORDS
   rebuildCustomWordsIntoWORDS();
   // ensure SRS cards for all customs
@@ -1041,6 +1135,11 @@ function renderStats() {
   dom.sessionIncorrectCount.textContent = `${state.incorrect} incorrect`;
 
   dom.bucketCount.textContent = state.bucket.length;
+
+  // update phase progress if in type phase
+  if (state.phase === "type" && dom.phaseProgress) {
+    dom.phaseProgress.textContent = `Word ${state.wordsSeen.length + 1} of ${poolSize()}`;
+  }
 }
 
 function renderBucketPanel() {
@@ -1102,137 +1201,6 @@ function recordCategoryStat(category, wasCorrect) {
   if (wasCorrect) state.categoryStats[category].correct += 1;
 }
 
-function renderCustomWordsList() {
-  if (!dom.customWordsList) return;
-  dom.customWordsList.innerHTML = "";
-  if (!state.customWords.length) {
-    const li = document.createElement("li");
-    li.className = "panel-hint";
-    li.textContent = "No custom words yet — add one above.";
-    li.style.listStyle = "none";
-    dom.customWordsList.appendChild(li);
-    return;
-  }
-  const sorted = [...state.customWords].sort((a,b) => a.word.localeCompare(b.word));
-  sorted.forEach(entry => {
-    const li = document.createElement("li");
-    li.className = "bucket-item";
-    li.innerHTML = `
-      <span class="bucket-item-word">${escapeHtml(entry.word)}</span>
-      <span class="bucket-item-meta">${escapeHtml(CATEGORY_LABELS[entry.category]||entry.category)} · ${entry.difficulty}
-        <button class="btn btn-quiet" data-del="${escapeHtml(entry.word)}" style="padding:4px 8px; font-size:12px; margin-left:8px">Delete</button>
-      </span>
-    `;
-    dom.customWordsList.appendChild(li);
-  });
-  dom.customWordsList.querySelectorAll("[data-del]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const w = btn.getAttribute("data-del");
-      if (confirm(`Delete "${w}"?`)) deleteCustomWord(w);
-    });
-  });
-}
-
-function renderSrsStats() {
-  if (!dom.srsStats) return;
-  const s = srsStats();
-  const due = s.due;
-  const total = s.total;
-  const fmtDue = due ? `${due} due` : "0 due";
-  const mature = s.mature;
-  const learning = s.learning;
-  dom.srsStats.innerHTML = `
-    <span class="pill" style="padding:4px 8px; font-size:12px"><span class="pill-value">${fmtDue}</span></span>
-    <span>· ${total} cards</span>
-    <span>· learning ${learning}</span>
-    <span>· mature ${mature}</span>
-  `;
-  // also update bucket count already, plus maybe header pill if exists
-}
-
-function exportJSON() {
-  const payload = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    customWords: state.customWords,
-    srsCards: state.srsCards,
-    categories: Object.keys(WORDS)
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `spellcast-export-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  announce("Exported JSON");
-}
-
-function importJSONFile(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || typeof data !== "object") throw new Error("Invalid JSON");
-      const cw = Array.isArray(data.customWords) ? data.customWords : [];
-      const sc = data.srsCards && typeof data.srsCards === "object" ? data.srsCards : {};
-      let added = 0, updated = 0, skipped = 0;
-      cw.forEach(e => {
-        if (!e.word || !e.category || !e.difficulty) { skipped++; return; }
-        const w = normalizeWordRaw(e.word);
-        if (!isValidWord(w)) { skipped++; return; }
-        if (wordExistsAnywhere(w) && !state.customWords.find(x=>x.word===w)) { skipped++; return; }
-        const existing = state.customWords.find(x=>x.word===w);
-        if (!existing) {
-          ensureCategory(e.category, CATEGORY_LABELS[e.category]||e.category);
-          state.customWords.push({ word:w, category:e.category, difficulty:e.difficulty, addedAt: e.addedAt||Date.now() });
-          if (!WORDS[e.category][e.difficulty].includes(w)) WORDS[e.category][e.difficulty].push(w);
-          added++;
-        } else {
-          updated++;
-        }
-      });
-      // merge srs cards — keep newer
-      Object.keys(sc).forEach(k => {
-        const incoming = sc[k];
-        const existing = state.srsCards[k];
-        if (!incoming || !incoming.word) return;
-        if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) {
-          state.srsCards[k] = incoming;
-          // ensure category exists
-          ensureCategory(incoming.category, CATEGORY_LABELS[incoming.category]||incoming.category);
-          if (!wordExistsAnywhere(k)) {
-            // add missing word to WORDS so it can appear
-            const diff = incoming.difficulty||"medium";
-            if (!WORDS[incoming.category][diff].includes(k)) WORDS[incoming.category][diff].push(k);
-          }
-        }
-      });
-      saveCustomWords();
-      saveSrsCards();
-      rebuildCustomWordsIntoWORDS();
-      renderCustomWordsList();
-      renderSrsStats();
-      resetWordPool();
-      announce(`Import: ${added} added, ${updated} updated, ${skipped} skipped`);
-      showImportToast(added, updated, skipped);
-    } catch (err) {
-      alert("Import failed: " + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-function showImportToast(added, updated, skipped) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.innerHTML = `<span class="toast-text"><span class="toast-title">Import done</span><span class="toast-sub">${added} added · ${updated} updated · ${skipped} skipped</span></span>`;
-  dom.toastRegion.appendChild(toast);
-  setTimeout(()=>toast.remove(), 3200);
-}
-
 // ================================
 // SOUND (Web Audio API, optional, off by default)
 // ================================
@@ -1252,6 +1220,7 @@ function playTone(kind) {
   if (!state.soundEnabled) return;
   const ctx = getAudioCtx();
   if (!ctx) return;
+  const vol = state.soundVolume || 0.5;
 
   const now = ctx.currentTime;
   const osc = ctx.createOscillator();
@@ -1266,15 +1235,17 @@ function playTone(kind) {
 
   osc.type = type;
   osc.frequency.setValueAtTime(freq, now);
+  const safeVol = Math.max(0.0001, vol * 0.06);
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(safeVol, now + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
   osc.start(now);
   osc.stop(now + duration + 0.02);
 
   if (kind === "milestone") {
-    // quick second note for a tiny "achievement" flourish
+    const vol = state.soundVolume || 0.5;
+    const safeVol = Math.max(0.0001, vol * 0.06);
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.connect(gain2);
@@ -1282,7 +1253,7 @@ function playTone(kind) {
     osc2.type = "sine";
     osc2.frequency.setValueAtTime(1108, now + 0.1);
     gain2.gain.setValueAtTime(0.0001, now + 0.1);
-    gain2.gain.exponentialRampToValueAtTime(0.05, now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(safeVol, now + 0.11);
     gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
     osc2.start(now + 0.1);
     osc2.stop(now + 0.28);
@@ -1320,6 +1291,7 @@ function computeSessionSummary() {
 }
 
 function showSessionSummary() {
+  stopSessionTimer();
   const summary = computeSessionSummary();
   dom.summaryScore.textContent = summary.score;
   dom.summaryAccuracy.textContent = summary.accuracy + "%";
@@ -1438,11 +1410,18 @@ function applySettingsToForm() {
   dom.difficultySelect.value = state.difficulty;
   dom.durationSelect.value = String(state.duration);
   setSoundToggleUI(state.soundEnabled);
+  if (state.soundVolume > 0) {
+    dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+    dom.volumeField.hidden = false;
+  }
 }
 
 function setSoundToggleUI(enabled) {
   dom.soundToggle.setAttribute("aria-checked", String(enabled));
   dom.soundToggle.querySelector(".toggle-state").textContent = enabled ? "On" : "Off";
+  if (dom.volumeField) {
+    dom.volumeField.hidden = !enabled;
+  }
 }
 
 function toggleSettingsPanel() {
@@ -1463,6 +1442,7 @@ function toggleExpandPanel(panelEl, toggleBtn) {
 
 function resetSession() {
   clearSeeTimer();
+  stopSessionTimer();
   state.score = 0;
   state.streak = 0;
   state.correct = 0;
@@ -1471,6 +1451,8 @@ function resetSession() {
   state.sessionBucketAdds = 0;
   state.categoryStats = {};
   state.bucket = [];
+  state.wordsSeen = [];
+  state.skippedWords.clear();
   saveBucket();
   resetWordPool();
 
@@ -1493,6 +1475,14 @@ function resetAllData() {
   state.difficulty = "medium";
   state.duration = 2000;
   state.soundEnabled = false;
+  state.soundVolume = 0.5;
+  state.darkMode = false;
+  state.wordsSeen = [];
+  state.skippedWords.clear();
+
+  document.documentElement.removeAttribute("data-theme");
+  dom.themeIcon.textContent = "🌙";
+  dom.themeLabel.textContent = "Dark mode off";
 
   resetSession();
   applySettingsToForm();
@@ -1558,63 +1548,73 @@ function attachEventListeners() {
     setSoundToggleUI(state.soundEnabled);
     saveLocal(LS_KEYS.soundEnabled, state.soundEnabled);
     if (state.soundEnabled) {
-      // resume/create audio context on this user gesture
       getAudioCtx();
       playTone("correct");
+      dom.volumeField.hidden = false;
+    } else {
+      dom.volumeField.hidden = true;
     }
   });
 
-  // custom words
-  if (dom.addWordForm) {
-    dom.addWordForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const raw = dom.customWordInput.value;
-      const cat = dom.customWordCategory.value;
-      const diff = dom.customWordDifficulty.value;
-      const res = addCustomWord(raw, cat, diff);
-      if (!res.ok) {
-        dom.customWordError.textContent = res.error;
-        dom.customWordError.hidden = false;
-      } else {
-        dom.customWordError.hidden = true;
-        dom.customWordInput.value = "";
-        dom.customWordInput.focus();
-      }
-    });
-  }
-  if (dom.createCategoryBtn) {
-    dom.createCategoryBtn.addEventListener("click", () => {
-      const name = dom.newCategoryInput.value.trim();
-      if (!name) { alert("Enter category name"); return; }
-      const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/^[0-9]+/, "");
-      if (!key) { alert("Invalid name"); return; }
-      if (WORDS[key]) { alert("Category exists"); return; }
-      ensureCategory(key, name);
-      saveCustomWords(); // trigger persist via reload? keep
-      dom.newCategoryInput.value = "";
-      // select it in both selects
-      dom.customWordCategory.value = key;
-      renderCustomWordsList();
-      announce(`Category ${name} created`);
-    });
-  }
-  if (dom.exportBtn) dom.exportBtn.addEventListener("click", exportJSON);
-  if (dom.importBtn && dom.importFile) {
-    dom.importBtn.addEventListener("click", () => dom.importFile.click());
-    dom.importFile.addEventListener("change", () => {
-      const f = dom.importFile.files[0];
-      if (f) importJSONFile(f);
-      dom.importFile.value = "";
-    });
-  }
-  if (dom.reviewModeSelect) {
-    dom.reviewModeSelect.value = state.reviewMode;
-    dom.reviewModeSelect.addEventListener("change", () => {
-      state.reviewMode = dom.reviewModeSelect.value;
-    });
-  }
+  dom.volumeSlider.addEventListener("input", () => {
+    state.soundVolume = parseInt(dom.volumeSlider.value) / 100;
+    saveLocal(LS_KEYS.soundVolume, state.soundVolume);
+  });
 
-  dom.resetSessionBtn.addEventListener("click", resetSession);
+  // dark mode toggle
+  dom.themeToggle.addEventListener("click", () => {
+    state.darkMode = !state.darkMode;
+    if (state.darkMode) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      dom.themeIcon.textContent = "☀️";
+      dom.themeLabel.textContent = "Dark mode on";
+      announce("Dark mode enabled");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      dom.themeIcon.textContent = "🌙";
+      dom.themeLabel.textContent = "Dark mode off";
+      announce("Dark mode disabled");
+    }
+    saveLocal(LS_KEYS.darkMode, state.darkMode);
+  });
+
+  // skip button during type phase
+  dom.skipBtn.addEventListener("click", () => {
+    if (state.phase === "type") {
+      const word = state.currentWord?.word;
+      state.skippedWords.add(word);
+      clearSeeTimer();
+      addToBucket(word, state.currentWord?.category);
+      // don't count as incorrect for streak
+      announce(`Skipped ${word}. Added to practice bucket.`);
+      beginRound();
+    }
+  });
+
+  // back button after incorrect
+  dom.backAfterIncorrectBtn.addEventListener("click", () => {
+    if (state.phase === "incorrect") {
+      setPhase("type");
+      dom.answerInput.value = "";
+      requestAnimationFrame(() => dom.answerInput.focus());
+    }
+  });
+
+  // reset session confirmation
+  dom.resetSessionBtn.addEventListener("click", () => {
+    dom.resetSessionOverlay.hidden = false;
+    dom.resetSessionCancelBtn.focus();
+  });
+
+  dom.resetSessionCancelBtn.addEventListener("click", () => {
+    dom.resetSessionOverlay.hidden = true;
+    dom.resetSessionBtn.focus();
+  });
+
+  dom.resetSessionConfirmBtn.addEventListener("click", () => {
+    dom.resetSessionOverlay.hidden = true;
+    resetSession();
+  });
 
   dom.resetAllBtn.addEventListener("click", () => {
     dom.resetAllOverlay.hidden = false;
@@ -1640,8 +1640,26 @@ function attachEventListeners() {
     renderCategoryStats();
   });
 
+  // session timer
   dom.finishSessionBtn.addEventListener("click", () => {
     showSessionSummary();
+  });
+
+  // keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (state.phase === "type") {
+        e.preventDefault();
+        dom.skipBtn.click();
+      } else if (!dom.resetAllOverlay.hidden) {
+        dom.resetAllOverlay.hidden = true;
+      } else if (!dom.summaryOverlay.hidden) {
+        dom.summaryOverlay.hidden = true;
+        resetSession();
+      } else if (!dom.resetSessionOverlay.hidden) {
+        dom.resetSessionOverlay.hidden = true;
+      }
+    }
   });
 
   dom.summaryCloseBtn.addEventListener("click", () => {
@@ -1689,6 +1707,17 @@ function init() {
   renderCustomWordsList();
   renderSrsStats();
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
+  // restore dark mode
+  if (state.darkMode) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    dom.themeIcon.textContent = "☀️";
+    dom.themeLabel.textContent = "Dark mode on";
+  }
+  // restore volume
+  if (state.soundVolume > 0) {
+    dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+    dom.volumeField.hidden = false;
+  }
   setPhase("ready");
   attachEventListeners();
 }
