@@ -438,6 +438,68 @@ button {
   color: var(--ink-faint);
 }
 
+/* Expanded top bar inside game card — requested placement */
+.game-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.game-top-bar .session-line {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0;
+  padding: 8px 6px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  min-height: 38px;
+  box-shadow: 0 1px 2px rgba(31,36,33,0.04);
+}
+
+.session-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.session-chip-correct {
+  color: var(--correct);
+}
+
+.session-chip-incorrect {
+  color: var(--incorrect);
+}
+
+.game-top-bar .session-dot {
+  margin: 0 2px;
+  color: var(--line);
+  font-weight: 700;
+}
+
+.game-top-bar .category-tag {
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  flex-shrink: 0;
+  margin: 0;
+}
+
 /* ==========================================================================
    GAME CARD
    ========================================================================== */
@@ -445,8 +507,8 @@ button {
 .game-card {
   position: relative;
   margin-top: 18px;
-  min-height: 280px;
-  padding: 56px 28px 36px;
+  min-height: 420px;
+  padding: 16px 24px 18px;
   background: var(--paper-raised);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -454,10 +516,49 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
   overflow: hidden;
   transition: box-shadow var(--dur-med) var(--ease);
+  gap: 12px;
+}
+
+/* expanded look: phases take remaining center space */
+.game-card .phase {
+  flex: 1;
+  justify-content: center;
+  padding: 12px 0 8px;
+}
+
+.game-footer-actions {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.game-footer-actions .btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 40px;
+  font-size: 13.5px;
+}
+
+@media (max-width: 560px) {
+  .game-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .game-top-bar .session-line {
+    justify-content: space-around;
+  }
+  .game-footer-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .theme-fire .game-card,

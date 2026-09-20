@@ -118,20 +118,21 @@
     </div>
   </section>
 
-  <div class="session-line">
-    <span id="sessionWordCount">Word 0</span>
-    <span class="session-dot" aria-hidden="true">·</span>
-    <span id="sessionCorrectCount">0 correct</span>
-    <span class="session-dot" aria-hidden="true">·</span>
-    <span id="sessionIncorrectCount">0 incorrect</span>
-  </div>
-
   <!-- ============ MAIN GAME CARD ============ -->
   <main class="game-card" id="gameCard">
 
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
 
-    <div class="category-tag" id="categoryTag">Nouns</div>
+    <div class="game-top-bar">
+      <div class="session-line" id="sessionLine">
+        <span class="session-chip" id="sessionWordCount">Word 0</span>
+        <span class="session-dot" aria-hidden="true">·</span>
+        <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
+        <span class="session-dot" aria-hidden="true">·</span>
+        <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+      </div>
+      <div class="category-tag" id="categoryTag">Nouns</div>
+    </div>
 
     <!-- READY PHASE -->
     <div class="phase phase-ready" id="phaseReady">
@@ -182,21 +183,21 @@
       <button class="btn btn-primary" id="nextAfterIncorrectBtn" type="button">Next word</button>
     </div>
 
+    <!-- FOOTER ACTIONS — now inside expanded box, bottom bar -->
+    <div class="footer-actions game-footer-actions">
+      <button class="btn btn-quiet" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">
+        Practice bucket <span class="bucket-count" id="bucketCount">0</span>
+      </button>
+      <button class="btn btn-quiet" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">
+        Category performance
+      </button>
+      <button class="btn btn-secondary" id="finishSessionBtn" type="button">Finish session</button>
+    </div>
+
   </main>
 
   <!-- toast / milestone banners live here -->
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
-
-  <!-- ============ FOOTER ACTIONS ============ -->
-  <div class="footer-actions">
-    <button class="btn btn-quiet" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">
-      Practice bucket <span class="bucket-count" id="bucketCount">0</span>
-    </button>
-    <button class="btn btn-quiet" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">
-      Category performance
-    </button>
-    <button class="btn btn-secondary" id="finishSessionBtn" type="button">Finish session</button>
-  </div>
 
   <!-- ============ BUCKET PANEL ============ -->
   <section class="expand-panel" id="bucketPanel" hidden>
