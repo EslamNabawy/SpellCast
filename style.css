@@ -1468,6 +1468,15 @@ button {
     margin: 0;
   }
 
+  /* practice bucket — when clicked, show in right column on desktop */
+  #bucketPanel {
+    grid-column: 3;
+    grid-row: auto;
+    max-width: none;
+    justify-self: stretch;
+    width: 100%;
+  }
+
   /* RIGHT PANEL — stats vertical, mirrors left exactly */
   .dashboard {
     grid-column: 3;
