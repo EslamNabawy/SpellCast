@@ -256,7 +256,8 @@ const LS_KEYS = {
   bucket: "spellsprint.bucket",
   customWords: "spellsprint.customWords",
   srsCards: "spellsprint.srsCards",
-  darkMode: "spellsprint.darkMode"
+  darkMode: "spellsprint.darkMode",
+  rails: "spellsprint.rails"
 };
 
 // ================================
@@ -307,7 +308,9 @@ const state = {
   sessionStartTime: null,
   sessionTimerHandle: null,
   wordsSeen: [], // track words shown in session for "X of Y"
-  skippedWords: new Set()
+  skippedWords: new Set(),
+  railLeft: false,
+  railRight: false
 };
 
 let seeTimerHandle = null;
@@ -441,7 +444,21 @@ const dom = {
   confettiLayer: document.getElementById("confettiLayer"),
 
   volumeField: document.getElementById("volumeField"),
-  volumeSlider: document.getElementById("volumeSlider")
+  volumeSlider: document.getElementById("volumeSlider"),
+
+  railPracticeBtn: document.getElementById("railPracticeBtn"),
+  railWordsBtn: document.getElementById("railWordsBtn"),
+  railWordsBadge: document.getElementById("railWordsBadge"),
+  railStatsBtn: document.getElementById("railStatsBtn"),
+  railStreakBtn: document.getElementById("railStreakBtn"),
+  railStreakBadge: document.getElementById("railStreakBadge"),
+  railBucketBtn: document.getElementById("railBucketBtn"),
+  railBucketBadge: document.getElementById("railBucketBadge"),
+  railDueBtn: document.getElementById("railDueBtn"),
+  railDueBadge: document.getElementById("railDueBadge"),
+  drawerLeft: document.getElementById("drawerLeft"),
+  drawerRight: document.getElementById("drawerRight"),
+  scrim: document.getElementById("scrim")
 };
 
 // ================================
@@ -934,6 +951,8 @@ function loadAllPersisted() {
   state.soundEnabled = loadLocal(LS_KEYS.soundEnabled, false);
   state.soundVolume = loadLocal(LS_KEYS.soundVolume, 0.5);
   state.darkMode = loadLocal(LS_KEYS.darkMode, false);
+  const rails = loadLocal(LS_KEYS.rails, { left: false, right: false });
+  state.railLeft = !!rails.left; state.railRight = !!rails.right;
   // inject customs into WORDS
   rebuildCustomWordsIntoWORDS();
   // ensure SRS cards for all customs
@@ -1026,13 +1045,15 @@ function renderCustomWordsList() {
       if (confirm(`Delete "${w}"?`)) deleteCustomWord(w);
     });
   });
+  updateRailBadges();
 }
 
 function renderSrsStats() {
   if (!dom.srsStats) return;
   const s = srsStats();
-  if (!s.total) { dom.srsStats.innerHTML = '<span style="color:var(--ink-faint);font-size:12px">No SRS cards yet</span>'; return; }
+  if (!s.total) { dom.srsStats.innerHTML = '<span style="color:var(--ink-faint);font-size:12px">No SRS cards yet</span>'; updateRailBadges(); return; }
   dom.srsStats.innerHTML = `<span class="pill" style="padding:3px 8px;font-size:11px"><span class="pill-value">${s.due} due</span></span><span>${s.total} cards</span><span>· learning ${s.learning}</span><span>· mature ${s.mature}</span>`;
+  updateRailBadges();
 }
 
 function exportJSON() {
@@ -1198,6 +1219,7 @@ function renderStats() {
   if (state.phase === "type" && dom.phaseProgress) {
     dom.phaseProgress.textContent = `Word ${state.wordsSeen.length + 1} of ${poolSize()}`;
   }
+  updateRailBadges();
 }
 
 function renderBucketPanel() {
@@ -1222,6 +1244,7 @@ function renderBucketPanel() {
     `;
     dom.bucketList.appendChild(li);
   });
+  updateRailBadges();
 }
 
 function renderCategoryStats() {
@@ -1491,6 +1514,40 @@ function toggleExpandPanel(panelEl, toggleBtn) {
   toggleBtn.setAttribute("aria-expanded", String(isHidden));
 }
 
+function isDesktopRails() { return window.matchMedia("(min-width: 900px)").matches; }
+function applyRails() {
+  const app = document.querySelector(".app");
+  app.classList.toggle("rail-left-open", state.railLeft);
+  app.classList.toggle("rail-right-open", state.railRight);
+  if (dom.railPracticeBtn) { dom.railPracticeBtn.classList.toggle("active", state.railLeft); dom.railPracticeBtn.setAttribute("aria-expanded", String(state.railLeft)); }
+  if (dom.railWordsBtn) { dom.railWordsBtn.classList.toggle("active", state.railLeft); dom.railWordsBtn.setAttribute("aria-expanded", String(state.railLeft)); }
+  if (dom.railStatsBtn) { dom.railStatsBtn.classList.toggle("active", state.railRight); dom.railStatsBtn.setAttribute("aria-expanded", String(state.railRight)); }
+  if (dom.railStreakBtn) { dom.railStreakBtn.classList.toggle("active", state.railRight); dom.railStreakBtn.setAttribute("aria-expanded", String(state.railRight)); }
+  if (dom.railBucketBtn) { dom.railBucketBtn.classList.toggle("active", state.railRight); dom.railBucketBtn.setAttribute("aria-expanded", String(state.railRight)); }
+  if (dom.railDueBtn) { dom.railDueBtn.classList.toggle("active", state.railRight); dom.railDueBtn.setAttribute("aria-expanded", String(state.railRight)); }
+  if (dom.scrim) dom.scrim.hidden = !(state.railLeft || state.railRight) || !isDesktopRails();
+  saveLocal(LS_KEYS.rails, { left: state.railLeft, right: state.railRight });
+}
+function openRail(side, scrollTo) {
+  if (side === "left") { state.railLeft = true; state.railRight = false; }
+  else { state.railRight = true; state.railLeft = false; }
+  applyRails();
+  announce(side === "left" ? "Controls opened" : "Stats opened");
+  if (scrollTo && isDesktopRails()) setTimeout(() => { const el = document.getElementById(scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
+}
+function closeRails() { state.railLeft = false; state.railRight = false; applyRails(); }
+function toggleRail(side) {
+  if (side === "left") { state.railLeft = !state.railLeft; if (state.railLeft) state.railRight = false; }
+  else { state.railRight = !state.railRight; if (state.railRight) state.railLeft = false; }
+  applyRails();
+}
+function updateRailBadges() {
+  if (dom.railWordsBadge) dom.railWordsBadge.textContent = state.customWords.length;
+  if (dom.railStreakBadge) dom.railStreakBadge.textContent = state.streak;
+  if (dom.railBucketBadge) dom.railBucketBadge.textContent = state.bucket.length;
+  if (dom.railDueBadge) { const s = srsStats(); dom.railDueBadge.textContent = s.due; }
+}
+
 // ================================
 // RESETS
 // ================================
@@ -1580,7 +1637,18 @@ function attachEventListeners() {
     }
   });
 
-  dom.settingsToggle.addEventListener("click", toggleSettingsPanel);
+  dom.settingsToggle.addEventListener("click", () => {
+    if (isDesktopRails()) openRail("left");
+    else toggleSettingsPanel();
+  });
+
+  if (dom.railPracticeBtn) dom.railPracticeBtn.addEventListener("click", () => toggleRail("left"));
+  if (dom.railWordsBtn) dom.railWordsBtn.addEventListener("click", () => openRail("left", "addWordForm"));
+  if (dom.railStatsBtn) dom.railStatsBtn.addEventListener("click", () => toggleRail("right"));
+  if (dom.railStreakBtn) dom.railStreakBtn.addEventListener("click", () => toggleRail("right"));
+  if (dom.railBucketBtn) dom.railBucketBtn.addEventListener("click", () => { openRail("right"); if (dom.bucketPanel.hidden) toggleExpandPanel(dom.bucketPanel, dom.bucketToggle); });
+  if (dom.railDueBtn) dom.railDueBtn.addEventListener("click", () => toggleRail("right"));
+  if (dom.scrim) dom.scrim.addEventListener("click", closeRails);
 
   dom.categorySelect.addEventListener("change", () => {
     state.category = dom.categorySelect.value;
@@ -1719,10 +1787,12 @@ function attachEventListeners() {
   });
 
   dom.bucketToggle.addEventListener("click", () => {
+    if (isDesktopRails() && !state.railRight) openRail("right");
     toggleExpandPanel(dom.bucketPanel, dom.bucketToggle);
   });
 
   dom.categoryStatsToggle.addEventListener("click", () => {
+    if (isDesktopRails() && !state.railRight) openRail("right");
     toggleExpandPanel(dom.categoryStatsPanel, dom.categoryStatsToggle);
     renderCategoryStats();
   });
@@ -1735,6 +1805,11 @@ function attachEventListeners() {
   // keyboard shortcuts
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      if (state.railLeft || state.railRight) {
+        e.preventDefault();
+        closeRails();
+        return;
+      }
       if (state.phase === "type") {
         e.preventDefault();
         dom.skipBtn.click();
@@ -1810,6 +1885,8 @@ function init() {
   }
   setPhase("ready");
   attachEventListeners();
+  applyRails();
+  updateRailBadges();
 }
 
 document.addEventListener("DOMContentLoaded", init);
