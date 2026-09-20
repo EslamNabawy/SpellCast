@@ -15,7 +15,6 @@
 
 <div class="app">
 
-  <!-- ============ HEADER ============ -->
   <header class="header">
     <div class="header-inner">
       <div class="brand">
@@ -43,75 +42,74 @@
         </button>
       </div>
     </div>
-    <div class="state-banner" id="stateBanner" aria-hidden="true">
-      <span id="stateBannerText"></span>
-    </div>
+    <div class="state-banner" id="stateBanner" aria-hidden="true"><span id="stateBannerText"></span></div>
   </header>
 
-  <!-- ============ SETTINGS PANEL ============ -->
   <section class="settings-panel" id="settingsPanel" hidden>
-    <form class="settings-form" id="settingsForm">
-      <div class="field">
-        <label for="categorySelect">Word category</label>
-        <select id="categorySelect" name="category">
-          <option value="all">All categories</option>
-          <option value="nouns">Nouns</option>
-          <option value="verbs">Verbs</option>
-          <option value="adjectives">Adjectives</option>
-          <option value="adverbs">Adverbs</option>
-          <option value="commonlyMisspelled">Commonly misspelled</option>
-          <option value="advanced">Advanced</option>
-          <option value="animals">Animals</option>
-          <option value="food">Food</option>
-          <option value="science">Science</option>
-          <option value="technology">Technology</option>
-          <option value="nature">Nature</option>
-          <option value="sports">Sports</option>
-        </select>
+    <div class="settings-group">
+      <h3 class="settings-heading">Practice</h3>
+      <form class="settings-form" id="settingsForm">
+        <div class="field">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect" name="category">
+            <option value="all">All categories</option>
+            <option value="nouns">Nouns</option>
+            <option value="verbs">Verbs</option>
+            <option value="adjectives">Adjectives</option>
+            <option value="adverbs">Adverbs</option>
+            <option value="commonlyMisspelled">Commonly misspelled</option>
+            <option value="advanced">Advanced</option>
+            <option value="animals">Animals</option>
+            <option value="food">Food</option>
+            <option value="science">Science</option>
+            <option value="technology">Technology</option>
+            <option value="nature">Nature</option>
+            <option value="sports">Sports</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="durationSelect">Show for</label>
+          <select id="durationSelect" name="duration">
+            <option value="1000">1s</option>
+            <option value="1500">1.5s</option>
+            <option value="2000" selected>2s</option>
+            <option value="3000">3s</option>
+            <option value="4000">4s</option>
+          </select>
+        </div>
+        <div class="field field-toggle">
+          <label for="soundToggle">Sound</label>
+          <button type="button" class="toggle" id="soundToggle" role="switch" aria-checked="false">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-state">Off</span>
+          </button>
+        </div>
+        <div class="field" id="volumeField" hidden>
+          <label for="volumeSlider">Volume</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+        </div>
+      </form>
+      <div class="settings-actions">
+        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn">Reset session</button>
+        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Reset all</button>
       </div>
-      <div class="field">
-        <label for="difficultySelect">Difficulty</label>
-        <select id="difficultySelect" name="difficulty">
-          <option value="easy">Easy</option>
-          <option value="medium" selected>Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="durationSelect">Display time</label>
-        <select id="durationSelect" name="duration">
-          <option value="1000">1 second</option>
-          <option value="1500">1.5 seconds</option>
-          <option value="2000" selected>2 seconds</option>
-          <option value="3000">3 seconds</option>
-          <option value="4000">4 seconds</option>
-        </select>
-      </div>
-      <div class="field field-toggle">
-        <label for="soundToggle">Sound effects</label>
-        <button type="button" class="toggle" id="soundToggle" role="switch" aria-checked="false">
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          <span class="toggle-state">Off</span>
-        </button>
-      </div>
-      <div class="field" id="volumeField" hidden>
-        <label for="volumeSlider">Sound volume</label>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
-      </div>
-    </form>
-
-    <div class="settings-actions">
-      <button type="button" class="btn btn-quiet" id="resetSessionBtn">Reset session</button>
-      <button type="button" class="btn btn-danger-quiet" id="resetAllBtn">Reset all data…</button>
     </div>
 
-    <div class="custom-words-section">
-      <h3 class="panel-title" style="margin-top:18px">My words</h3>
-      <p class="panel-hint">Add your own words. They enter the Anki-like review — forgotten words return in ~10 min, remembered words in days.</p>
+    <details class="settings-group custom-words-group" open>
+      <summary class="settings-heading summary-row">My words <span class="summary-badge" id="customCountBadge">0</span></summary>
+      <p class="panel-hint">Add words. Forgotten → 10 min. Remembered → days.</p>
       <form class="add-word-form" id="addWordForm" autocomplete="off">
-        <input type="text" id="customWordInput" class="answer-input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false" style="text-align:left">
+        <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
         <div class="add-word-row">
-          <select id="customWordCategory" aria-label="Category for new word">
+          <select id="customWordCategory" aria-label="Category">
             <option value="nouns">Nouns</option>
             <option value="verbs">Verbs</option>
             <option value="adjectives">Adjectives</option>
@@ -127,35 +125,34 @@
           </select>
           <select id="customWordDifficulty" aria-label="Difficulty">
             <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
+            <option value="medium" selected>Med</option>
             <option value="hard">Hard</option>
           </select>
-          <button type="submit" class="btn btn-primary" id="addWordBtn">Add</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn">Add</button>
         </div>
       </form>
-      <p class="panel-hint" id="customWordError" hidden style="color:var(--incorrect); margin-top:8px"></p>
-      <div class="new-category-row" style="display:flex; gap:8px; margin-top:10px">
-        <input type="text" id="newCategoryInput" class="answer-input" placeholder="New category name" style="text-align:left; flex:1; padding:9px 12px; font-size:14px">
-        <button type="button" class="btn btn-quiet" id="createCategoryBtn">Create category</button>
+      <p class="field-error" id="customWordError" hidden></p>
+      <div class="new-category-row">
+        <input type="text" id="newCategoryInput" class="input input-sm" placeholder="New category">
+        <button type="button" class="btn btn-quiet btn-sm" id="createCategoryBtn">Create</button>
       </div>
-      <ul class="bucket-list" id="customWordsList" style="margin-top:12px"></ul>
-      <div class="import-export-row" style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
-        <button type="button" class="btn btn-quiet" id="exportBtn">Export JSON</button>
-        <button type="button" class="btn btn-quiet" id="importBtn">Import JSON</button>
+      <ul class="mini-list" id="customWordsList"></ul>
+      <div class="import-export-row">
+        <button type="button" class="btn btn-quiet btn-sm" id="exportBtn">Export</button>
+        <button type="button" class="btn btn-quiet btn-sm" id="importBtn">Import</button>
         <input type="file" id="importFile" accept=".json" hidden>
       </div>
-      <div class="field" style="margin-top:12px">
-        <label for="reviewModeSelect">Review mode</label>
+      <div class="field" style="margin-top:10px">
+        <label for="reviewModeSelect">Review</label>
         <select id="reviewModeSelect">
-          <option value="mixed">Mixed — due + new</option>
-          <option value="dueOnly">Due only — Anki style</option>
+          <option value="mixed">Mixed</option>
+          <option value="dueOnly">Due only</option>
         </select>
       </div>
-      <div class="srs-stats" id="srsStats" style="margin-top:12px; font-size:12.5px; color:var(--ink-soft); display:flex; gap:8px; flex-wrap:wrap"></div>
-    </div>
+      <div class="srs-stats" id="srsStats"></div>
+    </details>
   </section>
 
-  <!-- ============ DASHBOARD ============ -->
   <section class="dashboard" aria-label="Session statistics">
     <div class="stat-card">
       <span class="stat-label">Score</span>
@@ -175,11 +172,8 @@
     </div>
   </section>
 
-  <!-- ============ MAIN GAME CARD ============ -->
   <main class="game-card" id="gameCard">
-
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
-
     <div class="game-top-bar">
       <div class="session-line" id="sessionLine">
         <span class="session-chip" id="sessionWordCount">Word 0</span>
@@ -188,178 +182,123 @@
         <span class="session-dot" aria-hidden="true">·</span>
         <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
       </div>
+      <span class="session-timer" id="sessionTimer" aria-label="Elapsed">0:00</span>
       <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
     </div>
 
-    <!-- READY PHASE -->
     <div class="phase phase-ready" id="phaseReady">
-      <p class="ready-copy">Ready when you are.</p>
-      <p class="ready-hint" id="readyHint">Type a word from memory, then check your spelling.</p>
+      <p class="ready-copy">Ready?</p>
+      <p class="ready-hint" id="readyHint">Memorize, then type from memory.</p>
       <button class="btn btn-primary btn-large" id="startBtn" type="button">Show word</button>
+      <p class="kbd-hint">Press Enter to start</p>
     </div>
 
-    <!-- SEE PHASE -->
     <div class="phase phase-see" id="phaseSee" hidden>
       <div class="word-display" id="wordDisplay" aria-live="polite">apple</div>
-      <p class="see-hint" id="seeHint">Memorize this word. Type it from memory when ready.</p>
-      <div class="timer-track" aria-hidden="true">
-        <div class="timer-fill" id="timerFill"></div>
-      </div>
-      <div class="timer-caption" id="timerCaption">2.0 seconds</div>
+      <p class="see-hint" id="seeHint">Memorize it</p>
+      <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="timer-caption" id="timerCaption">2.0s</div>
     </div>
 
-    <!-- TYPE PHASE -->
     <div class="phase phase-type" id="phaseType" hidden>
       <p class="your-turn">Your turn</p>
       <div class="mystery-mark" aria-hidden="true">?</div>
-      <p class="type-instruction" id="typeInstruction">Type the word you remember</p>
-      <div class="phase-progress" id="phaseProgress" aria-live="polite">Word 1 of 12</div>
+      <p class="type-instruction" id="typeInstruction">Type what you saw</p>
+      <div class="phase-progress" id="phaseProgress">Word 1 of 1</div>
       <form class="answer-form" id="answerForm" autocomplete="off">
         <label for="answerInput" class="sr-only">Your spelling</label>
-        <input type="text" id="answerInput" name="answer" class="answer-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Start typing…">
+        <input type="text" id="answerInput" name="answer" class="input input-large" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type here">
         <div class="type-actions">
           <button type="submit" class="btn btn-primary" id="checkBtn">Check</button>
           <button type="button" class="btn btn-quiet" id="skipBtn">Skip</button>
         </div>
       </form>
-      <p class="type-hint" id="typeHint">Press Enter to check, Escape to skip</p>
+      <p class="type-hint" id="typeHint">Enter to check · Esc to skip</p>
     </div>
 
-    <!-- RESULT: CORRECT -->
     <div class="phase phase-result phase-result-correct" id="phaseCorrect" hidden>
       <div class="result-icon" aria-hidden="true">✓</div>
       <p class="result-headline" id="correctHeadline">Correct</p>
       <p class="result-word" id="correctWordEcho">necessary</p>
       <p class="result-points" id="correctPoints">+10</p>
-      <p class="result-sub" id="masteredNote" hidden>Removed from your practice bucket.</p>
-      <button class="btn btn-primary" id="nextAfterCorrectBtn" type="button">Next word</button>
+      <p class="result-sub" id="masteredNote" hidden>Removed from practice bucket.</p>
+      <button class="btn btn-primary" id="nextAfterCorrectBtn" type="button">Next</button>
     </div>
 
-    <!-- RESULT: INCORRECT -->
     <div class="phase phase-result phase-result-incorrect" id="phaseIncorrect" hidden>
       <div class="result-icon" aria-hidden="true">×</div>
       <p class="result-headline">Not quite</p>
-      <p class="result-sub-label">The correct spelling</p>
+      <p class="result-sub-label">Correct</p>
       <p class="result-word" id="incorrectCorrectWord">necessary</p>
       <p class="result-your-answer" id="incorrectYourAnswer">You wrote: necesary</p>
       <p class="result-streak-transition" id="streakTransitionNote" hidden></p>
-      <p class="result-sub bucket-note">Streak ended. This word has been added to your practice bucket.</p>
+      <p class="result-sub bucket-note">Added to practice bucket.</p>
       <div class="result-actions">
-        <button class="btn btn-primary" id="nextAfterIncorrectBtn" type="button">Next word</button>
-        <button class="btn btn-quiet" id="backAfterIncorrectBtn" type="button">← Back</button>
+        <button class="btn btn-primary" id="nextAfterIncorrectBtn" type="button">Next</button>
+        <button class="btn btn-quiet" id="backAfterIncorrectBtn" type="button">Back</button>
       </div>
     </div>
 
-    <!-- SESSION TIMER -->
-    <div class="session-timer" id="sessionTimer" aria-label="Session elapsed time">0:00</div>
-    <!-- FOOTER ACTIONS — now inside expanded box, bottom bar -->
     <div class="footer-actions game-footer-actions">
-      <button class="btn btn-quiet" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">
-        Practice bucket <span class="bucket-count" id="bucketCount">0</span>
-      </button>
-      <button class="btn btn-quiet" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">
-        Category performance
-      </button>
-      <button class="btn btn-secondary" id="finishSessionBtn" type="button">Finish session</button>
+      <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Bucket <span class="bucket-count" id="bucketCount">0</span></button>
+      <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
+      <button class="btn btn-secondary btn-sm" id="finishSessionBtn" type="button">Finish</button>
     </div>
-
   </main>
 
-  <!-- toast / milestone banners live here -->
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
-  <!-- ============ BUCKET PANEL ============ -->
   <section class="expand-panel" id="bucketPanel" hidden>
-    <h2 class="panel-title">Practice bucket</h2>
-    <p class="panel-hint" id="bucketEmptyHint">No words in your practice bucket right now — nice work.</p>
+    <h2 class="panel-title">Practice bucket <span class="count-pill" id="bucketCount2">0</span></h2>
+    <p class="panel-hint" id="bucketEmptyHint">Empty — great work.</p>
     <ul class="bucket-list" id="bucketList"></ul>
   </section>
 
-  <!-- ============ CATEGORY STATS PANEL ============ -->
   <section class="expand-panel" id="categoryStatsPanel" hidden>
-    <h2 class="panel-title">Category performance</h2>
-    <p class="panel-hint" id="categoryStatsEmptyHint">Practice a few words to see how you're doing by category.</p>
+    <h2 class="panel-title">By category</h2>
+    <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
     <ul class="category-stats-list" id="categoryStatsList"></ul>
   </section>
 
 </div>
 
-<!-- ============ SESSION SUMMARY MODAL ============ -->
 <div class="modal-overlay" id="summaryOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
-    <h2 id="summaryTitle">Session complete</h2>
+    <h2 id="summaryTitle">Session done</h2>
     <div class="summary-grid">
-      <div class="summary-item">
-        <span class="summary-label">Score</span>
-        <span class="summary-value" id="summaryScore">0</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Accuracy</span>
-        <span class="summary-value" id="summaryAccuracy">0%</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Best streak</span>
-        <span class="summary-value" id="summaryBestStreak">0</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Words practiced</span>
-        <span class="summary-value" id="summaryWordsPracticed">0</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Added to bucket</span>
-        <span class="summary-value" id="summaryBucketAdds">0</span>
-      </div>
+      <div class="summary-item"><span class="summary-label">Score</span><span class="summary-value" id="summaryScore">0</span></div>
+      <div class="summary-item"><span class="summary-label">Accuracy</span><span class="summary-value" id="summaryAccuracy">0%</span></div>
+      <div class="summary-item"><span class="summary-label">Best streak</span><span class="summary-value" id="summaryBestStreak">0</span></div>
+      <div class="summary-item"><span class="summary-label">Words</span><span class="summary-value" id="summaryWordsPracticed">0</span></div>
+      <div class="summary-item"><span class="summary-label">Added to bucket</span><span class="summary-value" id="summaryBucketAdds">0</span></div>
     </div>
     <div class="summary-categories">
-      <div class="summary-cat-block">
-        <span class="summary-cat-label">Strongest</span>
-        <span class="summary-cat-value" id="summaryStrongest">—</span>
-      </div>
-      <div class="summary-cat-block">
-        <span class="summary-cat-label">Needs more practice</span>
-        <span class="summary-cat-value" id="summaryWeakest">—</span>
-      </div>
+      <div class="summary-cat-block"><span class="summary-cat-label">Strongest</span><span class="summary-cat-value" id="summaryStrongest">—</span></div>
+      <div class="summary-cat-block"><span class="summary-cat-label">Needs work</span><span class="summary-cat-value" id="summaryWeakest">—</span></div>
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="summaryCloseBtn" type="button">Keep practicing</button>
-    </div>
+    <div class="modal-actions"><button class="btn btn-primary" id="summaryCloseBtn" type="button">Continue</button></div>
   </div>
 </div>
 
-<!-- ============ RESET SESSION CONFIRM MODAL ============ -->
 <div class="modal-overlay" id="resetSessionOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetSessionTitle">
     <h2 id="resetSessionTitle">Reset session?</h2>
-    <p class="modal-body-text">This will clear your current score, streak, and session words. High score and best streak are preserved.</p>
-    <div class="modal-actions">
-      <button class="btn btn-quiet" id="resetSessionCancelBtn" type="button">Cancel</button>
-      <button class="btn btn-primary" id="resetSessionConfirmBtn" type="button">Reset</button>
-    </div>
+    <p class="modal-body-text">Clears score, streak, session stats. Keeps high score.</p>
+    <div class="modal-actions"><button class="btn btn-quiet" id="resetSessionCancelBtn" type="button">Cancel</button><button class="btn btn-primary" id="resetSessionConfirmBtn" type="button">Reset</button></div>
   </div>
 </div>
 
-<!-- ============ RESET ALL CONFIRM MODAL ============ -->
 <div class="modal-overlay" id="resetAllOverlay" hidden>
   <div class="modal modal-danger" role="dialog" aria-modal="true" aria-labelledby="resetAllTitle">
-    <h2 id="resetAllTitle">Delete all saved progress?</h2>
-    <p class="modal-body-text">This will remove:</p>
-    <ul class="modal-list">
-      <li>High score</li>
-      <li>Best streak</li>
-      <li>Lifetime statistics</li>
-    </ul>
-    <div class="modal-actions">
-      <button class="btn btn-quiet" id="resetAllCancelBtn" type="button">Cancel</button>
-      <button class="btn btn-danger" id="resetAllConfirmBtn" type="button">Delete everything</button>
-    </div>
+    <h2 id="resetAllTitle">Delete all?</h2>
+    <p class="modal-body-text">Removes high score, best streak, custom words.</p>
+    <ul class="modal-list"><li>High score</li><li>Best streak</li><li>Lifetime stats</li></ul>
+    <div class="modal-actions"><button class="btn btn-quiet" id="resetAllCancelBtn" type="button">Cancel</button><button class="btn btn-danger" id="resetAllConfirmBtn" type="button">Delete</button></div>
   </div>
 </div>
 
-<!-- live region for screen readers -->
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
-
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-
 <script src="script.js"></script>
 </body>
 </html>

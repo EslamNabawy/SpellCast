@@ -345,6 +345,7 @@ const dom = {
   customWordDifficulty: document.getElementById("customWordDifficulty"),
   addWordForm: document.getElementById("addWordForm"),
   addWordBtn: document.getElementById("addWordBtn"),
+  customCountBadge: document.getElementById("customCountBadge"),
   newCategoryInput: document.getElementById("newCategoryInput"),
   createCategoryBtn: document.getElementById("createCategoryBtn"),
   customWordsList: document.getElementById("customWordsList"),
@@ -407,6 +408,7 @@ const dom = {
   bucketToggle: document.getElementById("bucketToggle"),
   bucketPanel: document.getElementById("bucketPanel"),
   bucketCount: document.getElementById("bucketCount"),
+  bucketCount2: document.getElementById("bucketCount2"),
   bucketList: document.getElementById("bucketList"),
   bucketEmptyHint: document.getElementById("bucketEmptyHint"),
 
@@ -1001,6 +1003,72 @@ function srsStats() {
   return { total: all.length, due, learning, mature, fresh };
 }
 
+function renderCustomWordsList() {
+  if (!dom.customWordsList) return;
+  if (dom.customCountBadge) dom.customCountBadge.textContent = state.customWords.length;
+  dom.customWordsList.innerHTML = "";
+  if (!state.customWords.length) {
+    const li = document.createElement("li");
+    li.style.cssText = "justify-content:center;color:var(--ink-soft);font-size:12px;border-style:dashed";
+    li.textContent = "No custom words yet";
+    dom.customWordsList.appendChild(li);
+    return;
+  }
+  const sorted = [...state.customWords].sort((a,b) => a.word.localeCompare(b.word));
+  sorted.forEach(entry => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span style="font-weight:700;font-family:var(--font-display)">${escapeHtml(entry.word)}</span><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-faint)">${escapeHtml(CATEGORY_LABELS[entry.category]||entry.category)} · ${entry.difficulty} <button data-del="${escapeHtml(entry.word)}" class="btn btn-quiet" style="padding:4px 8px;font-size:11px">✕</button></span>`;
+    dom.customWordsList.appendChild(li);
+  });
+  dom.customWordsList.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const w = btn.getAttribute("data-del");
+      if (confirm(`Delete "${w}"?`)) deleteCustomWord(w);
+    });
+  });
+}
+
+function renderSrsStats() {
+  if (!dom.srsStats) return;
+  const s = srsStats();
+  if (!s.total) { dom.srsStats.innerHTML = '<span style="color:var(--ink-faint);font-size:12px">No SRS cards yet</span>'; return; }
+  dom.srsStats.innerHTML = `<span class="pill" style="padding:3px 8px;font-size:11px"><span class="pill-value">${s.due} due</span></span><span>${s.total} cards</span><span>· learning ${s.learning}</span><span>· mature ${s.mature}</span>`;
+}
+
+function exportJSON() {
+  const payload = { version: 1, exportedAt: new Date().toISOString(), customWords: state.customWords, srsCards: state.srsCards, categories: Object.keys(WORDS) };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `spellcast-export-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 1000); announce("Exported JSON");
+}
+function importJSONFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const cw = Array.isArray(data.customWords) ? data.customWords : [];
+      const sc = data.srsCards && typeof data.srsCards === "object" ? data.srsCards : {};
+      let added=0, updated=0, skipped=0;
+      cw.forEach(e => {
+        if (!e.word || !e.category || !e.difficulty) { skipped++; return; }
+        const w = normalizeWordRaw(e.word);
+        if (!isValidWord(w)) { skipped++; return; }
+        if (wordExistsAnywhere(w) && !state.customWords.find(x=>x.word===w)) { skipped++; return; }
+        const existing = state.customWords.find(x=>x.word===w);
+        if (!existing) { ensureCategory(e.category, CATEGORY_LABELS[e.category]||e.category); state.customWords.push({ word:w, category:e.category, difficulty:e.difficulty, addedAt:e.addedAt||Date.now() }); if (!WORDS[e.category][e.difficulty].includes(w)) WORDS[e.category][e.difficulty].push(w); added++; } else updated++;
+      });
+      Object.keys(sc).forEach(k => {
+        const incoming = sc[k]; const existing = state.srsCards[k];
+        if (!incoming || !incoming.word) return;
+        if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) { state.srsCards[k] = incoming; ensureCategory(incoming.category, CATEGORY_LABELS[incoming.category]||incoming.category); if (!wordExistsAnywhere(k)) { const diff = incoming.difficulty||"medium"; if (!WORDS[incoming.category][diff].includes(k)) WORDS[incoming.category][diff].push(k); } }
+      });
+      saveCustomWords(); saveSrsCards(); rebuildCustomWordsIntoWORDS(); renderCustomWordsList(); renderSrsStats(); resetWordPool(); announce(`Import: ${added} added, ${updated} updated, ${skipped} skipped`);
+      const toast = document.createElement("div"); toast.className="toast"; toast.innerHTML=`<span class="toast-text"><span class="toast-title">Import done</span><span class="toast-sub">${added} added · ${updated} updated · ${skipped} skipped</span></span>`; dom.toastRegion.appendChild(toast); setTimeout(()=>toast.remove(),3200);
+    } catch(err){ alert("Import failed: "+err.message); }
+  }; reader.readAsText(file);
+}
+
 // ================================
 // UI / ANIMATIONS
 // ================================
@@ -1124,6 +1192,7 @@ function renderStats() {
   dom.sessionIncorrectCount.textContent = `${state.incorrect} incorrect`;
 
   dom.bucketCount.textContent = state.bucket.length;
+  if (dom.bucketCount2) dom.bucketCount2.textContent = state.bucket.length;
 
   // update phase progress if in type phase
   if (state.phase === "type" && dom.phaseProgress) {
@@ -1548,6 +1617,37 @@ function attachEventListeners() {
     saveLocal(LS_KEYS.soundVolume, state.soundVolume);
   });
 
+  if (dom.addWordForm) {
+    dom.addWordForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const raw = dom.customWordInput.value;
+      const cat = dom.customWordCategory.value;
+      const diff = dom.customWordDifficulty.value;
+      const res = addCustomWord(raw, cat, diff);
+      if (!res.ok) { dom.customWordError.textContent = res.error; dom.customWordError.hidden = false; }
+      else { dom.customWordError.hidden = true; dom.customWordInput.value = ""; dom.customWordInput.focus(); }
+    });
+  }
+  if (dom.createCategoryBtn) {
+    dom.createCategoryBtn.addEventListener("click", () => {
+      const name = dom.newCategoryInput.value.trim();
+      if (!name) { alert("Enter category name"); return; }
+      const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/^[0-9]+/, "");
+      if (!key) { alert("Invalid name"); return; }
+      if (WORDS[key]) { alert("Category exists"); return; }
+      ensureCategory(key, name); saveCustomWords(); dom.newCategoryInput.value = ""; dom.customWordCategory.value = key; renderCustomWordsList(); announce(`Category ${name} created`);
+    });
+  }
+  if (dom.exportBtn) dom.exportBtn.addEventListener("click", exportJSON);
+  if (dom.importBtn && dom.importFile) {
+    dom.importBtn.addEventListener("click", () => dom.importFile.click());
+    dom.importFile.addEventListener("change", () => { const f = dom.importFile.files[0]; if (f) importJSONFile(f); dom.importFile.value = ""; });
+  }
+  if (dom.reviewModeSelect) {
+    dom.reviewModeSelect.value = state.reviewMode;
+    dom.reviewModeSelect.addEventListener("change", () => { state.reviewMode = dom.reviewModeSelect.value; });
+  }
+
   // dark mode toggle
   dom.themeToggle.addEventListener("click", () => {
     state.darkMode = !state.darkMode;
@@ -1665,6 +1765,9 @@ function attachEventListeners() {
     if (e.target === dom.resetAllOverlay) {
       dom.resetAllOverlay.hidden = true;
     }
+  });
+  dom.resetSessionOverlay.addEventListener("click", (e) => {
+    if (e.target === dom.resetSessionOverlay) dom.resetSessionOverlay.hidden = true;
   });
 
   // Escape closes any open modal
