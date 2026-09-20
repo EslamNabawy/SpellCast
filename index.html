@@ -46,14 +46,13 @@
   </header>
 
   <aside class="rail rail-left" aria-label="Controls">
-    <div class="rail-icons">
-      <button class="rail-btn" id="railPracticeBtn" type="button" aria-expanded="false" aria-controls="drawerLeft" title="Practice settings">
-        <span aria-hidden="true">⚙</span><span class="rail-tip">Practice</span>
-      </button>
-      <button class="rail-btn" id="railWordsBtn" type="button" aria-expanded="false" aria-controls="drawerLeft" title="My words">
-        <span aria-hidden="true">✎</span><span class="rail-badge" id="railWordsBadge">0</span><span class="rail-tip">My words</span>
-      </button>
-    </div>
+    <button class="rail-btn" id="railPracticeBtn" type="button" aria-expanded="false" aria-controls="drawerLeft" title="Practice settings">
+      <span aria-hidden="true">⚙</span><span class="rail-tip">Practice</span>
+    </button>
+    <button class="rail-btn" id="railWordsBtn" type="button" aria-expanded="false" aria-controls="drawerLeft" title="My words">
+      <span aria-hidden="true">✎</span><span class="rail-badge" id="railWordsBadge">0</span><span class="rail-tip">My words</span>
+    </button>
+  </aside>
   <div class="drawer drawer-left" id="drawerLeft">
   <section class="settings-panel" id="settingsPanel" hidden>
     <div class="settings-group">
@@ -163,23 +162,21 @@
     </details>
   </section>
   </div>
-  </aside>
 
   <aside class="rail rail-right" aria-label="Stats">
-    <div class="rail-icons">
-      <button class="rail-btn" id="railStatsBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Live stats">
-        <span aria-hidden="true">📊</span><span class="rail-tip">Stats</span>
-      </button>
-      <button class="rail-btn" id="railStreakBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Streak">
-        <span aria-hidden="true">🔥</span><span class="rail-badge" id="railStreakBadge">0</span><span class="rail-tip">Streak</span>
-      </button>
-      <button class="rail-btn" id="railBucketBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Practice bucket">
-        <span aria-hidden="true">🪣</span><span class="rail-badge" id="railBucketBadge">0</span><span class="rail-tip">Bucket</span>
-      </button>
-      <button class="rail-btn" id="railDueBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Due reviews">
-        <span aria-hidden="true">⏳</span><span class="rail-badge" id="railDueBadge">0</span><span class="rail-tip">Due</span>
-      </button>
-    </div>
+    <button class="rail-btn" id="railStatsBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Live stats">
+      <span aria-hidden="true">📊</span><span class="rail-tip">Stats</span>
+    </button>
+    <button class="rail-btn" id="railStreakBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Streak">
+      <span aria-hidden="true">🔥</span><span class="rail-badge" id="railStreakBadge">0</span><span class="rail-tip">Streak</span>
+    </button>
+    <button class="rail-btn" id="railBucketBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Practice bucket">
+      <span aria-hidden="true">🪣</span><span class="rail-badge" id="railBucketBadge">0</span><span class="rail-tip">Bucket</span>
+    </button>
+    <button class="rail-btn" id="railDueBtn" type="button" aria-expanded="false" aria-controls="drawerRight" title="Due reviews">
+      <span aria-hidden="true">⏳</span><span class="rail-badge" id="railDueBadge">0</span><span class="rail-tip">Due</span>
+    </button>
+  </aside>
   <div class="drawer drawer-right" id="drawerRight">
   <section class="dashboard" aria-label="Session statistics">
     <div class="stat-card">
@@ -199,8 +196,6 @@
       <span class="stat-value" id="statAccuracy">—</span>
     </div>
   </section>
-  </div>
-  </aside>
 
   <main class="game-card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
@@ -289,6 +284,7 @@
     <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
     <ul class="category-stats-list" id="categoryStatsList"></ul>
   </section>
+  </div>
   <div class="scrim" id="scrim" hidden></div>
 
 </div>
