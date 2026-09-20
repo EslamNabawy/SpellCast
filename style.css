@@ -438,14 +438,18 @@ button {
   color: var(--ink-faint);
 }
 
-/* Expanded top bar inside game card — requested placement */
+/* Expanded top bar — flush to top edge, no empty gap */
 .game-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  margin-bottom: 10px;
+  margin: 0;
+  padding: 12px 18px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 24px 24px 0 0;
 }
 
 .game-top-bar .session-line {
@@ -518,7 +522,7 @@ button {
   position: relative;
   margin-top: 18px;
   min-height: 460px;
-  padding: 18px 26px 18px;
+  padding: 0;
   background: linear-gradient(180deg, var(--paper-raised) 0%, #FCFCFA 100%);
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -530,7 +534,7 @@ button {
   text-align: center;
   overflow: hidden;
   transition: box-shadow var(--dur-med) var(--ease), border-color var(--dur-med) var(--ease);
-  gap: 14px;
+  gap: 0;
 }
 
 .game-card::before {
@@ -540,22 +544,26 @@ button {
   height: 4px;
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
   opacity: 0.9;
+  z-index: 2;
+  border-radius: 24px 24px 0 0;
 }
 
-/* expanded look: phases take remaining center space */
+/* expanded look: phases take remaining center space, padded inside */
 .game-card .phase {
   flex: 1;
   justify-content: center;
-  padding: 16px 0 12px;
+  padding: 28px 24px 24px;
   width: 100%;
   max-width: 520px;
 }
 
 .game-footer-actions {
   width: 100%;
-  margin-top: auto;
-  padding-top: 14px;
+  margin: 0;
+  padding: 14px 18px;
+  background: var(--paper);
   border-top: 1px solid var(--line-soft);
+  border-radius: 0 0 24px 24px;
   display: grid;
   grid-template-columns: 1fr 1fr auto;
   gap: 10px;
