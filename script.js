@@ -567,24 +567,16 @@ function setPhase(phase) {
   dom.phaseType.hidden = phase !== "type";
   dom.phaseCorrect.hidden = phase !== "correct";
   dom.phaseIncorrect.hidden = phase !== "incorrect";
-  // manage focus and hints
   if (phase === "ready") {
-    dom.startBtn.focus();
-    if (dom.seeHint) dom.seeHint.style.display = "none";
-    if (dom.readyHint) dom.readyHint.style.display = "";
+    requestAnimationFrame(() => dom.startBtn.focus());
   } else if (phase === "see") {
-    dom.wordDisplay.focus();
-    if (dom.readyHint) dom.readyHint.style.display = "none";
-    if (dom.seeHint) dom.seeHint.style.display = "";
+    // don't steal focus to div — keep announce only
   } else if (phase === "type") {
     requestAnimationFrame(() => dom.answerInput.focus());
-    if (dom.typeHint) dom.typeHint.style.display = "";
   } else if (phase === "correct") {
-    dom.nextAfterCorrectBtn.focus();
-    if (dom.typeHint) dom.typeHint.style.display = "none";
+    requestAnimationFrame(() => dom.nextAfterCorrectBtn.focus());
   } else if (phase === "incorrect") {
-    dom.backAfterIncorrectBtn.focus();
-    if (dom.typeHint) dom.typeHint.style.display = "none";
+    requestAnimationFrame(() => dom.nextAfterIncorrectBtn.focus());
   }
 }
 
@@ -658,27 +650,23 @@ function goToTypePhase() {
 }
 
 function poolSize() {
+  if (state.wordPool.length) return state.wordPool.length;
   const cats = state.category === "all" ? CATEGORY_KEYS : [state.category];
   let total = 0;
   cats.forEach(cat => {
     const list = WORDS[cat][state.difficulty] || [];
     total += list.length;
   });
-  // add custom words in category
-  if (state.category === "all") {
-    total += state.customWords.length;
-  } else {
-    total += state.customWords.filter(c => c.category === state.category).length;
-  }
-  // subtract already seen (no-repeat)
   return Math.max(1, total);
 }
 
 function startSessionTimer() {
-  state.sessionStartTime = Date.now();
+  if (state.sessionTimerHandle) cancelAnimationFrame(state.sessionTimerHandle);
+  if (!state.sessionStartTime) state.sessionStartTime = Date.now();
+  dom.sessionTimer.classList.add("is-running");
   dom.sessionTimer.textContent = "0:00";
-  if (dom.sessionTimer) dom.sessionTimer.style.opacity = "1";
   function tick() {
+    if (!state.sessionStartTime) return;
     const elapsed = Math.floor((Date.now() - state.sessionStartTime) / 1000);
     const m = Math.floor(elapsed / 60);
     const s = elapsed % 60;
@@ -693,7 +681,7 @@ function stopSessionTimer() {
     cancelAnimationFrame(state.sessionTimerHandle);
     state.sessionTimerHandle = null;
   }
-  if (dom.sessionTimer) dom.sessionTimer.style.opacity = "0";
+  if (dom.sessionTimer) dom.sessionTimer.classList.remove("is-running");
 }
 
 // ================================
@@ -867,13 +855,14 @@ function ensureCategory(catKey, label) {
   WORDS[catKey] = { easy: [], medium: [], hard: [] };
   CATEGORY_LABELS[catKey] = label || catKey.charAt(0).toUpperCase() + catKey.slice(1);
   if (!CATEGORY_KEYS.includes(catKey)) CATEGORY_KEYS.push(catKey);
-  // add option to select if exists
-  if (dom.categorySelect) {
+  [dom.categorySelect, dom.customWordCategory].forEach(sel => {
+    if (!sel) return;
+    if ([...sel.options].some(o => o.value === catKey)) return;
     const opt = document.createElement("option");
     opt.value = catKey;
     opt.textContent = CATEGORY_LABELS[catKey];
-    dom.categorySelect.appendChild(opt);
-  }
+    sel.appendChild(opt);
+  });
 }
 
 function rebuildCustomWordsIntoWORDS() {
@@ -1244,8 +1233,8 @@ function playTone(kind) {
   osc.stop(now + duration + 0.02);
 
   if (kind === "milestone") {
-    const vol = state.soundVolume || 0.5;
-    const safeVol = Math.max(0.0001, vol * 0.06);
+    const vol2 = state.soundVolume || 0.5;
+    const safeVol2 = Math.max(0.0001, vol2 * 0.06);
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.connect(gain2);
@@ -1253,7 +1242,7 @@ function playTone(kind) {
     osc2.type = "sine";
     osc2.frequency.setValueAtTime(1108, now + 0.1);
     gain2.gain.setValueAtTime(0.0001, now + 0.1);
-    gain2.gain.exponentialRampToValueAtTime(safeVol, now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(safeVol2, now + 0.11);
     gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
     osc2.start(now + 0.1);
     osc2.stop(now + 0.28);
@@ -1410,10 +1399,7 @@ function applySettingsToForm() {
   dom.difficultySelect.value = state.difficulty;
   dom.durationSelect.value = String(state.duration);
   setSoundToggleUI(state.soundEnabled);
-  if (state.soundVolume > 0) {
-    dom.volumeSlider.value = Math.round(state.soundVolume * 100);
-    dom.volumeField.hidden = false;
-  }
+  dom.volumeSlider.value = Math.round(state.soundVolume * 100);
 }
 
 function setSoundToggleUI(enabled) {
@@ -1443,6 +1429,7 @@ function toggleExpandPanel(panelEl, toggleBtn) {
 function resetSession() {
   clearSeeTimer();
   stopSessionTimer();
+  state.sessionStartTime = null;
   state.score = 0;
   state.streak = 0;
   state.correct = 0;

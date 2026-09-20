@@ -44,99 +44,7 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ==========================================================================
-    DARK MODE
-    ========================================================================== */
-
-:root[data-theme="dark"] {
-  --paper: #1a1a2e;
-  --paper-raised: #16213e;
-  --ink: #e0e0e0;
-  --ink-soft: #a0a0b0;
-  --ink-faint: #6a6a80;
-  --line: #2a2a4a;
-  --line-soft: #1f1f35;
-  --accent: #4fc3f7;
-  --accent-strong: #0288d1;
-  --accent-tint: rgba(79,195,247,0.12);
-  --accent-glow: rgba(79,195,247,0.2);
-  --correct: #4fc3f7;
-  --correct-tint: rgba(79,195,247,0.12);
-  --incorrect: #ff8a65;
-  --incorrect-tint: rgba(255,138,101,0.12);
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4);
-}
-
-:root[data-theme="dark"] .settings-panel,
-:root[data-theme="dark"] .dashboard,
-:root[data-theme="dark"] .game-card,
-:root[data-theme="dark"] .expand-panel {
-  background: var(--paper-raised);
-  border-color: var(--line);
-}
-
-:root[data-theme="dark"] .answer-input {
-  background: var(--paper);
-  border-color: var(--line);
-  color: var(--ink);
-}
-
-:root[data-theme="dark"] .answer-input:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-:root[data-theme="dark"] .word-display,
-:root[data-theme="dark"] .result-word {
-  background: var(--paper);
-  border-color: var(--line);
-  color: var(--ink);
-}
-
-:root[data-theme="dark"] .timer-track {
-  background: var(--line-soft);
-}
-
-:root[data-theme="dark"] .timer-fill {
-  background: var(--accent);
-}
-
-:root[data-theme="dark"] .your-turn {
-  background: var(--accent-tint);
-  color: var(--accent-strong);
-}
-
-:root[data-theme="dark"] .btn-quiet {
-  color: var(--ink-soft);
-  border-color: var(--line);
-}
-:root[data-theme="dark"] .btn-quiet:hover {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-
-:root[data-theme="dark"] .btn-secondary {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-:root[data-theme="dark"] .modal-overlay {
-  background: rgba(0,0,0,0.7);
-}
-
-:root[data-theme="dark"] .modal {
-  background: var(--paper-raised);
-}
-
-:root[data-theme="dark"] .icon-btn {
-  border-color: var(--line);
-  background: var(--paper-raised);
-}
-
-:root[data-theme="dark"] .category-tag {
-  background: var(--accent-tint);
-  color: var(--accent-strong);
-}
+/* dark mode base kept empty here — defined after theme bands to win cascade */
 
 /* ==========================================================================
     THEME PROGRESSION
@@ -185,6 +93,46 @@
   --accent-glow: rgba(176, 132, 32, 0.32);
   --paper: #FDFAF2;
 }
+
+/* ==========================================================================
+    DARK MODE — placed after theme bands so it wins
+    ========================================================================== */
+
+html[data-theme="dark"] {
+  --paper: #121418;
+  --paper-raised: #1b1e22;
+  --ink: #e8e6e1;
+  --ink-soft: #a8adb2;
+  --ink-faint: #6d7378;
+  --line: #2a2f36;
+  --line-soft: #1f2429;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.5);
+}
+
+/* dark keeps original accent better contrast — no blue override */
+html[data-theme="dark"] body { background: var(--paper); }
+html[data-theme="dark"] .header { background: var(--paper); }
+html[data-theme="dark"] .settings-panel,
+html[data-theme="dark"] .dashboard,
+html[data-theme="dark"] .expand-panel {
+  background: var(--paper-raised);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .game-card {
+  background: var(--paper-raised);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .game-top-bar,
+html[data-theme="dark"] .game-footer-actions { background: var(--paper); border-color: var(--line-soft); }
+html[data-theme="dark"] .answer-input,
+html[data-theme="dark"] .word-display,
+html[data-theme="dark"] .result-word {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+}
+html[data-theme="dark"] .modal { background: var(--paper-raised); }
+html[data-theme="dark"] .modal-overlay { background: rgba(0,0,0,0.65); }
 
 /* ==========================================================================
    RESET & BASE
@@ -521,12 +469,12 @@ button {
   margin-top: 4px;
 }
 
-/* Session timer */
+/* Session timer — shown via .is-running class from JS (avoids :has) */
 .session-timer {
   position: absolute;
-  top: 12px;
-  right: 16px;
-  font-size: 12px;
+  top: 10px;
+  right: 14px;
+  font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
@@ -536,9 +484,7 @@ button {
   pointer-events: none;
 }
 
-.game-card:has(.phase:not([hidden])) .session-timer {
-  opacity: 1;
-}
+.session-timer.is-running { opacity: 1; }
 
 /* Category tag transition */
 .category-tag {
@@ -709,7 +655,7 @@ button {
   margin-top: 18px;
   min-height: 460px;
   padding: 0;
-  background: linear-gradient(180deg, var(--paper-raised) 0%, #FCFCFA 100%);
+  background: var(--paper-raised);
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: 0 1px 3px rgba(31,36,33,0.06), 0 12px 32px rgba(31,36,33,0.08), 0 0 0 1px rgba(31,36,33,0.02);
@@ -724,8 +670,9 @@ button {
 }
 
 .game-card:hover {
-  box-shadow: 0 2px 4px rgba(31,36,33,0.08), 0 16px 40px rgba(31,36,33,0.1), 0 0 0 1px rgba(31,36,33,0.03);
+  box-shadow: 0 2px 6px rgba(31,36,33,0.06), 0 14px 36px rgba(31,36,33,0.08);
 }
+html[data-theme="dark"] .game-card:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 14px 36px rgba(0,0,0,0.45); }
 
 .game-card::before {
   content: "";
