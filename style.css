@@ -438,15 +438,15 @@ button {
   color: var(--ink-faint);
 }
 
-/* Expanded top bar — flush to top edge, no empty gap */
+/* Expanded top bar — flush, compact, no big gap */
 .game-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
   margin: 0;
-  padding: 12px 18px;
+  padding: 6px 12px;
   background: var(--paper);
   border-bottom: 1px solid var(--line-soft);
   border-radius: 24px 24px 0 0;
@@ -459,22 +459,22 @@ button {
   justify-content: center;
   gap: 0;
   margin: 0;
-  padding: 8px 6px;
+  padding: 4px 4px;
   background: var(--paper);
   border: 1px solid var(--line-soft);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink);
-  min-height: 38px;
-  box-shadow: 0 1px 2px rgba(31,36,33,0.04);
+  min-height: 30px;
+  box-shadow: none;
 }
 
 .session-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -548,11 +548,11 @@ button {
   border-radius: 24px 24px 0 0;
 }
 
-/* expanded look: phases take remaining center space, padded inside */
+/* expanded look: phases take remaining center space, padded inside — reduced gap */
 .game-card .phase {
   flex: 1;
   justify-content: center;
-  padding: 28px 24px 24px;
+  padding: 20px 24px 16px;
   width: 100%;
   max-width: 520px;
 }
@@ -560,13 +560,13 @@ button {
 .game-footer-actions {
   width: 100%;
   margin: 0;
-  padding: 14px 18px;
+  padding: 8px 12px;
   background: var(--paper);
   border-top: 1px solid var(--line-soft);
   border-radius: 0 0 24px 24px;
   display: grid;
   grid-template-columns: 1fr 1fr auto;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
