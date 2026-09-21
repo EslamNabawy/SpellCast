@@ -5,153 +5,256 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SpellSprint — Spelling Trainer</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=8">
-<link rel="alternate icon" href="favicon.ico?v=8">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=8">
-<meta name="theme-color" content="#0E1116">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2D6A4F">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body class="theme-normal">
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">✎</span>
-      <span class="brand-text">
-        <span class="brand-name">SpellSprint</span>
-        <span class="brand-tagline">Train your spelling. Build your streak.</span>
-      </span>
-    </div>
-    <div class="status-group" aria-label="Session status">
-      <div class="pill pill-category" title="Current category">
-        <span class="pill-icon" aria-hidden="true">▦</span>
-        <span class="pill-value" id="topCategory">All</span>
-      </div>
-      <div class="pill pill-streak" id="headerStreakPill" title="Current streak">
-        <span class="pill-icon" aria-hidden="true">🔥</span>
-        <span class="pill-value" id="headerStreak">0</span>
-        <span class="pill-label">Streak</span>
-      </div>
-      <div class="pill pill-score" title="Session score">
-        <span class="pill-icon" aria-hidden="true">⭐</span>
-        <span class="pill-value" id="headerScore">0</span>
-        <span class="pill-label">Score</span>
-      </div>
-      <div class="pill pill-best" title="High score">
-        <span class="pill-icon" aria-hidden="true">🏆</span>
-        <span class="pill-value" id="headerBest">0</span>
-        <span class="pill-label">Best</span>
-      </div>
-      <div class="pill pill-acc" title="Session accuracy">
-        <span class="pill-icon" aria-hidden="true">🎯</span>
-        <span class="pill-value" id="headerAccuracy">—</span>
-        <span class="pill-label">Accuracy</span>
-      </div>
-      <div class="pill pill-timer" id="headerTimerPill" title="Session time">
-        <span class="pill-icon" aria-hidden="true">⏱</span>
-        <span class="pill-value" id="sessionTimer">0:00</span>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle light mode" title="Toggle light mode">
-        <span aria-hidden="true" id="themeIcon">☀️</span>
-        <span class="sr-only" id="themeLabel">Dark mode on</span>
-      </button>
-      <button class="icon-btn deck-toggle" id="settingsToggle" type="button" aria-expanded="false" aria-controls="deckLeft" title="Controls">
-        <span aria-hidden="true">⚙</span>
-        <span class="sr-only">Controls</span>
-      </button>
-    </div>
-  </div>
-  <div class="state-banner" id="stateBanner" aria-hidden="true"><span id="stateBannerText"></span></div>
-</header>
-
 <div class="app">
 
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">✎</span>
+        <span class="brand-name">SpellSprint</span>
+      </div>
+      <div class="status-group" aria-label="Session status">
+        <div class="pill pill-streak" id="headerStreakPill">
+          <span class="pill-icon" aria-hidden="true">🔥</span>
+          <span class="pill-value" id="headerStreak">0</span>
+          <span class="pill-label">streak</span>
+        </div>
+        <div class="pill pill-best">
+          <span class="pill-icon" aria-hidden="true">🏆</span>
+          <span class="pill-value" id="headerBest">0</span>
+          <span class="pill-label">best</span>
+        </div>
+        <div class="pill pill-score">
+          <span class="pill-icon" aria-hidden="true">◆</span>
+          <span class="pill-value" id="headerScore">0</span>
+          <span class="pill-label">score</span>
+        </div>
+        <div class="pill pill-acc">
+          <span class="pill-icon" aria-hidden="true">%</span>
+          <span class="pill-value" id="headerAccuracy">—</span>
+          <span class="pill-label">acc</span>
+        </div>
+        <div class="pill pill-timer" id="headerTimerPill">
+          <span class="pill-icon" aria-hidden="true">⏱</span>
+          <span class="pill-value" id="sessionTimer">0:00</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <span aria-hidden="true" id="themeIcon">🌙</span>
+          <span class="sr-only" id="themeLabel">Dark mode off</span>
+        </button>
+        <button class="icon-btn" id="settingsToggle" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Settings">
+          <span aria-hidden="true">⚙</span>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+    <div class="state-banner" id="stateBanner" aria-hidden="true"><span id="stateBannerText"></span></div>
+  </header>
+
+  <aside class="deck deck-left" aria-label="Controls">
+    <h2 class="deck-title">Controls</h2>
+  <section class="settings-panel" id="settingsPanel" hidden>
+    <div class="settings-group">
+      <h3 class="settings-heading">Practice</h3>
+      <form class="settings-form" id="settingsForm">
+        <div class="field">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect" name="category">
+            <option value="all">All categories</option>
+            <option value="nouns">Nouns</option>
+            <option value="verbs">Verbs</option>
+            <option value="adjectives">Adjectives</option>
+            <option value="adverbs">Adverbs</option>
+            <option value="commonlyMisspelled">Commonly misspelled</option>
+            <option value="advanced">Advanced</option>
+            <option value="animals">Animals</option>
+            <option value="food">Food</option>
+            <option value="science">Science</option>
+            <option value="technology">Technology</option>
+            <option value="nature">Nature</option>
+            <option value="sports">Sports</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="durationSelect">Show for</label>
+          <select id="durationSelect" name="duration">
+            <option value="1000">1s</option>
+            <option value="1500">1.5s</option>
+            <option value="2000" selected>2s</option>
+            <option value="3000">3s</option>
+            <option value="4000">4s</option>
+          </select>
+        </div>
+        <div class="field field-toggle">
+          <label for="soundToggle">Sound</label>
+          <button type="button" class="toggle" id="soundToggle" role="switch" aria-checked="false">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-state">Off</span>
+          </button>
+        </div>
+        <div class="field" id="volumeField" hidden>
+          <label for="volumeSlider">Volume</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+        </div>
+      </form>
+      <div class="settings-actions">
+        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn">Reset session</button>
+        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Reset all</button>
+      </div>
+    </div>
+
+    <details class="settings-group custom-words-group" open>
+      <summary class="settings-heading summary-row">My words <span class="summary-badge" id="customCountBadge">0</span></summary>
+      <p class="panel-hint">Add words. Forgotten → 10 min. Remembered → days.</p>
+      <form class="add-word-form" id="addWordForm" autocomplete="off">
+        <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="add-word-row">
+          <select id="customWordCategory" aria-label="Category">
+            <option value="nouns">Nouns</option>
+            <option value="verbs">Verbs</option>
+            <option value="adjectives">Adjectives</option>
+            <option value="adverbs">Adverbs</option>
+            <option value="commonlyMisspelled">Commonly misspelled</option>
+            <option value="advanced">Advanced</option>
+            <option value="animals">Animals</option>
+            <option value="food">Food</option>
+            <option value="science">Science</option>
+            <option value="technology">Technology</option>
+            <option value="nature">Nature</option>
+            <option value="sports">Sports</option>
+          </select>
+          <select id="customWordDifficulty" aria-label="Difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Med</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn">Add</button>
+        </div>
+      </form>
+      <p class="field-error" id="customWordError" hidden></p>
+      <div class="new-category-row">
+        <input type="text" id="newCategoryInput" class="input input-sm" placeholder="New category">
+        <button type="button" class="btn btn-quiet btn-sm" id="createCategoryBtn">Create</button>
+      </div>
+      <ul class="mini-list" id="customWordsList"></ul>
+      <div class="import-export-row">
+        <button type="button" class="btn btn-quiet btn-sm" id="exportBtn">Export</button>
+        <button type="button" class="btn btn-quiet btn-sm" id="importBtn">Import</button>
+        <input type="file" id="importFile" accept=".json" hidden>
+      </div>
+    </details>
+  </section>
+  </aside>
+
   <div class="center">
-    <main class="game-card" id="gameCard">
-      <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
-      <div class="game-top-bar">
-        <div class="session-line" id="sessionLine">
-          <span class="session-chip" id="sessionWordCount">Word 0</span>
-          <span class="session-dot" aria-hidden="true">·</span>
-          <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
-          <span class="session-dot" aria-hidden="true">·</span>
-          <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+  <main class="game-card" id="gameCard">
+    <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
+    <div class="game-top-bar">
+      <div class="session-line" id="sessionLine">
+        <span class="session-chip" id="sessionWordCount">Word 0</span>
+        <span class="session-dot" aria-hidden="true">·</span>
+        <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
+        <span class="session-dot" aria-hidden="true">·</span>
+        <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+      </div>
+      <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
+    </div>
+
+    <div class="phase phase-ready" id="phaseReady">
+      <p class="ready-copy">Ready?</p>
+      <p class="ready-hint" id="readyHint">Memorize, then type from memory.</p>
+      <button class="btn btn-primary btn-large" id="startBtn" type="button">Show word</button>
+      <p class="kbd-hint">Press Enter to start</p>
+    </div>
+
+    <div class="phase phase-see" id="phaseSee" hidden>
+      <div class="word-display" id="wordDisplay" aria-live="polite">apple</div>
+      <p class="see-hint" id="seeHint">Memorize it</p>
+      <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
+      <div class="timer-caption" id="timerCaption">2.0s</div>
+    </div>
+
+    <div class="phase phase-type" id="phaseType" hidden>
+      <p class="your-turn">Your turn</p>
+      <div class="mystery-mark" aria-hidden="true">?</div>
+      <p class="type-instruction" id="typeInstruction">Type what you saw</p>
+      <div class="phase-progress" id="phaseProgress">Word 1 of 1</div>
+      <form class="answer-form" id="answerForm" autocomplete="off">
+        <label for="answerInput" class="sr-only">Your spelling</label>
+        <input type="text" id="answerInput" name="answer" class="input input-large" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type here">
+        <div class="type-actions">
+          <button type="submit" class="btn btn-primary" id="checkBtn">Check</button>
+          <button type="button" class="btn btn-quiet" id="skipBtn">Skip</button>
         </div>
-        <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
-      </div>
+      </form>
+      <p class="type-hint" id="typeHint">Enter to check · Esc to skip</p>
+    </div>
 
-      <div class="phase phase-ready" id="phaseReady">
-        <p class="ready-kicker">Spell the word</p>
-        <p class="ready-copy">Memorize the word before it disappears.</p>
-        <button class="btn btn-primary btn-large" id="startBtn" type="button">Start</button>
-        <p class="kbd-hint">Press Enter to start</p>
-      </div>
+    <div class="phase phase-result phase-result-correct" id="phaseCorrect" hidden>
+      <div class="result-icon" aria-hidden="true">✓</div>
+      <p class="result-headline" id="correctHeadline">Correct</p>
+      <p class="result-word" id="correctWordEcho">necessary</p>
+      <p class="result-points" id="correctPoints">+10</p>
+      <p class="result-sub" id="masteredNote" hidden>Removed from practice bucket.</p>
+      <button class="btn btn-primary" id="nextAfterCorrectBtn" type="button">Next</button>
+    </div>
 
-      <div class="phase phase-see" id="phaseSee" hidden>
-        <p class="see-kicker" id="seeHint">Remember this word</p>
-        <div class="word-display" id="wordDisplay" aria-live="polite">apple</div>
-        <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
-        <div class="timer-caption" id="timerCaption">2.0s</div>
+    <div class="phase phase-result phase-result-incorrect" id="phaseIncorrect" hidden>
+      <div class="result-icon" aria-hidden="true">×</div>
+      <p class="result-headline">Not quite</p>
+      <p class="result-sub-label">Correct</p>
+      <p class="result-word" id="incorrectCorrectWord">necessary</p>
+      <p class="result-your-answer" id="incorrectYourAnswer">You wrote: necesary</p>
+      <p class="result-streak-transition" id="streakTransitionNote" hidden></p>
+      <p class="result-sub bucket-note">Added to practice bucket.</p>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="nextAfterIncorrectBtn" type="button">Next</button>
+        <button class="btn btn-quiet" id="backAfterIncorrectBtn" type="button">Back</button>
       </div>
+    </div>
 
-      <div class="phase phase-type" id="phaseType" hidden>
-        <p class="your-turn">Type the word</p>
-        <div class="mystery-mark" aria-hidden="true">?</div>
-        <p class="type-instruction" id="typeInstruction">Type what you saw</p>
-        <div class="phase-progress" id="phaseProgress">Word 1 of 1</div>
-        <form class="answer-form" id="answerForm" autocomplete="off">
-          <label for="answerInput" class="sr-only">Your spelling</label>
-          <input type="text" id="answerInput" name="answer" class="input input-large" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type here">
-          <div class="type-actions">
-            <button type="submit" class="btn btn-primary" id="checkBtn">Check</button>
-            <button type="button" class="btn btn-quiet" id="skipBtn">Skip</button>
-          </div>
-        </form>
-        <p class="type-hint" id="typeHint">Enter to check · Esc to skip</p>
-      </div>
+    <div class="footer-actions game-footer-actions">
+      <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Bucket <span class="bucket-count" id="bucketCount">0</span></button>
+      <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
+      <button class="btn btn-secondary btn-sm" id="finishSessionBtn" type="button">Finish</button>
+    </div>
+  </main>
 
-      <div class="phase phase-result phase-result-correct" id="phaseCorrect" hidden>
-        <div class="result-icon" aria-hidden="true">✓</div>
-        <p class="result-headline" id="correctHeadline">Correct!</p>
-        <p class="result-word" id="correctWordEcho">necessary</p>
-        <p class="result-points" id="correctPoints">+10</p>
-        <p class="result-streak" id="correctStreak" hidden>🔥 8 streak</p>
-        <p class="result-sub" id="masteredNote" hidden>Removed from practice bucket.</p>
-        <button class="btn btn-primary" id="nextAfterCorrectBtn" type="button">Next</button>
-      </div>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
 
-      <div class="phase phase-result phase-result-incorrect" id="phaseIncorrect" hidden>
-        <div class="result-icon" aria-hidden="true">✕</div>
-        <p class="result-headline">Incorrect</p>
-        <p class="result-sub-label">Correct spelling</p>
-        <p class="result-word" id="incorrectCorrectWord">necessary</p>
-        <p class="result-your-answer" id="incorrectYourAnswer">You wrote: necesary</p>
-        <p class="result-streak-transition" id="streakTransitionNote" hidden></p>
-        <p class="result-sub bucket-note">Added to practice bucket.</p>
-        <div class="result-actions">
-          <button class="btn btn-primary" id="nextAfterIncorrectBtn" type="button">Next</button>
-          <button class="btn btn-quiet" id="backAfterIncorrectBtn" type="button">Back</button>
-        </div>
-      </div>
+  <section class="expand-panel" id="bucketPanel" hidden>
+    <h2 class="panel-title">Practice bucket <span class="count-pill" id="bucketCount2">0</span></h2>
+    <p class="panel-hint" id="bucketEmptyHint">Empty — great work.</p>
+    <ul class="bucket-list" id="bucketList"></ul>
+  </section>
 
-      <div class="footer-actions game-footer-actions">
-        <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Practice bucket <span class="bucket-count" id="bucketCount">0</span></button>
-        <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
-        <button class="btn btn-secondary btn-sm" id="finishSessionBtn" type="button">Finish</button>
-      </div>
-    </main>
-
-    <section class="expand-panel" id="categoryStatsPanel" hidden>
-      <h2 class="panel-title">By category</h2>
-      <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
-      <ul class="category-stats-list" id="categoryStatsList"></ul>
-    </section>
+  <section class="expand-panel" id="categoryStatsPanel" hidden>
+    <h2 class="panel-title">By category</h2>
+    <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
+    <ul class="category-stats-list" id="categoryStatsList"></ul>
+  </section>
   </div>
 
-  <aside class="deck deck-right" aria-label="Session stats">
-    <h2 class="deck-title">Session</h2>
+  <aside class="deck deck-right" aria-label="Stats and review">
+    <h2 class="deck-title">Stats</h2>
     <section class="dashboard" aria-label="Session statistics">
       <div class="stat-card">
         <span class="stat-label">Score</span>
@@ -169,25 +272,7 @@
         <span class="stat-label">Accuracy</span>
         <span class="stat-value" id="statAccuracy">—</span>
       </div>
-      <div class="stat-card stat-wide">
-        <span class="stat-label">Words practiced</span>
-        <span class="stat-value" id="sessWords">0</span>
-      </div>
     </section>
-    <div class="meter">
-      <div class="meter-top"><span>Accuracy</span><span id="sessAccVal">—</span></div>
-      <div class="meter-track"><div class="meter-fill" id="sessAccBar" style="width:0%"></div></div>
-    </div>
-    <div class="deck-group">
-      <h3 class="settings-heading">Recent</h3>
-      <ul class="recent-list" id="recentList"></ul>
-      <p class="panel-hint" id="recentEmptyHint">No answers yet.</p>
-    </div>
-    <div class="deck-group">
-      <h3 class="settings-heading">Needs practice</h3>
-      <ul class="mistake-list" id="mistakeList"></ul>
-      <p class="panel-hint" id="mistakeEmptyHint">Nothing here — nice.</p>
-    </div>
     <div class="deck-group">
       <h3 class="settings-heading">Review</h3>
       <div class="field">
@@ -201,112 +286,7 @@
     </div>
   </aside>
 
-  <aside class="deck deck-left" id="deckLeft" aria-label="Training controls">
-    <h2 class="deck-title">Training</h2>
-    <section class="settings-panel" id="settingsPanel">
-      <div class="settings-group">
-        <h3 class="settings-heading">Category</h3>
-        <div class="choice-list" id="categoryList" role="radiogroup" aria-label="Word category"></div>
-      </div>
-      <div class="settings-group">
-        <h3 class="settings-heading">Difficulty</h3>
-        <div class="segmented" id="difficultyList" role="radiogroup" aria-label="Difficulty">
-          <button type="button" class="seg-btn" data-difficulty="easy" role="radio" aria-checked="false">Easy</button>
-          <button type="button" class="seg-btn" data-difficulty="medium" role="radio" aria-checked="true">Medium</button>
-          <button type="button" class="seg-btn" data-difficulty="hard" role="radio" aria-checked="false">Hard</button>
-        </div>
-      </div>
-      <div class="settings-group">
-        <h3 class="settings-heading">Options</h3>
-        <form class="settings-form" id="settingsForm">
-          <div class="field">
-            <label for="durationSelect">Show for</label>
-            <select id="durationSelect" name="duration">
-              <option value="1000">1s</option>
-              <option value="1500">1.5s</option>
-              <option value="2000" selected>2s</option>
-              <option value="3000">3s</option>
-              <option value="4000">4s</option>
-            </select>
-          </div>
-          <div class="field field-toggle">
-            <label for="soundToggle">Sound</label>
-            <button type="button" class="toggle" id="soundToggle" role="switch" aria-checked="false">
-              <span class="toggle-track"><span class="toggle-thumb"></span></span>
-              <span class="toggle-state">Off</span>
-            </button>
-          </div>
-          <div class="field" id="volumeField" hidden>
-            <label for="volumeSlider">Volume</label>
-            <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
-          </div>
-        </form>
-      </div>
-      <div class="settings-group">
-        <h3 class="settings-heading">Practice bucket <span class="summary-badge" id="bucketWidgetCount">0</span></h3>
-        <div class="meter">
-          <div class="meter-track"><div class="meter-fill meter-fill-warn" id="bucketWidgetBar" style="width:0%"></div></div>
-        </div>
-        <section class="bucket-inline" id="bucketPanel">
-          <p class="panel-hint" id="bucketEmptyHint">✓ Nothing to review</p>
-          <ul class="bucket-list" id="bucketList"></ul>
-        </section>
-        <button type="button" class="btn btn-primary btn-sm btn-block" id="practiceBucketBtn">Practice bucket</button>
-      </div>
-      <details class="settings-group custom-words-group">
-        <summary class="settings-heading summary-row">My words <span class="summary-badge" id="customCountBadge">0</span></summary>
-        <p class="panel-hint">Add words. Forgotten → 10 min. Remembered → days.</p>
-        <form class="add-word-form" id="addWordForm" autocomplete="off">
-          <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
-          <div class="add-word-row">
-            <select id="customWordCategory" aria-label="Category">
-              <option value="nouns">Nouns</option>
-              <option value="verbs">Verbs</option>
-              <option value="adjectives">Adjectives</option>
-              <option value="adverbs">Adverbs</option>
-              <option value="commonlyMisspelled">Commonly misspelled</option>
-              <option value="advanced">Advanced</option>
-              <option value="animals">Animals</option>
-              <option value="food">Food</option>
-              <option value="science">Science</option>
-              <option value="technology">Technology</option>
-              <option value="nature">Nature</option>
-              <option value="sports">Sports</option>
-            </select>
-            <select id="customWordDifficulty" aria-label="Difficulty">
-              <option value="easy">Easy</option>
-              <option value="medium" selected>Med</option>
-              <option value="hard">Hard</option>
-            </select>
-            <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn">Add</button>
-          </div>
-        </form>
-        <p class="field-error" id="customWordError" hidden></p>
-        <div class="new-category-row">
-          <input type="text" id="newCategoryInput" class="input input-sm" placeholder="New category">
-          <button type="button" class="btn btn-quiet btn-sm" id="createCategoryBtn">Create</button>
-        </div>
-        <ul class="mini-list" id="customWordsList"></ul>
-        <div class="import-export-row">
-          <button type="button" class="btn btn-quiet btn-sm" id="exportBtn">Export</button>
-          <button type="button" class="btn btn-quiet btn-sm" id="importBtn">Import</button>
-          <input type="file" id="importFile" accept=".json" hidden>
-        </div>
-      </details>
-      <div class="settings-actions">
-        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn">Reset session</button>
-        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Reset all</button>
-      </div>
-    </section>
-  </aside>
-
 </div>
-
-<div class="toast-region" id="toastRegion" aria-live="polite"></div>
-
-<footer class="footer">
-  <span>SpellSprint · your progress never leaves this browser</span>
-</footer>
 
 <div class="modal-overlay" id="summaryOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
@@ -345,6 +325,6 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="script.js?v=8"></script>
+<script src="script.js?v=7"></script>
 </body>
 </html>
