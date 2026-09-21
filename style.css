@@ -156,25 +156,20 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 @media(max-width:380px){.status-group{gap:4px}.pill{padding:5px 8px;font-size:12px}}
 .deck-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
 .deck-group{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+@media(max-width:899px){
+  .deck-left:has(#settingsPanel[hidden]){margin:0}
+  .deck-left:has(#settingsPanel[hidden]) .deck-title{display:none}
+}
 @media(min-width:900px){
-  .app{max-width:1280px;display:grid;grid-template-columns:290px minmax(0,660px) 290px;gap:18px;align-items:start;justify-content:center;padding:22px 18px 40px}
-  .header{grid-column:1/-1;position:sticky;top:0;padding:0;background:var(--paper);z-index:30}
+  .app{max-width:720px;margin:0 auto;padding:22px 18px 40px}
+  .header{position:sticky;top:0;padding:0;background:var(--paper);z-index:30}
   .header-inner{padding:12px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
   .status-group{justify-content:center}
   #settingsToggle{display:none}
-  .deck{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:16px 14px;position:sticky;top:84px;max-height:calc(100vh - 96px);overflow:auto;margin:0}
-  .deck-left{grid-column:1;grid-row:2}
-  .deck-right{grid-column:3;grid-row:2}
+  .deck{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:16px 14px;margin:14px 0 0}
   .deck .settings-panel{display:block!important;margin:0;padding:0;background:none;border:none;box-shadow:none;animation:none}
   .deck .settings-panel[hidden]{display:block!important}
-  .settings-form{grid-template-columns:1fr;gap:10px}
-  .center{grid-column:2;grid-row:2;min-width:0}
-  .game-card{margin:0;min-height:520px;width:100%}
+  .settings-form{grid-template-columns:1fr 1fr;gap:10px}
+  .game-card{min-height:520px}
   .expand-panel{margin:12px 0 0}
-  .deck .dashboard{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;background:none;border:none;box-shadow:none}
-  .deck .dashboard .stat-card{flex-direction:row;justify-content:space-between;padding:12px 14px;min-height:52px}
-  .deck .dashboard .stat-label{flex:1;text-align:left}.deck .dashboard .stat-value{text-align:right;min-width:44px}
-}
-@media(min-width:1180px){
-  .app{grid-template-columns:300px minmax(0,660px) 300px;column-gap:22px}
 }
