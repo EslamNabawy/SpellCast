@@ -21,7 +21,7 @@
         <span class="brand-mark" aria-hidden="true">✎</span>
         <span class="brand-name">SpellSprint</span>
       </div>
-      <div class="header-stats">
+      <div class="status-group" aria-label="Session status">
         <div class="pill pill-streak" id="headerStreakPill">
           <span class="pill-icon" aria-hidden="true">🔥</span>
           <span class="pill-value" id="headerStreak">0</span>
@@ -32,6 +32,22 @@
           <span class="pill-value" id="headerBest">0</span>
           <span class="pill-label">best</span>
         </div>
+        <div class="pill pill-score">
+          <span class="pill-icon" aria-hidden="true">◆</span>
+          <span class="pill-value" id="headerScore">0</span>
+          <span class="pill-label">score</span>
+        </div>
+        <div class="pill pill-acc">
+          <span class="pill-icon" aria-hidden="true">%</span>
+          <span class="pill-value" id="headerAccuracy">—</span>
+          <span class="pill-label">acc</span>
+        </div>
+        <div class="pill pill-timer" id="headerTimerPill">
+          <span class="pill-icon" aria-hidden="true">⏱</span>
+          <span class="pill-value" id="sessionTimer">0:00</span>
+        </div>
+      </div>
+      <div class="header-actions">
         <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
           <span aria-hidden="true" id="themeIcon">🌙</span>
           <span class="sr-only" id="themeLabel">Dark mode off</span>
@@ -45,6 +61,8 @@
     <div class="state-banner" id="stateBanner" aria-hidden="true"><span id="stateBannerText"></span></div>
   </header>
 
+  <aside class="deck deck-left" aria-label="Controls">
+    <h2 class="deck-title">Controls</h2>
   <section class="settings-panel" id="settingsPanel" hidden>
     <div class="settings-group">
       <h3 class="settings-heading">Practice</h3>
@@ -142,36 +160,11 @@
         <button type="button" class="btn btn-quiet btn-sm" id="importBtn">Import</button>
         <input type="file" id="importFile" accept=".json" hidden>
       </div>
-      <div class="field" style="margin-top:10px">
-        <label for="reviewModeSelect">Review</label>
-        <select id="reviewModeSelect">
-          <option value="mixed">Mixed</option>
-          <option value="dueOnly">Due only</option>
-        </select>
-      </div>
-      <div class="srs-stats" id="srsStats"></div>
     </details>
   </section>
+  </aside>
 
-  <section class="dashboard" aria-label="Session statistics">
-    <div class="stat-card">
-      <span class="stat-label">Score</span>
-      <span class="stat-value" id="statScore">0</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">Streak</span>
-      <span class="stat-value" id="statStreak">0</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">Best</span>
-      <span class="stat-value" id="statBest">0</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-label">Accuracy</span>
-      <span class="stat-value" id="statAccuracy">—</span>
-    </div>
-  </section>
-
+  <div class="center">
   <main class="game-card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
@@ -182,7 +175,6 @@
         <span class="session-dot" aria-hidden="true">·</span>
         <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
       </div>
-      <span class="session-timer" id="sessionTimer" aria-label="Elapsed">0:00</span>
       <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
     </div>
 
@@ -259,6 +251,40 @@
     <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
     <ul class="category-stats-list" id="categoryStatsList"></ul>
   </section>
+  </div>
+
+  <aside class="deck deck-right" aria-label="Stats and review">
+    <h2 class="deck-title">Stats</h2>
+    <section class="dashboard" aria-label="Session statistics">
+      <div class="stat-card">
+        <span class="stat-label">Score</span>
+        <span class="stat-value" id="statScore">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Streak</span>
+        <span class="stat-value" id="statStreak">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Best</span>
+        <span class="stat-value" id="statBest">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Accuracy</span>
+        <span class="stat-value" id="statAccuracy">—</span>
+      </div>
+    </section>
+    <div class="deck-group">
+      <h3 class="settings-heading">Review</h3>
+      <div class="field">
+        <label for="reviewModeSelect">Mode</label>
+        <select id="reviewModeSelect">
+          <option value="mixed">Mixed</option>
+          <option value="dueOnly">Due only</option>
+        </select>
+      </div>
+      <div class="srs-stats" id="srsStats"></div>
+    </div>
+  </aside>
 
 </div>
 
