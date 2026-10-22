@@ -15,7 +15,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # own group (not "pages"): a stuck run must not block the next deploy
+  group: spellcast-pages
   cancel-in-progress: true
 
 jobs:
