@@ -50,8 +50,8 @@ async function run() {
   await context.close();
 
   const keys = Object.keys(storage).sort();
-  check("fixture captured with progress keys", keys.includes("spellsprint.srsCards"), keys.join(", "));
-  check("fixture contains the custom word", (storage["spellsprint.customWords"] || "").includes("zephyrine"));
+  check("fixture captured with progress keys", keys.includes("spellcast.srsCards"), keys.join(", "));
+  check("fixture contains the custom word", (storage["spellcast.customWords"] || "").includes("zephyrine"));
   fs.writeFileSync(FIXTURE, JSON.stringify({ capturedAt: new Date().toISOString(), storage }, null, 2));
 
   // ---------- reload the fixture in a clean context ----------
@@ -89,7 +89,7 @@ async function run() {
   });
 
   // progress keys must survive byte-for-byte
-  const progressKeys = keys.filter((k) => ["spellsprint.srsCards", "spellsprint.customWords", "spellsprint.bucket", "spellsprint.highScore", "spellsprint.bestStreak", "spellsprint.lifetimeCorrect", "spellsprint.totalLifetimeWords"].includes(k));
+  const progressKeys = keys.filter((k) => ["spellcast.srsCards", "spellcast.customWords", "spellcast.bucket", "spellcast.highScore", "spellcast.bestStreak", "spellcast.lifetimeCorrect", "spellcast.totalLifetimeWords"].includes(k));
   const lost = progressKeys.filter((k) => after.storage[k] !== storage[k]);
   check("no progress key lost or rewritten on load", lost.length === 0, lost.join(", "));
   check("custom words restored", after.state.customWords.includes("zephyrine"), after.state.customWords.join(", "));

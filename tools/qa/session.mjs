@@ -111,12 +111,11 @@ async function run() {
     difficulty: state.difficulty,
     duration: state.duration,
     reviewMode: state.reviewMode,
-    lsCategory: localStorage.getItem("spellsprint.preferredCategory"),
-    lsDifficulty: localStorage.getItem("spellsprint.preferredDifficulty"),
-    lsDuration: localStorage.getItem("spellsprint.preferredDuration")
+    lsCategory: localStorage.getItem(LS_KEYS.preferredCategory),
+    lsDifficulty: localStorage.getItem(LS_KEYS.preferredDifficulty),
+    lsDuration: localStorage.getItem(LS_KEYS.preferredDuration)
   }));
-  check("category setting persists", persisted.category === "commonlyMisspelled" && persisted.lsCategory === '"commonlyMisspelled"', JSON.stringify(persisted.lsCategory));
-  check("difficulty setting persists", persisted.difficulty === "hard" && persisted.lsDifficulty === '"hard"');
+  check("category setting persists", persisted.category === "commonlyMisspelled" && persisted.lsCategory === '"commonlyMisspelled"', JSON.stringify(persisted.lsCategory));  check("difficulty setting persists", persisted.difficulty === "hard" && persisted.lsDifficulty === '"hard"');
   check("duration setting persists", persisted.duration === 1500 && persisted.lsDuration === "1500");
   check("review mode setting persists", persisted.reviewMode === "dueOnly");
 

@@ -50,17 +50,6 @@ const CATEGORY_KEYS = Object.keys(WORDS);
 const BUILTIN_WORDS = JSON.parse(JSON.stringify(WORDS));
 const BUILTIN_CATEGORY_KEYS = Object.keys(BUILTIN_WORDS);
 
-// Find the real category + difficulty a word belongs to (used for SRS cards).
-function findWordMeta(word) {
-  for (const cat of Object.keys(WORDS)) {
-    for (const diff of ["easy", "medium", "hard"]) {
-      const arr = WORDS[cat][diff];
-      if (arr && arr.indexOf(word) !== -1) return { category: cat, difficulty: diff };
-    }
-  }
-  return null;
-}
-
 // ================================
 // STREAK MILESTONES & THEME BANDS
 // ================================
@@ -96,6 +85,14 @@ function streakBonus(streak) {
 
 const BUCKET_MASTER_BONUS = 15;
 const BUCKET_MIX_RATIO = 0.6; // 60% bucket words when bucket has entries
+const REVIEW_DUE_WEIGHT = 0.75; // 75% of "Mixed" rounds prefer a due review card
+const MS_PER_DAY = 86400000;
+const MS_PER_SHORT_REVIEW = 10 * 60 * 1000; // a miss comes back in 10 minutes
+const SRS_EASE_START = 2.3;
+const SRS_EASE_MAX = 2.8;
+const SRS_EASE_MIN = 1.3;
+const SRS_MATURE_DAYS = 21; // a card with a >= 21 day interval counts as mastered
+const SRS_LEARNING_DAYS = 7; // below this, a card counts as "learning"
 
 // ================================
 // STORAGE KEYS
@@ -186,7 +183,6 @@ const state = {
   poolIndex: 0,
   recentQueue: [], // last 30 words to avoid immediate repeats
   maxRecent: 30,
-
   // custom + SRS
   customWords: [], // [{word, category, difficulty, addedAt}]
   srsCards: {}, // word -> {word, category, difficulty, interval, ease, due, reps, lapses, lastReviewed}
@@ -196,8 +192,7 @@ const state = {
   darkMode: false,
   soundVolume: 0.5,
   sessionStartTime: null,
-  sessionTimerHandle: null,
-  wordsSeen: [] // words shown in this session, for the "Word N of M" chip
+  sessionTimerHandle: null
 };
 
 let seeTimerHandle = null;
@@ -214,12 +209,10 @@ const dom = {
   headerStreak: document.getElementById("headerStreak"),
   headerStreakPill: document.getElementById("headerStreakPill"),
   headerTimerPill: document.getElementById("headerTimerPill"),
-  stateBanner: document.getElementById("stateBanner"),
   stateBannerText: document.getElementById("stateBannerText"),
 
   settingsToggle: document.getElementById("settingsToggle"),
   settingsPanel: document.getElementById("settingsPanel"),
-  settingsForm: document.getElementById("settingsForm"),
   categorySelect: document.getElementById("categorySelect"),
   difficultySelect: document.getElementById("difficultySelect"),
   durationSelect: document.getElementById("durationSelect"),
@@ -234,7 +227,6 @@ const dom = {
   customWordCategory: document.getElementById("customWordCategory"),
   customWordDifficulty: document.getElementById("customWordDifficulty"),
   addWordForm: document.getElementById("addWordForm"),
-  addWordBtn: document.getElementById("addWordBtn"),
   customCountBadge: document.getElementById("customCountBadge"),
   newCategoryInput: document.getElementById("newCategoryInput"),
   createCategoryBtn: document.getElementById("createCategoryBtn"),
@@ -266,17 +258,14 @@ const dom = {
 
   phaseSee: document.getElementById("phaseSee"),
   wordDisplay: document.getElementById("wordDisplay"),
-  seeHint: document.getElementById("seeHint"),
   timerFill: document.getElementById("timerFill"),
   timerCaption: document.getElementById("timerCaption"),
 
   phaseType: document.getElementById("phaseType"),
-  typeInstruction: document.getElementById("typeInstruction"),
   answerForm: document.getElementById("answerForm"),
   answerInput: document.getElementById("answerInput"),
+  answerMirror: document.getElementById("answerMirror"),
   skipBtn: document.getElementById("skipBtn"),
-  checkBtn: document.getElementById("checkBtn"),
-  typeHint: document.getElementById("typeHint"),
 
   phaseCorrect: document.getElementById("phaseCorrect"),
   correctHeadline: document.getElementById("correctHeadline"),
@@ -383,9 +372,10 @@ function buildPool() {
   state.deckRevealed = 0;
 }
 
-function pickCategory() {
-  if (state.category !== "all") return state.category;
-  return CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
+// Remember a word so it is not served again within the recent window.
+function pushRecent(word) {
+  state.recentQueue.push(word);
+  if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
 }
 
 function getNextFreshWord() {
@@ -416,8 +406,7 @@ function getNextFreshWord() {
     state.poolIndex = (state.poolIndex + 1) % n;
   }
   // track recent
-  state.recentQueue.push(candidate.word);
-  if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+  pushRecent(candidate.word);
   return candidate;
 }
 
@@ -433,7 +422,7 @@ function selectNextWord() {
       if (catFiltered.length) filtered = catFiltered;
     }
     // respect reviewMode
-    const useDue = state.reviewMode === "dueOnly" ? true : (Math.random() < 0.75);
+    const useDue = state.reviewMode === "dueOnly" ? true : (Math.random() < REVIEW_DUE_WEIGHT);
     if (useDue && filtered.length) {
       const weighted = [];
       filtered.forEach(c => {
@@ -447,8 +436,7 @@ function selectNextWord() {
         const alt = filtered.find(c => !state.recentQueue.includes(c.word));
         if (alt) chosen = alt;
       }
-      state.recentQueue.push(chosen.word);
-      if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+      pushRecent(chosen.word);
       return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: true };
     }
     // "Due only" means exactly that — never fall through to fresh words.
@@ -468,8 +456,7 @@ function selectNextWord() {
     });
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
     if (!state.recentQueue.includes(chosen.word) || state.bucket.length === 1) {
-      state.recentQueue.push(chosen.word);
-      if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+      pushRecent(chosen.word);
     }
     return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: !!state.srsCards[chosen.word] };
   }
@@ -609,7 +596,6 @@ function goToTypePhase() {
   dom.answerInput.value = "";
   syncAnswerMirror();
   if (state.currentWord) {
-    state.wordsSeen.push(state.currentWord.word);
     state.deckRevealed += 1;
   }
   renderDeckProgress();
@@ -913,7 +899,11 @@ function loadAllPersisted() {
   // migrate bucket -> SRS if srs empty but bucket has data
   if (Object.keys(state.srsCards).length === 0 && state.bucket.length) {
     state.bucket.forEach(e => {
-      state.srsCards[e.word] = { word:e.word, category:e.category, difficulty:"medium", interval:0, ease:2.3 - Math.min(0.5, e.mistakes*0.1), due:Date.now(), reps:0, lapses:e.mistakes, lastReviewed:0 };
+      state.srsCards[e.word] = makeSrsCard(e.word, e.category, "medium", {
+        ease: SRS_EASE_START - Math.min(0.5, e.mistakes * 0.1),
+        due: Date.now(),
+        lapses: e.mistakes
+      });
     });
     saveSrsCards();
   }
@@ -945,9 +935,26 @@ function recordLifetimeWord(wasCorrect) {
 // SRS (Anki-like, SM-2 simplified) — short/long term
 // ================================
 
+// Build an SRS card record. Every card has the same shape — one factory keeps
+// the stored format in a single place.
+function makeSrsCard(word, category, difficulty, overrides) {
+  const card = {
+    word,
+    category,
+    difficulty,
+    interval: 0,
+    ease: SRS_EASE_START,
+    due: Date.now(),
+    reps: 0,
+    lapses: 0,
+    lastReviewed: 0
+  };
+  return Object.assign(card, overrides || {});
+}
+
 function initSrsCard(word, category, difficulty) {
   if (state.srsCards[word]) return state.srsCards[word];
-  const c = { word, category, difficulty, interval:0, ease:2.3, due:Date.now(), reps:0, lapses:0, lastReviewed:0 };
+  const c = makeSrsCard(word, category, difficulty);
   state.srsCards[word] = c;
   return c;
 }
@@ -963,19 +970,19 @@ function updateSrsCard(word, wasCorrect) {
   c.lastReviewed = now;
   if (wasCorrect) {
     c.reps += 1;
-    c.ease = Math.min(2.8, c.ease + 0.12);
+    c.ease = Math.min(SRS_EASE_MAX, c.ease + 0.12);
     if (c.reps === 1) c.interval = 1;
     else if (c.reps === 2) c.interval = 3;
     else c.interval = Math.round(c.interval * c.ease);
     // long-term vs short-term: <7 days = learning, >=21 = mature
-    c.due = now + c.interval * 86400000;
+    c.due = now + c.interval * MS_PER_DAY;
   } else {
     c.lapses += 1;
     c.reps = 0;
-    c.ease = Math.max(1.3, c.ease - 0.2);
+    c.ease = Math.max(SRS_EASE_MIN, c.ease - 0.2);
     // short-term re-review in 10 min, then again soon
     c.interval = 0;
-    c.due = now + 10 * 60 * 1000; // 10 min
+    c.due = now + MS_PER_SHORT_REVIEW;
     // also keep in bucket for backward compat
   }
   saveSrsCards();
@@ -988,9 +995,8 @@ function srsStats() {
   const all = Object.values(state.srsCards);
   const due = all.filter(c => c.due <= now).length;
   const learning = all.filter(c => c.interval > 0 && c.interval < 7).length;
-  const mature = all.filter(c => c.interval >= 21).length;
-  const fresh = all.filter(c => c.reps===0 && c.interval===0).length;
-  return { total: all.length, due, learning, mature, fresh };
+  const mature = all.filter(c => c.interval >= SRS_MATURE_DAYS).length;
+  return { total: all.length, due, learning, mature };
 }
 
 function renderCustomWordsList() {
@@ -1078,17 +1084,14 @@ function importJSONFile(file) {
         const existing = state.srsCards[w];
         if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) {
           ensureCategory(catKey, CATEGORY_LABELS[catKey] || incoming.category);
-          state.srsCards[w] = {
-            word: w,
-            category: catKey,
-            difficulty: diff,
+          state.srsCards[w] = makeSrsCard(w, catKey, diff, {
             interval: Number(incoming.interval) || 0,
-            ease: Number(incoming.ease) || 2.3,
+            ease: Number(incoming.ease) || SRS_EASE_START,
             due: Number(incoming.due) || Date.now(),
             reps: Number(incoming.reps) || 0,
             lapses: Number(incoming.lapses) || 0,
             lastReviewed: Number(incoming.lastReviewed) || 0
-          };
+          });
           const arr = WORDS[catKey][diff];
           if (arr && arr.indexOf(w) === -1) arr.push(w);
         }
@@ -1562,8 +1565,7 @@ function setSoundToggleUI(enabled) {
 // The answer mirror shows what was typed while the underlying field is a
 // password field (phone keyboards) — see applyAnswerFieldMode.
 function syncAnswerMirror() {
-  const mirror = document.getElementById("answerMirror");
-  if (mirror) mirror.textContent = dom.answerInput.value;
+  if (dom.answerMirror) dom.answerMirror.textContent = dom.answerInput.value;
 }
 
 function applyAnswerFieldMode() {
@@ -1619,7 +1621,6 @@ function resetSession() {
   state.sessionBucketAdds = 0;
   state.categoryStats = {};
   state.bucket = [];
-  state.wordsSeen = [];
   state.sessionRecordAtStart = state.highScore;
   state.recordCelebrated = false;
   saveBucket();
@@ -1670,7 +1671,6 @@ function resetAllData() {
   state.soundEnabled = false;
   state.soundVolume = 0.5;
   state.darkMode = false;
-  state.wordsSeen = [];
 
   restoreBuiltinCategories();
 
