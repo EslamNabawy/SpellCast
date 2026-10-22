@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=30 shipped — accordion right deck, bucket/categories moved into the deck, panel polish (v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `b120851`, serving `v=30`)
+**Current phase:** v=31 shipped — hidden scrollbars + keyboard persistence (v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `107582c`, serving `v=31`)
 
 ---
 
@@ -225,3 +225,21 @@ Scope (user review of v=29): kill the scrollable panels in the right deck, move 
 **Harness / QA** (session.mjs + capture-matrix.mjs wait on `#bucketPanel[open]`/`#categoryStatsPanel[open]`; session.mjs/fixture.mjs open the containing `<details>` before driving `#reviewModeSelect`/`#customWordInput`; layout.mjs opens the tallest (bucket) section during overflow measurement)
 - Full run 6/6 PASS — session 29/29, fixture 8/8, a11y (12 axe runs, 0 violations; 150 probes, 0 failures; reduced-motion neutralised), layout 21 checks (incl. 375 px sheet), matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile perf 0.96 / a11y 1 (LCP 2.5 s, CLS 0).
 - **Rollout:** single commit on `main` (`b120851`, 8 files, +144/−77); Pages run `39828809004` success (~2 m). **Verified live:** `index.html?v=30` 24,770 B · CSS 32,105 B · script 84,003 B; reloaded page reports **0 console errors**, 4 deck sections with exactly one open, bucket click retracts Performance (exclusive accordion confirmed live), fonts loaded, footer = single Finish.
+
+---
+
+## v=31 — Hidden scrollbars + keyboard persistence ✅ · commit `107582c` · 2026-10-22
+
+Scope (user review of v=30): the drawer/decks still showed ugly scrollbar tracks in Chrome, and the mobile keyboard kept collapsing between reveal → type swaps.
+
+**Polish**
+- All intentional overflow regions now hide scrollbars: `.settings-panel` / `.deck` / `.deck-right` / `.bucket-list` / `.category-stats` / drawer details get `scrollbar-width:none` + WebKit `::-webkit-scrollbar{display:none}`; the drawer keeps its `overflow-y:auto` as an invisible safety valve.
+- `overflow-x:hidden` replaced by `overflow-x:clip` where clipping without creating a scrollable ancestor was intended.
+
+**Behaviour**
+- The answer input is **phase-parked instead of removed**: `#phaseType` no longer carries the `hidden` attribute in markup; `setPhase` toggles `.phase-parked` (`position:fixed; left:-10000px; opacity:0; pointer-events:none; visibility:hidden`). Focus is retained across reveal→type swaps, so the on-screen keyboard stays open for the whole session; closing the summary blurs, `goToTypePhase` clears value + mirror as before.
+- Note for future work: per-phase visibility is driven by the `hidden` attribute — the parked class is the single exception; the initial `hidden` on `#phaseType` had to be removed from the markup or it stayed stuck (first v=31 harness run failed on 0×0 input rects until fixed).
+
+**Harness / QA** (evidence probes committed as `tools/qa/scratch/probe-drawer.mjs` + `probe-park.mjs`)
+- Full run 6/6 PASS — session 29/29, fixture 8/8, a11y (0 axe violations; 150 probes, 0 failures), layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile 0.96 / a11y 1 (LCP 2.5 s).
+- **Rollout:** code commit `107582c` on `main` (+110/−9, incl. both probes); docs commit follows; Pages verified after push (see header line).
