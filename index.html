@@ -10,7 +10,7 @@
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2D6A4F">
-<link rel="stylesheet" href="style.css?v=25">
+<link rel="stylesheet" href="style.css?v=26">
 </head>
 <body class="theme-normal">
 
@@ -23,29 +23,15 @@
         <span class="brand-name">SpellCast</span>
       </div>
       <div class="status-group" aria-label="Session status">
-        <div class="pill pill-streak" id="headerStreakPill">
+        <div class="pill pill-streak" id="headerStreakPill" title="Current streak — correct answers in a row">
           <span class="pill-icon" aria-hidden="true">🔥</span>
           <span class="pill-value" id="headerStreak">0</span>
           <span class="pill-label">streak</span>
         </div>
-        <div class="pill pill-best">
-          <span class="pill-icon" aria-hidden="true">🏆</span>
-          <span class="pill-value" id="headerBest">0</span>
-          <span class="pill-label">best</span>
-        </div>
-        <div class="pill pill-score">
-          <span class="pill-icon" aria-hidden="true">◆</span>
-          <span class="pill-value" id="headerScore">0</span>
-          <span class="pill-label">score</span>
-        </div>
-        <div class="pill pill-acc">
-          <span class="pill-icon" aria-hidden="true">%</span>
-          <span class="pill-value" id="headerAccuracy">—</span>
-          <span class="pill-label">acc</span>
-        </div>
-        <div class="pill pill-timer" id="headerTimerPill">
+        <div class="pill pill-timer" id="headerTimerPill" title="Session time" aria-label="Session time">
           <span class="pill-icon" aria-hidden="true">⏱</span>
           <span class="pill-value" id="sessionTimer">0:00</span>
+          <span class="pill-label">time</span>
         </div>
       </div>
       <div class="header-actions">
@@ -262,7 +248,7 @@
         <span class="stat-label">Score</span>
         <span class="stat-value" id="statScore">0</span>
       </div>
-      <div class="stat-card">
+      <div class="stat-card stat-card-streak" title="Also shown in the header streak pill">
         <span class="stat-label">Streak</span>
         <span class="stat-value" id="statStreak">0</span>
       </div>
@@ -328,7 +314,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=25"></script>
-<script src="script.js?v=25"></script>
+<script src="words.js?v=26"></script>
+<script src="script.js?v=26"></script>
 </body>
 </html>

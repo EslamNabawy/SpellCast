@@ -183,9 +183,6 @@ const dom = {
 
   headerStreak: document.getElementById("headerStreak"),
   headerStreakPill: document.getElementById("headerStreakPill"),
-  headerBest: document.getElementById("headerBest"),
-  headerScore: document.getElementById("headerScore"),
-  headerAccuracy: document.getElementById("headerAccuracy"),
   headerTimerPill: document.getElementById("headerTimerPill"),
   stateBanner: document.getElementById("stateBanner"),
   stateBannerText: document.getElementById("stateBannerText"),
@@ -1172,8 +1169,6 @@ function launchConfetti() {
 
 function renderStats() {
   dom.headerStreak.textContent = state.streak;
-  dom.headerBest.textContent = state.bestStreak;
-  if (dom.headerScore) dom.headerScore.textContent = state.score;
 
   dom.statScore.textContent = state.score;
   dom.statStreak.textContent = state.streak;
@@ -1182,7 +1177,6 @@ function renderStats() {
   const attempted = state.correct + state.incorrect;
   const accuracy = attempted === 0 ? null : Math.round((state.correct / attempted) * 100);
   dom.statAccuracy.textContent = accuracy === null ? "—" : accuracy + "%";
-  if (dom.headerAccuracy) dom.headerAccuracy.textContent = accuracy === null ? "—" : accuracy + "%";
 
   dom.sessionWordCount.textContent = `Word ${state.sessionWords}`;
   dom.sessionCorrectCount.textContent = `${state.correct} correct`;
