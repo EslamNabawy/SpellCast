@@ -2033,6 +2033,12 @@ function init() {
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
   dom.volumeField.hidden = !state.soundEnabled;
   state.sessionRecordAtStart = state.highScore;
+  // belt-and-braces in case of stale cached HTML: keep autofill and virtual
+  // keyboard suggestions off the answer field (Chrome ignores autocomplete=off)
+  dom.answerInput.setAttribute("autocomplete", "new-password");
+  dom.answerInput.setAttribute("autocapitalize", "none");
+  dom.answerInput.setAttribute("autocorrect", "off");
+  dom.answerInput.setAttribute("spellcheck", "false");
   // mobile takes the settings sheet compact — start with "My words" collapsed
   const myWordsDetails = document.querySelector("#settingsPanel details");
   if (myWordsDetails && window.matchMedia("(max-width: 999px)").matches) myWordsDetails.removeAttribute("open");
