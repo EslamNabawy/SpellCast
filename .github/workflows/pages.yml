@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages
+
+# Publishes ONLY the files the app actually loads. Everything else in the repo
+# (docs/, tools/qa/, baseline screenshots, plans, audits) stays out of the
+# published site — so the docs and the dev harness are not publicly fetchable.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage the published files
+        run: |
+          mkdir -p _site
+          cp index.html style.css script.js words.js _site/
+          cp favicon.svg favicon.png favicon.ico apple-touch-icon.png _site/
+          cp .nojekyll _site/ 2>/dev/null || true
+          echo "Published:" && ls -1 _site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

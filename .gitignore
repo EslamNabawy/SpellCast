@@ -3,12 +3,22 @@ node_modules/
 tools/qa/test-results/
 tools/qa/screenshots/
 tools/qa/.playwright/
+playwright-report/
+lighthouse-report/
+coverage/
+
+# environment / secrets
+.env
+.env.*
 
 # OS / editor noise
 .DS_Store
 Thumbs.db
+desktop.ini
 .idea/
 .vscode/
 *.swp
 *.log
 npm-debug.log*
+*.tmp
+*.tsbuildinfo
