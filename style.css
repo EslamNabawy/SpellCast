@@ -62,6 +62,8 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .field select,.input{padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);width:100%}
 .input::placeholder{color:var(--ink-faint);opacity:1}
 .input-large{padding:14px 16px;font-size:18px;font-weight:600;text-align:center}
+.answer-mirror{display:none;min-height:18px;font-size:18px;font-weight:600;letter-spacing:.22em;text-align:center;color:var(--ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.answer-form.password-mode .answer-mirror{display:block}
 .input-sm{padding:9px 10px;font-size:14px}
 .field-toggle{flex-direction:row;align-items:center;justify-content:space-between}
 .toggle{display:flex;align-items:center;gap:8px;background:none;border:none;padding:0}.toggle-track{width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:background var(--dur-fast) var(--ease)}.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform var(--dur-fast) var(--ease)}.toggle[aria-checked="true"] .toggle-track{background:var(--accent)}.toggle[aria-checked="true"] .toggle-thumb{transform:translateX(16px)}.toggle-state{font-size:13px;color:var(--ink-soft)}

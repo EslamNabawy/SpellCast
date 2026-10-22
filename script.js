@@ -714,6 +714,7 @@ function goToTypePhase() {
   clearSeeTimer();
   setPhase("type");
   dom.answerInput.value = "";
+  syncAnswerMirror();
   if (state.currentWord) state.wordsSeen.push(state.currentWord.word);
   if (dom.phaseProgress) dom.phaseProgress.textContent = `Word ${state.wordsSeen.length} of ${poolSize()}`;
 }
@@ -1631,6 +1632,42 @@ function setSoundToggleUI(enabled) {
   }
 }
 
+// Virtual keyboards refuse the suggestion strip (and the clipboard chip) for
+// password fields — so on touch devices the answer input is a password field
+// and `-webkit-text-security: none` renders the typed letters as plain text.
+// Fine-pointers (desktop mouse/trackpad) never see keyboard bars, so the field
+// stays a regular text input there, managed by `autocomplete="new-password"`.
+// The answer mirror shows what was typed while the underlying field is a
+// password field (phone keyboards) — see applyAnswerFieldMode.
+function syncAnswerMirror() {
+  const mirror = document.getElementById("answerMirror");
+  if (mirror) mirror.textContent = dom.answerInput.value;
+}
+
+function applyAnswerFieldMode() {
+  const input = dom.answerInput;
+  if (!input) return;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const plainPassword = typeof CSS !== "undefined" && CSS.supports && CSS.supports("-webkit-text-security", "none");
+  if (coarse && plainPassword) {
+    input.setAttribute("type", "password");
+    input.style.setProperty("-webkit-text-security", "none");
+    // "new-password" on a password field invites generate-password popups;
+    // a plain off clears autofill without that side effect
+    input.setAttribute("autocomplete", "off");
+    input.removeAttribute("data-1p-ignore");
+    input.form.classList.add("password-mode");
+  } else {
+    input.setAttribute("type", "text");
+    input.style.removeProperty("-webkit-text-security");
+    input.setAttribute("autocomplete", "new-password");
+    input.setAttribute("data-1p-ignore", "true");
+    input.form.classList.remove("password-mode");
+  }
+  input.setAttribute("data-lpignore", "true");
+  input.setAttribute("data-form-type", "other");
+}
+
 function toggleSettingsPanel() {
   const isHidden = dom.settingsPanel.hidden;
   dom.settingsPanel.hidden = !isHidden;
@@ -1764,6 +1801,8 @@ function attachEventListeners() {
     if (state.phase !== "type") return;
     dom.answerInput.focus();
   });
+
+  dom.answerInput.addEventListener("input", syncAnswerMirror);
 
   dom.answerForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -1911,6 +1950,7 @@ function attachEventListeners() {
     if (state.phase === "incorrect") {
       setPhase("type");
       dom.answerInput.value = "";
+      syncAnswerMirror();
       requestAnimationFrame(() => dom.answerInput.focus());
     }
   });
@@ -2035,10 +2075,10 @@ function init() {
   state.sessionRecordAtStart = state.highScore;
   // belt-and-braces in case of stale cached HTML: keep autofill and virtual
   // keyboard suggestions off the answer field (Chrome ignores autocomplete=off)
-  dom.answerInput.setAttribute("autocomplete", "new-password");
   dom.answerInput.setAttribute("autocapitalize", "none");
   dom.answerInput.setAttribute("autocorrect", "off");
   dom.answerInput.setAttribute("spellcheck", "false");
+  applyAnswerFieldMode();
   // mobile takes the settings sheet compact — start with "My words" collapsed
   const myWordsDetails = document.querySelector("#settingsPanel details");
   if (myWordsDetails && window.matchMedia("(max-width: 999px)").matches) myWordsDetails.removeAttribute("open");
