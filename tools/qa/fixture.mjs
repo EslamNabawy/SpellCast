@@ -26,9 +26,8 @@ async function run() {
   // build a realistic state: correct word, wrong word, custom word, settings
   await playOneWord(page, "correct");
   await playOneWord(page, "incorrect");
-  await page.evaluate(() => {
-    document.getElementById("addWordForm").dispatchEvent(new Event("submit", { cancelable: true }));
-  });
+  // back to idle so the settings below apply without a confirmation dialog
+  await page.evaluate(() => resetSession());
   await page.fill("#customWordInput", "zephyrine");
   await page.selectOption("#customWordCategory", "nouns");
   await page.selectOption("#customWordDifficulty", "hard");

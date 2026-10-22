@@ -45,9 +45,12 @@ async function run() {
   results.forEach((r) => {
     console.log(`${r.preset}: perf=${r.scores.performance} a11y=${r.scores.accessibility} bp=${r.scores["best-practices"]} seo=${r.scores.seo} | LCP ${r.metrics.lcp} TBT ${r.metrics.tbt} CLS ${r.metrics.cls}`);
   });
-  const bad = results.filter((r) => Object.values(r.scores).some((s) => s < 1));
+  // a11y / best-practices / SEO must stay at 1.0; performance is a throttled
+  // estimate on mobile, so it is reported but does not fail the run.
+  const gated = ["accessibility", "best-practices", "seo"];
+  const bad = results.filter((r) => gated.some((c) => (r.scores[c] ?? 1) < 1));
   if (bad.length) {
-    console.log("categories below 1.0 — see docs/baseline/lighthouse.json");
+    console.log("accessibility / best-practices / seo below 1.0 — see docs/baseline/lighthouse.json");
     process.exitCode = 1;
   }
 }

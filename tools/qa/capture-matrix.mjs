@@ -44,9 +44,9 @@ const STATES = {
   summary: async (page) => {
     await playOneWord(page, "correct");
     await page.evaluate(() => document.getElementById("finishSessionBtn").click());
-    // v=26 shows a confirm dialog first when the deck still has words
-    const dialog = await page.$("#finishOverlay:not([hidden])");
-    if (dialog) await page.click("#finishConfirmBtn");
+    // v=26+ asks once (shared confirm dialog) when the deck still has words
+    const dialog = await page.$("#actionDialog:not([hidden])");
+    if (dialog) await page.click("#actionDialog .btn-primary");
     await page.waitForSelector("#summaryOverlay:not([hidden])");
     return "session summary";
   },
@@ -80,12 +80,14 @@ const STATES = {
   dialog_finish: async (page) => {
     await playOneWord(page, "correct");
     await page.evaluate(() => document.getElementById("finishSessionBtn").click());
-    await page.waitForSelector("#finishOverlay:not([hidden])");
+    await page.waitForSelector("#actionDialog:not([hidden])");
+    await page.waitForTimeout(400); // let the sheet animation settle before the shot
     return "finish confirm";
   },
   dialog_resetall: async (page) => {
     await page.evaluate(() => document.getElementById("resetAllBtn").click());
-    await page.waitForSelector("#resetAllOverlay:not([hidden])");
+    await page.waitForSelector("#actionDialog:not([hidden])");
+    await page.waitForTimeout(400);
     return "delete all data confirm";
   }
 };

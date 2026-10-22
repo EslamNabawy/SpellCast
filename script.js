@@ -296,9 +296,14 @@ const dom = {
   categoryStatsEmptyHint: document.getElementById("categoryStatsEmptyHint"),
 
   finishSessionBtn: document.getElementById("finishSessionBtn"),
-  finishOverlay: document.getElementById("finishOverlay"),
-  finishCancelBtn: document.getElementById("finishCancelBtn"),
-  finishConfirmBtn: document.getElementById("finishConfirmBtn"),
+
+  actionDialog: document.getElementById("actionDialog"),
+  actionDialogTitle: document.getElementById("actionDialogTitle"),
+  actionDialogBody: document.getElementById("actionDialogBody"),
+  actionDialogActions: document.getElementById("actionDialogActions"),
+  actionDialogRequire: document.getElementById("actionDialogRequire"),
+  actionDialogRequireLabel: document.getElementById("actionDialogRequireLabel"),
+  actionDialogInput: document.getElementById("actionDialogInput"),
 
   summaryOverlay: document.getElementById("summaryOverlay"),
   summaryScore: document.getElementById("summaryScore"),
@@ -311,14 +316,6 @@ const dom = {
   summaryWeakest: document.getElementById("summaryWeakest"),
   summaryCloseBtn: document.getElementById("summaryCloseBtn"),
   summaryNewSessionBtn: document.getElementById("summaryNewSessionBtn"),
-
-  resetAllOverlay: document.getElementById("resetAllOverlay"),
-  resetAllCancelBtn: document.getElementById("resetAllCancelBtn"),
-  resetAllConfirmBtn: document.getElementById("resetAllConfirmBtn"),
-
-  resetSessionOverlay: document.getElementById("resetSessionOverlay"),
-  resetSessionCancelBtn: document.getElementById("resetSessionCancelBtn"),
-  resetSessionConfirmBtn: document.getElementById("resetSessionConfirmBtn"),
 
   srAnnouncer: document.getElementById("srAnnouncer"),
   confettiLayer: document.getElementById("confettiLayer"),
@@ -412,27 +409,27 @@ function getNextFreshWord() {
 
 // Returns { word, category, fromBucket, isSrs } or null when there is
 // nothing to serve (empty pool / nothing due in "due only" mode).
+// The selected category is honoured by EVERY source — a session set to
+// "verbs" never serves a noun, no matter whether the word comes from the
+// fresh deck, the practice bucket or a due review card.
 function selectNextWord() {
+  const categoryFilter = state.category; // "all" or a category key
+  const inCategory = (cat) => categoryFilter === "all" || cat === categoryFilter;
+
   // 1) SRS due cards — highest priority (Anki-like)
   const dueAll = getDueCards();
   if (dueAll.length) {
-    let filtered = dueAll;
-    if (state.category !== "all") {
-      const catFiltered = dueAll.filter(c => c.category === state.category);
-      if (catFiltered.length) filtered = catFiltered;
-    }
-    // respect reviewMode
+    const filtered = dueAll.filter(c => inCategory(c.category));
     const useDue = state.reviewMode === "dueOnly" ? true : (Math.random() < REVIEW_DUE_WEIGHT);
     if (useDue && filtered.length) {
       const weighted = [];
       filtered.forEach(c => {
-        const w = Math.min(c.lapses + (c.interval===0?2:0), 5) + 1;
-        for (let i=0;i<w;i++) weighted.push(c);
+        const w = Math.min(c.lapses + (c.interval === 0 ? 2 : 0), 5) + 1;
+        for (let i = 0; i < w; i++) weighted.push(c);
       });
-      let chosen = weighted[Math.floor(Math.random()*weighted.length)];
+      let chosen = weighted[Math.floor(Math.random() * weighted.length)];
       // avoid immediate repeat if possible
       if (state.recentQueue.includes(chosen.word) && filtered.length > 1) {
-        // pick alternative not recent
         const alt = filtered.find(c => !state.recentQueue.includes(c.word));
         if (alt) chosen = alt;
       }
@@ -445,17 +442,16 @@ function selectNextWord() {
     return null;
   }
 
-  // 2) legacy bucket (kept for compatibility) — also maps to SRS but keep weight
-  const bucketEligible = state.bucket.length > 0;
-  const useBucket = bucketEligible && Math.random() < BUCKET_MIX_RATIO;
-  if (useBucket) {
+  // 2) practice bucket — also filtered by the selected category
+  const bucketWords = state.bucket.filter(entry => inCategory(entry.category));
+  if (bucketWords.length && Math.random() < BUCKET_MIX_RATIO) {
     const weighted = [];
-    state.bucket.forEach((entry) => {
+    bucketWords.forEach((entry) => {
       const weight = Math.min(entry.mistakes, 5) + 1;
       for (let i = 0; i < weight; i++) weighted.push(entry);
     });
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
-    if (!state.recentQueue.includes(chosen.word) || state.bucket.length === 1) {
+    if (!state.recentQueue.includes(chosen.word) || bucketWords.length === 1) {
       pushRecent(chosen.word);
     }
     return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: !!state.srsCards[chosen.word] };
@@ -489,9 +485,17 @@ function refreshReadyState() {
     setReadyHint(READY_HINT_NO_WORDS, true);
     return;
   }
-  if (state.reviewMode === "dueOnly" && getDueCards().length === 0) {
-    setReadyHint(READY_HINT_NOTHING_DUE, true);
-    return;
+  if (state.reviewMode === "dueOnly") {
+    const due = getDueCards().filter(c => state.category === "all" || c.category === state.category);
+    if (!due.length) {
+      setReadyHint(
+        state.category === "all"
+          ? READY_HINT_NOTHING_DUE
+          : `Nothing is due for ${CATEGORY_LABELS[state.category] || state.category} right now — switch Review mode to Mixed to keep practising.`,
+        true
+      );
+      return;
+    }
   }
   setReadyHint(READY_HINT_DEFAULT, false);
 }
@@ -1421,16 +1425,23 @@ function showSessionSummary() {
   dom.summaryBucketAdds.textContent = summary.bucketAdds;
   dom.summaryStrongest.textContent = summary.strongest;
   dom.summaryWeakest.textContent = summary.weakest;
+  summaryOpener = document.activeElement;
   dom.summaryOverlay.hidden = false;
   dom.summaryCloseBtn.focus();
 }
 
 // Close the recap without throwing the session away — "Keep playing" resumes
 // the current session, "New session" is the explicit way to start over.
+let summaryOpener = null;
+
 function closeSummary() {
   dom.summaryOverlay.hidden = true;
   state.sessionStartTime = null;
   refreshReadyState();
+  if (summaryOpener && document.contains(summaryOpener)) {
+    try { summaryOpener.focus(); } catch (e) { /* ignore */ }
+  }
+  summaryOpener = null;
   announce("Recap closed. Session continues.");
 }
 
@@ -1541,12 +1552,109 @@ function handleIncorrectAnswer(word, category, rawInput, isSrs) {
 // SETTINGS
 // ================================
 
+// ================================
+// SETTINGS — one source of truth
+// ================================
+// Controls never own state: they call setSetting(), which validates, stores,
+// rebuilds what depends on the value and re-renders every place the setting
+// is shown. On load the controls are rendered FROM the stored state.
+const SETTING_DEFS = {
+  category: { label: "Category", storageKey: "preferredCategory", affectsSession: true, values: () => ["all"].concat(CATEGORY_KEYS) },
+  difficulty: { label: "Difficulty", storageKey: "preferredDifficulty", affectsSession: true, values: () => ["easy", "medium", "hard"] },
+  duration: { label: "Show for", storageKey: "preferredDuration", affectsSession: true, values: () => [1000, 1500, 2000, 3000, 4000] },
+  reviewMode: { label: "Review mode", storageKey: "reviewMode", affectsSession: true, values: () => ["mixed", "dueOnly"] },
+  soundEnabled: { label: "Sound", storageKey: "soundEnabled", affectsSession: false, values: () => [true, false] },
+  soundVolume: { label: "Volume", storageKey: "soundVolume", affectsSession: false, values: () => [0, 0.25, 0.5, 0.75, 1] },
+  darkMode: { label: "Dark mode", storageKey: "darkMode", affectsSession: false, values: () => [true, false] }
+};
+
+function settingLabel(key, value) {
+  if (key === "category") return value === "all" ? "All categories" : (CATEGORY_LABELS[value] || value);
+  if (key === "difficulty") return value.charAt(0).toUpperCase() + value.slice(1);
+  if (key === "duration") return (value / 1000) + "s";
+  if (key === "reviewMode") return value === "dueOnly" ? "Due only" : "Mixed";
+  if (key === "soundVolume") return Math.round(value * 100) + "%";
+  if (typeof value === "boolean") return value ? "On" : "Off";
+  return String(value);
+}
+
+function setSetting(key, value, options) {
+  const def = SETTING_DEFS[key];
+  if (!def) return false;
+  const opts = options || {};
+  if (!def.values().includes(value)) return false;
+  state[key] = value;
+  saveLocal(LS_KEYS[def.storageKey], value);
+  if (key === "category" || key === "difficulty") resetWordPool();
+  if (key === "soundEnabled") {
+    setSoundToggleUI(value);
+    if (value) { getAudioCtx(); playTone("correct"); }
+  }
+  if (key === "darkMode") applyTheme();
+  applySettingsToForm();
+  if (opts.announce !== false) announce(`${def.label}: ${settingLabel(key, value)}`);
+  return true;
+}
+
+// A session is "in progress" once a word has been answered or is on screen.
+function sessionInProgress() {
+  return state.sessionWords > 0 || state.phase === "see" || state.phase === "type" || state.phase === "correct" || state.phase === "incorrect";
+}
+
+function sessionAccuracyText() {
+  const attempted = state.correct + state.incorrect;
+  if (!attempted) return "0% correct";
+  return Math.round((state.correct / attempted) * 100) + "% correct";
+}
+
+// Settings that change what you practise ask first when a session is running.
+async function requestSettingChange(key, value) {
+  const def = SETTING_DEFS[key];
+  if (!def) return;
+  if (!def.affectsSession || !sessionInProgress()) {
+    setSetting(key, value);
+    return;
+  }
+  const choice = await confirmAction({
+    title: `Change ${def.label.toLowerCase()} to ${settingLabel(key, value)}?`,
+    body: `This ends your current session (${state.sessionWords} answered, ${sessionAccuracyText()}). Every answer you have given is already saved in the review deck — only the session score and streak start over.`,
+    actions: [
+      { id: "keep", label: "Keep current session", variant: "quiet" },
+      { id: "switch", label: "Switch & start fresh", variant: "primary" }
+    ]
+  });
+  if (choice === "switch") {
+    resetSession();
+    setSetting(key, value);
+  } else {
+    // revert the control to the stored value
+    applySettingsToForm();
+  }
+}
+
+function applyTheme() {
+  const on = !!state.darkMode;
+  if (on) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    dom.themeIcon.textContent = "☀️";
+    dom.themeLabel.textContent = "Dark mode on";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    dom.themeIcon.textContent = "🌙";
+    dom.themeLabel.textContent = "Dark mode off";
+  }
+}
+
 function applySettingsToForm() {
+  // Controls are rendered FROM the stored state, never the other way round.
   dom.categorySelect.value = state.category;
   dom.difficultySelect.value = state.difficulty;
   dom.durationSelect.value = String(state.duration);
+  if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   setSoundToggleUI(state.soundEnabled);
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+  if (dom.volumeField) dom.volumeField.hidden = !state.soundEnabled;
+  applyTheme();
 }
 
 function setSoundToggleUI(enabled) {
@@ -1697,8 +1805,108 @@ function isTextEntryTarget(el) {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!el.isContentEditable;
 }
 
+// ================================
+// CONFIRM DIALOG
+// ================================
+// One reusable promise-based dialog for every "are you sure?" in the app:
+// changing a setting mid-session, finishing early, resetting the session and
+// deleting all data. It traps focus, suspends the game key handlers, pauses
+// the session clock and returns focus to whatever opened it.
+let actionDialogResolver = null;
+let actionDialogOpener = null;
+let actionDialogWasRunning = false;
+
+function confirmAction({ title, body, actions, requireText, requireLabel }) {
+  return new Promise((resolve) => {
+    dom.actionDialogTitle.textContent = title;
+    dom.actionDialogBody.textContent = body || "";
+    dom.actionDialogBody.hidden = !body;
+
+    // optional "type DELETE to confirm" gate
+    if (requireText) {
+      dom.actionDialogRequire.hidden = false;
+      dom.actionDialogRequireLabel.textContent = requireLabel || `Type ${requireText} to confirm`;
+      dom.actionDialogInput.value = "";
+      dom.actionDialogInput.dataset.expect = requireText;
+    } else {
+      dom.actionDialogRequire.hidden = true;
+      dom.actionDialogInput.value = "";
+      delete dom.actionDialogInput.dataset.expect;
+    }
+
+    // buttons
+    dom.actionDialogActions.innerHTML = "";
+    actions.forEach((action) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-" + (action.variant || "quiet");
+      btn.textContent = action.label;
+      btn.dataset.actionId = action.id;
+      btn.addEventListener("click", () => {
+        // a required confirmation word gates the action buttons (case-sensitive:
+        // the label says exactly what to type)
+        const expect = dom.actionDialogInput.dataset.expect;
+        if (expect && dom.actionDialogInput.value.trim() !== expect) {
+          dom.actionDialogInput.focus();
+          announce("Type the confirmation word to continue.");
+          return;
+        }
+        closeActionDialog(action.id);
+      });
+      dom.actionDialogActions.appendChild(btn);
+    });
+
+    actionDialogResolver = resolve;
+    actionDialogOpener = document.activeElement;
+    actionDialogWasRunning = !!state.sessionStartTime;
+    if (actionDialogWasRunning) stopSessionTimer(); // pause the session clock
+    dom.actionDialog.hidden = false;
+    document.body.classList.add("dialog-open");
+
+    // focus: the confirmation input, else the primary action, else the first button
+    const first = dom.actionDialogActions.querySelector(".btn-primary") || dom.actionDialogActions.querySelector("button");
+    if (requireText) dom.actionDialogInput.focus();
+    else if (first) first.focus();
+  });
+}
+
+function closeActionDialog(actionId) {
+  if (!actionDialogResolver) return;
+  const resolve = actionDialogResolver;
+  actionDialogResolver = null;
+  dom.actionDialog.hidden = true;
+  document.body.classList.remove("dialog-open");
+  // resume the session clock where it left off
+  if (actionDialogWasRunning) {
+    actionDialogWasRunning = false;
+    startSessionTimer();
+  }
+  // return focus to the opener
+  if (actionDialogOpener && document.contains(actionDialogOpener)) {
+    try { actionDialogOpener.focus(); } catch (e) { /* ignore */ }
+  }
+  actionDialogOpener = null;
+  resolve(actionId);
+}
+
+// Keep Tab inside the open dialog.
+function trapDialogFocus(e) {
+  if (e.key !== "Tab" || dom.actionDialog.hidden) return;
+  const focusables = dom.actionDialog.querySelectorAll("button, input, [href], select, textarea");
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 function anyModalOpen() {
-  return !dom.summaryOverlay.hidden || !dom.resetAllOverlay.hidden || !dom.resetSessionOverlay.hidden || !dom.finishOverlay.hidden;
+  return !dom.actionDialog.hidden || !dom.summaryOverlay.hidden;
 }
 
 function attachEventListeners() {
@@ -1759,38 +1967,23 @@ function attachEventListeners() {
   dom.settingsToggle.addEventListener("click", toggleSettingsPanel);
 
   dom.categorySelect.addEventListener("change", () => {
-    state.category = dom.categorySelect.value;
-    saveLocal(LS_KEYS.preferredCategory, state.category);
-    resetWordPool();
+    requestSettingChange("category", dom.categorySelect.value);
   });
 
   dom.difficultySelect.addEventListener("change", () => {
-    state.difficulty = dom.difficultySelect.value;
-    saveLocal(LS_KEYS.preferredDifficulty, state.difficulty);
-    resetWordPool();
+    requestSettingChange("difficulty", dom.difficultySelect.value);
   });
 
   dom.durationSelect.addEventListener("change", () => {
-    state.duration = Number(dom.durationSelect.value);
-    saveLocal(LS_KEYS.preferredDuration, state.duration);
+    requestSettingChange("duration", Number(dom.durationSelect.value));
   });
 
   dom.soundToggle.addEventListener("click", () => {
-    state.soundEnabled = !state.soundEnabled;
-    setSoundToggleUI(state.soundEnabled);
-    saveLocal(LS_KEYS.soundEnabled, state.soundEnabled);
-    if (state.soundEnabled) {
-      getAudioCtx();
-      playTone("correct");
-      dom.volumeField.hidden = false;
-    } else {
-      dom.volumeField.hidden = true;
-    }
+    setSetting("soundEnabled", !state.soundEnabled);
   });
 
   dom.volumeSlider.addEventListener("input", () => {
-    state.soundVolume = parseInt(dom.volumeSlider.value) / 100;
-    saveLocal(LS_KEYS.soundVolume, state.soundVolume);
+    setSetting("soundVolume", parseInt(dom.volumeSlider.value) / 100, { announce: false });
   });
 
   if (dom.addWordForm) {
@@ -1832,27 +2025,13 @@ function attachEventListeners() {
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
     dom.reviewModeSelect.addEventListener("change", () => {
-      state.reviewMode = dom.reviewModeSelect.value;
-      saveLocal(LS_KEYS.reviewMode, state.reviewMode);
-      refreshReadyState();
+      requestSettingChange("reviewMode", dom.reviewModeSelect.value);
     });
   }
 
   // dark mode toggle
   dom.themeToggle.addEventListener("click", () => {
-    state.darkMode = !state.darkMode;
-    if (state.darkMode) {
-      document.documentElement.setAttribute("data-theme", "dark");
-      dom.themeIcon.textContent = "☀️";
-      dom.themeLabel.textContent = "Dark mode on";
-      announce("Dark mode enabled");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      dom.themeIcon.textContent = "🌙";
-      dom.themeLabel.textContent = "Dark mode off";
-      announce("Dark mode disabled");
-    }
-    saveLocal(LS_KEYS.darkMode, state.darkMode);
+    setSetting("darkMode", !state.darkMode);
   });
 
   // skip button during type phase
@@ -1881,34 +2060,30 @@ function attachEventListeners() {
   });
 
   // reset session confirmation
-  dom.resetSessionBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = false;
-    dom.resetSessionCancelBtn.focus();
+  dom.resetSessionBtn.addEventListener("click", async () => {
+    const choice = await confirmAction({
+      title: "Reset this session?",
+      body: `${state.sessionWords} answered ${state.sessionWords === 1 ? "word" : "words"} will be discarded. Your high score, best streak and review deck stay.`,
+      actions: [
+        { id: "cancel", label: "Cancel", variant: "quiet" },
+        { id: "reset", label: "Reset session", variant: "primary" }
+      ]
+    });
+    if (choice === "reset") resetSession();
   });
 
-  dom.resetSessionCancelBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = true;
-    dom.resetSessionBtn.focus();
-  });
-
-  dom.resetSessionConfirmBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = true;
-    resetSession();
-  });
-
-  dom.resetAllBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = false;
-    dom.resetAllCancelBtn.focus();
-  });
-
-  dom.resetAllCancelBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = true;
-    dom.resetAllBtn.focus();
-  });
-
-  dom.resetAllConfirmBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = true;
-    resetAllData();
+  dom.resetAllBtn.addEventListener("click", async () => {
+    const choice = await confirmAction({
+      title: "Delete all data?",
+      body: "This removes everything SpellCast has stored in this browser: high score, best streak, lifetime stats, your custom words and categories, the whole review deck, and your settings. It cannot be undone.",
+      requireText: "DELETE",
+      requireLabel: "Type DELETE to confirm",
+      actions: [
+        { id: "cancel", label: "Cancel", variant: "quiet" },
+        { id: "delete", label: "Delete everything", variant: "danger" }
+      ]
+    });
+    if (choice === "delete") resetAllData();
   });
 
   dom.bucketToggle.addEventListener("click", () => {
@@ -1923,54 +2098,50 @@ function attachEventListeners() {
   // session timer
   // Finish is the low-key way out: if words are still unrevealed in the
   // current deck pass it asks once before opening the recap.
-  dom.finishSessionBtn.addEventListener("click", () => {
+  dom.finishSessionBtn.addEventListener("click", async () => {
     const pending = state.deckRevealed < poolSize();
-    if (pending && !state.sessionWords) {
-      // untouched session — treating "finish" before any word as safe
+    if (!pending || !state.sessionWords) {
       showSessionSummary();
       return;
     }
-    if (pending) {
-      dom.finishOverlay.hidden = false;
-      dom.finishCancelBtn.focus();
+    const choice = await confirmAction({
+      title: "Finish session?",
+      body: "You still have words left in this deck. Finishing shows your recap now, and you can always start a new session after.",
+      actions: [
+        { id: "cancel", label: "Keep going", variant: "quiet" },
+        { id: "finish", label: "Finish", variant: "primary" }
+      ]
+    });
+    if (choice === "finish") showSessionSummary();
+  });
+
+  // the shared confirm dialog: Esc cancels, backdrop cancels, Tab is trapped
+  document.addEventListener("keydown", (e) => {
+    if (dom.actionDialog.hidden) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeActionDialog("cancel");
       return;
     }
-    showSessionSummary();
-  });
-
-  dom.finishCancelBtn.addEventListener("click", () => {
-    dom.finishOverlay.hidden = true;
-    dom.finishSessionBtn.focus();
-  });
-
-  dom.finishConfirmBtn.addEventListener("click", () => {
-    dom.finishOverlay.hidden = true;
-    showSessionSummary();
-  });
-
-  dom.finishOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.finishOverlay) {
-      dom.finishOverlay.hidden = true;
+    if (e.key === "Enter" && dom.actionDialogInput.dataset.expect && document.activeElement === dom.actionDialogInput) {
+      e.preventDefault();
+      const btn = dom.actionDialogActions.querySelector(".btn-danger") || dom.actionDialogActions.querySelector(".btn-primary");
+      if (btn) btn.click();
+      return;
     }
+    trapDialogFocus(e);
+  });
+
+  dom.actionDialog.addEventListener("click", (e) => {
+    if (e.target === dom.actionDialog) closeActionDialog("cancel");
   });
 
   // keyboard shortcuts — a single Escape handler for the whole app.
   // Modals take priority over the game.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!dom.finishOverlay.hidden) {
-      dom.finishOverlay.hidden = true;
-      dom.finishSessionBtn.focus();
-      return;
-    }
-    if (!dom.resetAllOverlay.hidden) {
-      dom.resetAllOverlay.hidden = true;
-      dom.resetAllBtn.focus();
-      return;
-    }
-    if (!dom.resetSessionOverlay.hidden) {
-      dom.resetSessionOverlay.hidden = true;
-      dom.resetSessionBtn.focus();
+    if (!dom.actionDialog.hidden) {
+      closeActionDialog("cancel");
       return;
     }
     if (!dom.summaryOverlay.hidden) {
@@ -1991,19 +2162,11 @@ function attachEventListeners() {
     });
   }
 
-  // close modals on backdrop click
+  // close the recap on backdrop click
   dom.summaryOverlay.addEventListener("click", (e) => {
     if (e.target === dom.summaryOverlay) {
       closeSummary();
     }
-  });
-  dom.resetAllOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.resetAllOverlay) {
-      dom.resetAllOverlay.hidden = true;
-    }
-  });
-  dom.resetSessionOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.resetSessionOverlay) dom.resetSessionOverlay.hidden = true;
   });
 }
 
@@ -2024,15 +2187,7 @@ function init() {
   renderCustomWordsList();
   renderSrsStats();
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
-  // restore dark mode
-  if (state.darkMode) {
-    document.documentElement.setAttribute("data-theme", "dark");
-    dom.themeIcon.textContent = "☀️";
-    dom.themeLabel.textContent = "Dark mode on";
-  }
-  // restore volume — the slider only makes sense while sound is on
-  dom.volumeSlider.value = Math.round(state.soundVolume * 100);
-  dom.volumeField.hidden = !state.soundEnabled;
+  // restore dark mode + volume through the single settings renderer
   state.sessionRecordAtStart = state.highScore;
   // belt-and-braces in case of stale cached HTML: keep autofill and virtual
   // keyboard suggestions off the answer field (Chrome ignores autocomplete=off)

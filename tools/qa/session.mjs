@@ -95,16 +95,25 @@ async function run() {
   const catRows = await page.locator("#categoryStatsList li").count();
   check("category stats panel renders rows", catRows >= 1, `${catRows} rows`);
 
-  // --- every setting ---
+  // --- every setting (applied while idle, so no confirmation is needed) ---
   const settings = [
     ["#categorySelect", "commonlyMisspelled"],
     ["#difficultySelect", "hard"],
     ["#durationSelect", "1500"],
     ["#reviewModeSelect", "dueOnly"]
   ];
+  // back to a truly idle session (ready phase, nothing answered) so the
+  // settings below apply instantly
+  await page.evaluate(() => resetSession());
+  await page.waitForTimeout(100);
   for (const [sel, value] of settings) {
     await page.selectOption(sel, value);
-    await page.waitForTimeout(80);
+    await page.waitForTimeout(120);
+    const dialogOpen = await page.evaluate(() => !document.getElementById("actionDialog").hidden);
+    if (dialogOpen) {
+      check(`idle change to ${sel} does not ask`, false, "dialog opened while idle");
+      await page.click("#actionDialog .btn-quiet");
+    }
   }
   const persisted = await page.evaluate(() => ({
     category: state.category,
@@ -115,7 +124,8 @@ async function run() {
     lsDifficulty: localStorage.getItem(LS_KEYS.preferredDifficulty),
     lsDuration: localStorage.getItem(LS_KEYS.preferredDuration)
   }));
-  check("category setting persists", persisted.category === "commonlyMisspelled" && persisted.lsCategory === '"commonlyMisspelled"', JSON.stringify(persisted.lsCategory));  check("difficulty setting persists", persisted.difficulty === "hard" && persisted.lsDifficulty === '"hard"');
+  check("category setting persists", persisted.category === "commonlyMisspelled" && persisted.lsCategory === '"commonlyMisspelled"', JSON.stringify(persisted.lsCategory));
+  check("difficulty setting persists", persisted.difficulty === "hard" && persisted.lsDifficulty === '"hard"');
   check("duration setting persists", persisted.duration === 1500 && persisted.lsDuration === "1500");
   check("review mode setting persists", persisted.reviewMode === "dueOnly");
 
@@ -125,6 +135,24 @@ async function run() {
     return { categories: [...cats], size: state.wordPool.length };
   });
   check("pool follows the selected category", poolState.categories.length === 1 && poolState.categories[0] === "commonlyMisspelled", JSON.stringify(poolState.categories));
+
+  // --- every source honours the selected category (the reported bug) ---
+  const categoryStrict = await page.evaluate(() => {
+    // a noun in the bucket and a noun due card must not leak into a verbs session
+    state.reviewMode = "mixed";
+    state.bucket = [{ word: "cathedral", category: "nouns", mistakes: 3 }];
+    state.srsCards.cathedral = { word: "cathedral", category: "nouns", difficulty: "medium", interval: 0, ease: 2.3, due: Date.now() - 1000, reps: 0, lapses: 1, lastReviewed: 0 };
+    state.category = "verbs";
+    resetWordPool();
+    const drawn = [];
+    for (let i = 0; i < 30; i++) {
+      const p = selectNextWord();
+      if (p) drawn.push(p.category);
+    }
+    return { categories: [...new Set(drawn)], count: drawn.length };
+  });
+  check("no word from another category is served", categoryStrict.categories.length === 1 && categoryStrict.categories[0] === "verbs", JSON.stringify(categoryStrict));
+  await page.evaluate(() => { state.category = "commonlyMisspelled"; });
 
   // --- sound + volume ---
   await page.click("#soundToggle");
@@ -146,33 +174,65 @@ async function run() {
   await setTheme(page, "light");
 
   // --- finish -> confirm -> summary ---
+  // answer a word first: finishing an untouched session shows the recap directly
+  await playOneWord(page, "correct");
   await page.click("#finishSessionBtn");
-  await page.waitForSelector("#finishOverlay:not([hidden])", { timeout: 4000 });
+  await page.waitForSelector("#actionDialog:not([hidden])", { timeout: 4000 });
   check("finishing mid-deck asks for confirmation", true);
-  await page.click("#finishCancelBtn");
-  check("cancelling the finish confirm closes it", await page.evaluate(() => document.getElementById("finishOverlay").hidden));
+  await page.click("#actionDialog .btn-quiet");
+  check("cancelling the finish confirm closes it", await page.evaluate(() => document.getElementById("actionDialog").hidden));
   await page.click("#finishSessionBtn");
-  await page.click("#finishConfirmBtn");
+  await page.click("#actionDialog .btn-primary");
   await page.waitForSelector("#summaryOverlay:not([hidden])", { timeout: 4000 });
   const summary = await page.evaluate(() => ({
     words: document.getElementById("summaryWordsPracticed").textContent,
     accuracy: document.getElementById("summaryAccuracy").textContent,
     bucketAdds: document.getElementById("summaryBucketAdds").textContent
   }));
-  check("summary shows session results", Number(summary.words) >= 2, JSON.stringify(summary));
+  check("summary shows session results", Number(summary.words) >= 1, JSON.stringify(summary));
 
-  // --- reset all data dialog ---
+  // --- delete-all dialog requires typing DELETE ---
   await page.evaluate(() => {
     document.getElementById("summaryOverlay").hidden = true;
     document.getElementById("resetAllBtn").click();
   });
-  await page.waitForSelector("#resetAllOverlay:not([hidden])", { timeout: 4000 });
+  await page.waitForSelector("#actionDialog:not([hidden])", { timeout: 4000 });
   check("delete-all dialog opens", true);
-  await page.click("#resetAllCancelBtn");
-  check("delete-all cancel closes it", await page.evaluate(() => document.getElementById("resetAllOverlay").hidden));
+  const blockedDelete = await page.evaluate(() => {
+    const input = document.getElementById("actionDialogInput");
+    input.value = "delete";
+    document.querySelector("#actionDialogActions .btn-danger").click();
+    return { stillOpen: !document.getElementById("actionDialog").hidden, highScore: localStorage.getItem(LS_KEYS.highScore) };
+  });
+  check("delete-all refuses without the exact word", blockedDelete.stillOpen, JSON.stringify(blockedDelete));
+  await page.evaluate(() => {
+    document.getElementById("actionDialogInput").value = "DELETE";
+    document.querySelector("#actionDialogActions .btn-danger").click();
+  });
+  await page.waitForTimeout(200);
+  check("delete-all wipes the data once confirmed", await page.evaluate(() => localStorage.getItem(LS_KEYS.highScore) === null));
+
+  // --- mid-session setting change asks first ---
+  await page.evaluate(() => {
+    document.getElementById("actionDialog").hidden = true;
+    state.sessionWords = 3;
+    const sel = document.getElementById("categorySelect");
+    sel.value = "verbs";
+    sel.dispatchEvent(new Event("change"));
+  });
+  await page.waitForSelector("#actionDialog:not([hidden])", { timeout: 4000 });
+  const settingDialog = await page.evaluate(() => ({
+    title: document.getElementById("actionDialogTitle").textContent,
+    buttons: [...document.querySelectorAll("#actionDialogActions button")].map((b) => b.textContent),
+    categoryUnchanged: document.getElementById("categorySelect").value !== "verbs"
+  }));
+  check("mid-session setting change asks before switching", settingDialog.buttons.length === 2, JSON.stringify(settingDialog));
+  check("the change dialog names the new value", /Verbs/i.test(settingDialog.title), settingDialog.title);
+  await page.click("#actionDialog .btn-quiet");
+  check("cancelling keeps the current setting", await page.evaluate(() => document.getElementById("categorySelect").value !== "verbs"));
 
   // --- keyboard-only path: Esc closes dialogs, Enter starts from ready ---
-  await page.evaluate(() => state.phase = "ready");
+  await page.evaluate(() => { state.phase = "ready"; });
   await page.keyboard.press("Escape");
   check("no console errors during the whole session", problems.length === 0, problems.join(" | "));
 
