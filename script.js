@@ -535,6 +535,8 @@ function setPhase(phase) {
 
 function beginRound() {
   clearSeeTimer();
+  // clear the previous result frame (correct / incorrect / high score)
+  dom.gameCard.classList.remove("correct", "incorrect", "new-high-score");
   const picked = selectNextWord();
   if (!picked) {
     // Nothing to serve (empty pool, or nothing due in "due only" mode).
