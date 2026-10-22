@@ -4,202 +4,43 @@
    ========================================================================== */
 
 // ================================
-// WORD DATABASE
+// WORD LIBRARY LOADER
 // ================================
+// words.js is the single source of truth:
+//   WORD_LIBRARY = { meta: { version }, categories: { key: { label, e, m, h } } }
+// Normalized here into the app's shape:
+//   WORDS[key] = { easy: [...], medium: [...], hard: [...] }
+// Loader guarantees: trimmed lowercase words, letters only, no duplicate
+// within a tier, categories without words are dropped, malformed entries
+// are logged and skipped instead of breaking the game.
+const TIER_ALIASES = { e: "easy", m: "medium", h: "hard" };
+const WORDS = {};
+const CATEGORY_LABELS = {};
 
-const WORDS = {
-  nouns: {
-    easy: [
-      "apple", "window", "garden", "school", "river", "planet", "pencil",
-      "bottle", "forest", "bridge", "island", "market", "engine", "castle"
-    ],
-    medium: [
-      "mountain", "computer", "library", "keyboard", "umbrella", "calendar",
-      "backpack", "telescope", "sandwich", "notebook", "elephant", "orchestra"
-    ],
-    hard: [
-      "restaurant", "architecture", "phenomenon", "questionnaire", "laboratory",
-      "atmosphere", "infrastructure", "parliament", "bureaucracy", "chronology"
-    ]
-  },
-  verbs: {
-    easy: [
-      "accept", "believe", "explain", "manage", "suggest", "arrive", "borrow",
-      "listen", "travel", "answer", "happen", "follow"
-    ],
-    medium: [
-      "achieve", "calculate", "discover", "imagine", "improve", "remember",
-      "understand", "recognize", "encourage", "establish", "negotiate", "demonstrate"
-    ],
-    hard: [
-      "differentiate", "hypothesize", "accommodate", "substantiate", "reconcile",
-      "exacerbate", "perpetuate", "circumvent", "corroborate", "extrapolate"
-    ]
-  },
-  adjectives: {
-    easy: [
-      "careful", "different", "excellent", "familiar", "possible", "terrible",
-      "honest", "curious", "gentle", "narrow", "recent", "simple"
-    ],
-    medium: [
-      "beautiful", "difficult", "important", "necessary", "successful",
-      "valuable", "reliable", "generous", "peculiar", "ambitious", "efficient", "sensible"
-    ],
-    hard: [
-      "conscientious", "miscellaneous", "indispensable", "unprecedented",
-      "quintessential", "incomprehensible", "idiosyncratic", "unequivocal",
-      "irrevocable", "ubiquitous"
-    ]
-  },
-  adverbs: {
-    easy: [
-      "actually", "finally", "quickly", "usually", "easily", "openly",
-      "safely", "loudly", "gently", "nearly"
-    ],
-    medium: [
-      "carefully", "completely", "especially", "generally", "immediately",
-      "probably", "recently", "naturally", "obviously", "frequently", "eventually", "seriously"
-    ],
-    hard: [
-      "unquestionably", "simultaneously", "disproportionately", "indiscriminately",
-      "unequivocally", "conscientiously", "unprecedentedly", "inadvertently"
-    ]
-  },
-  commonlyMisspelled: {
-    easy: [
-      "separate", "definitely", "receive", "believe", "friend", "weird",
-      "until", "beginning", "writing", "argument"
-    ],
-    medium: [
-      "necessary", "embarrass", "occurrence", "privilege", "restaurant",
-      "environment", "government", "maintenance", "recommend", "existence",
-      "occasion", "similar"
-    ],
-    hard: [
-      "accommodate", "conscientious", "unnecessarily", "questionnaire",
-      "millennium", "supersede", "liaison", "inoculate", "consensus", "minuscule"
-    ]
-  },
-  advanced: {
-    easy: [
-      "hierarchy", "independent", "fluorescent", "pronunciation", "vacuum",
-      "rhythm", "pseudonym", "synonym"
-    ],
-    medium: [
-      "entrepreneur", "questionnaire", "perseverance", "occasionally",
-      "disappointment", "recommendation", "acknowledgment", "phenomenon",
-      "extraordinary", "sophisticated"
-    ],
-    hard: [
-      "miscellaneous", "conscientious", "onomatopoeia", "idiosyncrasy",
-      "chiaroscuro", "bureaucratic", "unparalleled", "inextricable",
-      "pharmaceutical", "counterintuitive"
-    ]
-  },
-  animals: {
-    easy: [
-      "lion", "tiger", "zebra", "panda", "koala", "camel", "turtle",
-      "rabbit", "monkey", "parrot", "dolphin", "penguin", "giraffe", "jaguar"
-    ],
-    medium: [
-      "cheetah", "gorilla", "leopard", "squirrel", "crocodile", "flamingo",
-      "kangaroo", "octopus", "pelican", "chimpanzee", "hedgehog", "armadillo"
-    ],
-    hard: [
-      "rhinoceros", "hippopotamus", "platypus", "orangutan", "chameleon",
-      "caterpillar", "nightingale", "albatross", "chrysalis", "axolotl"
-    ]
-  },
-  food: {
-    easy: [
-      "pizza", "pasta", "banana", "orange", "tomato", "cheese", "cookie",
-      "burger", "salad", "sushi", "bagel", "donut", "waffle", "pancake"
-    ],
-    medium: [
-      "spaghetti", "chocolate", "cinnamon", "broccoli", "strawberry",
-      "pineapple", "sandwich", "casserole", "guacamole", "croissant",
-      "lasagna", "margarine"
-    ],
-    hard: [
-      "mayonnaise", "mozzarella", "prosciutto", "cauliflower", "pomegranate",
-      "asparagus", "bouillabaisse", "charcuterie", "pumpernickel", "connoisseur"
-    ]
-  },
-  science: {
-    easy: [
-      "atom", "cell", "gravity", "energy", "magnet", "planet", "orbit",
-      "fossil", "climate", "oxygen", "protein", "virus"
-    ],
-    medium: [
-      "molecule", "electron", "neutron", "galaxy", "ecosystem", "evolution",
-      "photosynthesis", "chromosome", "laboratory", "hypothesis", "quantum", "isotope"
-    ],
-    hard: [
-      "electromagnetic", "photosynthesis", "thermodynamics", "crystallography",
-      "astrophysics", "bioluminescence", "paleontology", "spectroscopy",
-      "neurotransmitter", "deoxyribonucleic"
-    ]
-  },
-  technology: {
-    easy: [
-      "keyboard", "monitor", "battery", "router", "browser", "network",
-      "printer", "software", "hardware", "sensor"
-    ],
-    medium: [
-      "algorithm", "database", "encryption", "interface", "protocol",
-      "bandwidth", "firewall", "malware", "pixel", "bluetooth", "satellite", "semiconductor"
-    ],
-    hard: [
-      "cryptocurrency", "virtualization", "microprocessor", "asynchronous",
-      "authentication", "infrastructure", "blockchain", "interoperability",
-      "cybersecurity", "telecommunications"
-    ]
-  },
-  nature: {
-    easy: [
-      "forest", "desert", "river", "meadow", "valley", "canyon", "island",
-      "glacier", "volcano", "waterfall"
-    ],
-    medium: [
-      "wilderness", "ecosystem", "peninsula", "archipelago", "tundra",
-      "savanna", "wetland", "aurora", "estuary", "geyser", "lagoon", "mangrove"
-    ],
-    hard: [
-      "archipelago", "biodiversity", "precipitation", "photosynthesis",
-      "topography", "cataclysmic", "equinox", "solstice", "biodegradable", "deforestation"
-    ]
-  },
-  sports: {
-    easy: [
-      "soccer", "tennis", "hockey", "cricket", "rugby", "boxing",
-      "archery", "bowling", "cycling", "karate"
-    ],
-    medium: [
-      "tournament", "championship", "athlete", "gymnastics", "marathon",
-      "badminton", "volleyball", "handball", "fencing", "triathlon", "sprint", "defense"
-    ],
-    hard: [
-      "decathlon", "steeplechase", "sportsmanship", "ambidextrous",
-      "physiotherapy", "tactician", "quarterback", "interception",
-      "recreational", "professionalism"
-    ]
-  }
-};
-
-const CATEGORY_LABELS = {
-  nouns: "Nouns",
-  verbs: "Verbs",
-  adjectives: "Adjectives",
-  adverbs: "Adverbs",
-  commonlyMisspelled: "Commonly Misspelled",
-  advanced: "Advanced",
-  animals: "Animals",
-  food: "Food",
-  science: "Science",
-  technology: "Technology",
-  nature: "Nature",
-  sports: "Sports"
-};
+function loadWordLibrary() {
+  const raw = typeof WORD_LIBRARY === "object" && WORD_LIBRARY ? WORD_LIBRARY.categories : null;
+  if (!raw) { console.error("SpellCast: words.js not loaded — no words available."); return; }
+  Object.keys(raw).forEach((catKey) => {
+    const src = raw[catKey];
+    if (!src || typeof src !== "object") { console.warn("SpellCast: skipped malformed category", catKey); return; }
+    const tiers = { easy: [], medium: [], hard: [] };
+    let count = 0;
+    Object.keys(TIER_ALIASES).forEach((alias) => {
+      const tier = TIER_ALIASES[alias];
+      (Array.isArray(src[alias]) ? src[alias] : []).forEach((raw0) => {
+        const w = typeof raw0 === "string" ? raw0.trim().toLowerCase() : "";
+        if (!/^[a-z]{2,30}$/.test(w)) { console.warn("SpellCast: dropped invalid word", JSON.stringify(raw0), "in", catKey); return; }
+        if (tiers[tier].includes(w)) { console.warn("SpellCast: duplicate tier word skipped", w, catKey); return; }
+        tiers[tier].push(w);
+        count++;
+      });
+    });
+    if (!count) { console.warn("SpellCast: skipped empty category", catKey); return; }
+    WORDS[catKey] = tiers;
+    CATEGORY_LABELS[catKey] = typeof src.label === "string" && src.label.trim() ? src.label.trim() : catKey;
+  });
+}
+loadWordLibrary();
 
 const CATEGORY_KEYS = Object.keys(WORDS);
 
@@ -480,14 +321,34 @@ function shuffleArray(arr) {
   return arr;
 }
 
+// === Word selection algorithm ===
+// 1) Decks, not concatenation: every category contributes one word per sweep
+//    (round-robin), so a 20-word list can never crowd out another distinct
+//    category in "All categories" mode — each category is surfaced evenly.
+// 2) Each category tier is Fisher-Yates shuffled before the sweep, so runs
+//    feel random while every word appears exactly once per full deck pass.
+// 3) No deck mutation tricks: the built pool is immutable; getNextFreshWord
+//    walks it with an index and the recent-queue guarantees nothing repeats
+//    within a window even after decks are reshuffled.
 function buildPool() {
-  const pool = [];
-  const cats = state.category === "all" ? CATEGORY_KEYS : [state.category];
+  const cats = state.category === "all" ? CATEGORY_KEYS.slice() : [state.category];
+  const decks = [];
   cats.forEach((cat) => {
     const list = (WORDS[cat] && WORDS[cat][state.difficulty]) || [];
-    list.forEach((w) => pool.push({ word: w, category: cat }));
+    if (list.length) {
+      const deck = list.slice();
+      shuffleArray(deck);
+      decks.push({ cat, deck });
+    }
   });
-  shuffleArray(pool);
+  const pool = [];
+  let i = 0;
+  while (decks.length) {
+    const d = decks[i % decks.length];
+    if (d.deck.length) pool.push({ word: d.deck.shift(), category: d.cat });
+    if (!d.deck.length) { decks.splice(i % decks.length, 1); continue; }
+    i++;
+  }
   state.wordPool = pool;
   state.poolIndex = 0;
 }
