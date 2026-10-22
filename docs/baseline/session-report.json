@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-10-22T12:11:44.785Z",
+  "origin": "http://127.0.0.1:8123",
+  "checks": [
+    {
+      "name": "start shows the reveal phase",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "correct answer scores",
+      "ok": true,
+      "detail": "{\"streak\":1,\"correct\":1,\"score\":10}"
+    },
+    {
+      "name": "Enter advances to the next word",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "incorrect answer records a miss",
+      "ok": true,
+      "detail": "{\"incorrect\":1,\"bucket\":1,\"srs\":2}"
+    },
+    {
+      "name": "missed word lands in the bucket",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "missed word gets an SRS card",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Back re-arms the same word",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Esc skips the word and buckets it",
+      "ok": true,
+      "detail": "{\"before\":{\"len\":1,\"mistakes\":1,\"words\":2},\"after\":{\"len\":1,\"mistakes\":2,\"words\":3}}"
+    },
+    {
+      "name": "bucket panel lists the missed words",
+      "ok": true,
+      "detail": "1 items"
+    },
+    {
+      "name": "category stats panel renders rows",
+      "ok": true,
+      "detail": "2 rows"
+    },
+    {
+      "name": "category setting persists",
+      "ok": true,
+      "detail": "\"\\\"commonlyMisspelled\\\"\""
+    },
+    {
+      "name": "difficulty setting persists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "duration setting persists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "review mode setting persists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pool follows the selected category",
+      "ok": true,
+      "detail": "[\"commonlyMisspelled\"]"
+    },
+    {
+      "name": "volume control appears when sound is on",
+      "ok": true,
+      "detail": "{\"enabled\":true,\"volumeVisible\":true}"
+    },
+    {
+      "name": "volume control hides when sound is off",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "theme toggle switches to dark",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "finishing mid-deck asks for confirmation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "cancelling the finish confirm closes it",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "summary shows session results",
+      "ok": true,
+      "detail": "{\"words\":\"3\",\"accuracy\":\"50%\",\"bucketAdds\":\"1\"}"
+    },
+    {
+      "name": "delete-all dialog opens",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "delete-all cancel closes it",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no console errors during the whole session",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "consoleProblems": [],
+  "passed": true
+}

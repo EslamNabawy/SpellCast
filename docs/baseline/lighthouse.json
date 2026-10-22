@@ -1,0 +1,141 @@
+{
+  "generatedAt": "2026-10-22T12:28:57.937Z",
+  "results": [
+    {
+      "preset": "desktop",
+      "scores": {
+        "performance": 1,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "metrics": {
+        "fcp": "0.1 s",
+        "lcp": "0.1 s",
+        "tbt": "0 ms",
+        "cls": "0",
+        "speedIndex": "0.1 s"
+      },
+      "failedAudits": [
+        {
+          "id": "render-blocking-resources",
+          "score": 0.5,
+          "title": "Eliminate render-blocking resources"
+        },
+        {
+          "id": "unminified-javascript",
+          "score": 0.5,
+          "title": "Minify JavaScript"
+        },
+        {
+          "id": "unused-css-rules",
+          "score": 0.5,
+          "title": "Reduce unused CSS"
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0.5,
+          "title": "Reduce unused JavaScript"
+        },
+        {
+          "id": "uses-text-compression",
+          "score": 0.5,
+          "title": "Enable text compression"
+        },
+        {
+          "id": "bf-cache",
+          "score": 0,
+          "title": "Page prevented back/forward cache restoration"
+        },
+        {
+          "id": "document-latency-insight",
+          "score": 0.5,
+          "title": "Document request latency"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0.5,
+          "title": "Render blocking requests"
+        }
+      ]
+    },
+    {
+      "preset": "mobile",
+      "scores": {
+        "performance": 0.99,
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1
+      },
+      "metrics": {
+        "fcp": "1.7 s",
+        "lcp": "1.7 s",
+        "tbt": "0 ms",
+        "cls": "0.009",
+        "speedIndex": "1.7 s"
+      },
+      "failedAudits": [
+        {
+          "id": "first-contentful-paint",
+          "score": 0.93,
+          "title": "First Contentful Paint"
+        },
+        {
+          "id": "largest-contentful-paint",
+          "score": 0.99,
+          "title": "Largest Contentful Paint"
+        },
+        {
+          "id": "render-blocking-resources",
+          "score": 0,
+          "title": "Eliminate render-blocking resources"
+        },
+        {
+          "id": "unminified-javascript",
+          "score": 0,
+          "title": "Minify JavaScript"
+        },
+        {
+          "id": "unused-css-rules",
+          "score": 0,
+          "title": "Reduce unused CSS"
+        },
+        {
+          "id": "unused-javascript",
+          "score": 0,
+          "title": "Reduce unused JavaScript"
+        },
+        {
+          "id": "uses-text-compression",
+          "score": 0,
+          "title": "Enable text compression"
+        },
+        {
+          "id": "bf-cache",
+          "score": 0,
+          "title": "Page prevented back/forward cache restoration"
+        },
+        {
+          "id": "document-latency-insight",
+          "score": 0.5,
+          "title": "Document request latency"
+        },
+        {
+          "id": "network-dependency-tree-insight",
+          "score": 0,
+          "title": "Network dependency tree"
+        },
+        {
+          "id": "render-blocking-insight",
+          "score": 0,
+          "title": "Render blocking requests"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-10-22T12:11:52.812Z",
+  "fixture": "..\\..\\docs\\baseline\\fixture.json",
+  "checks": [
+    {
+      "name": "fixture captured with progress keys",
+      "ok": true,
+      "detail": "spellsprint.bestStreak, spellsprint.bucket, spellsprint.customWords, spellsprint.darkMode, spellsprint.highScore, spellsprint.lifetimeCorrect, spellsprint.preferredCategory, spellsprint.preferredDifficulty, spellsprint.preferredDuration, spellsprint.soundEnabled, spellsprint.srsCards, spellsprint.totalLifetimeWords"
+    },
+    {
+      "name": "fixture contains the custom word",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no progress key lost or rewritten on load",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "custom words restored",
+      "ok": true,
+      "detail": "zephyrine"
+    },
+    {
+      "name": "SRS cards restored",
+      "ok": true,
+      "detail": "3"
+    },
+    {
+      "name": "settings restored from storage",
+      "ok": true,
+      "detail": "{\"customWords\":[\"zephyrine\"],\"srsCards\":3,\"bucket\":1,\"category\":\"verbs\",\"difficulty\":\"hard\",\"duration\":3000,\"soundEnabled\":true,\"darkMode\":true,\"highScore\":10,\"bestStreak\":1}"
+    },
+    {
+      "name": "theme preference restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no console errors while loading the fixture",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "passed": true
+}
