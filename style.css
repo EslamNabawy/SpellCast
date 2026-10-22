@@ -60,6 +60,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .settings-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .field{display:flex;flex-direction:column;gap:6px}.field label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
 .field select,.input{padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper);width:100%}
+.input::placeholder{color:var(--ink-faint);opacity:1}
 .input-large{padding:14px 16px;font-size:18px;font-weight:600;text-align:center}
 .input-sm{padding:9px 10px;font-size:14px}
 .field-toggle{flex-direction:row;align-items:center;justify-content:space-between}
