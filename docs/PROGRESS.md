@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** Phase 4/5 visual redesign — **v=29 shipped** (mockup layout + self-hosted type + segment strip)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `7a57b30`, serving `v=29`)
+**Current phase:** v=30 shipped — accordion right deck, bucket/categories moved into the deck, panel polish (v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `b120851`, serving `v=30`)
 
 ---
 
@@ -224,4 +224,4 @@ Scope (user review of v=29): kill the scrollable panels in the right deck, move 
 
 **Harness / QA** (session.mjs + capture-matrix.mjs wait on `#bucketPanel[open]`/`#categoryStatsPanel[open]`; session.mjs/fixture.mjs open the containing `<details>` before driving `#reviewModeSelect`/`#customWordInput`; layout.mjs opens the tallest (bucket) section during overflow measurement)
 - Full run 6/6 PASS — session 29/29, fixture 8/8, a11y (12 axe runs, 0 violations; 150 probes, 0 failures; reduced-motion neutralised), layout 21 checks (incl. 375 px sheet), matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile perf 0.96 / a11y 1 (LCP 2.5 s, CLS 0).
-- **Rollout:** this release lands as one code+docs commit on `levelup` → merge `main` → push (Pages); hash + run id + live verification appended in the follow-up docs commit, as with v=29.
+- **Rollout:** single commit on `main` (`b120851`, 8 files, +144/−77); Pages run `39828809004` success (~2 m). **Verified live:** `index.html?v=30` 24,770 B · CSS 32,105 B · script 84,003 B; reloaded page reports **0 console errors**, 4 deck sections with exactly one open, bucket click retracts Performance (exclusive accordion confirmed live), fonts loaded, footer = single Finish.
