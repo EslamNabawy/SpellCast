@@ -1,9 +1,9 @@
 /* SpellSprint — clean rebuild */
 :root{
   --paper:#FAF8F3; --paper-raised:#FFFFFF; --paper-soft:#F2EFE8;
-  --ink:#1F2421; --ink-soft:#5B6560; --ink-faint:#9AA0A6;
+  --ink:#1F2421; --ink-soft:#5B6560; --ink-faint:#676E68;
   --line:#E7E2D6; --line-soft:#EDE9DE;
-  --accent:#2D6A4F; --accent-strong:#1B4332; --accent-tint:#E7F0EA; --accent-glow:rgba(45,106,79,.16);
+  --accent:#2D6A4F; --accent-strong:#1B4332; --accent-tint:#E7F0EA; --accent-glow:rgba(45,106,79,.16); --accent-btn:#2D6A4F;
   --correct:#2D6A4F; --correct-tint:#E7F0EA; --incorrect:#B4532A; --incorrect-tint:#F7EBE6;
   --font-display:Georgia,"Iowan Old Style",Palatino,serif;
   --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -11,13 +11,20 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 8px 28px rgba(0,0,0,.08);
   --max:640px; --dur-fast:140ms; --dur-med:280ms; --ease:cubic-bezier(.22,1,.36,1);
 }
-.theme-normal{--accent:#2D6A4F;--accent-strong:#1B4332;--accent-tint:#E7F0EA;--accent-glow:rgba(45,106,79,.14)}
-.theme-warm{--accent:#C08A2E;--accent-strong:#8F6414;--accent-tint:#FBF0DC;--accent-glow:rgba(192,138,46,.18)}
-.theme-fire{--accent:#C1572A;--accent-strong:#96401C;--accent-tint:#FBE7DA;--accent-glow:rgba(193,87,42,.2)}
-.theme-electric{--accent:#A6459A;--accent-strong:#7B2E72;--accent-tint:#F6E4F3;--accent-glow:rgba(166,69,154,.2)}
-.theme-rocket{--accent:#5B4FCF;--accent-strong:#3E349E;--accent-tint:#E9E6FB;--accent-glow:rgba(91,79,207,.22)}
-.theme-legendary{--accent:#B08420;--accent-strong:#8A6414;--accent-tint:#FAF0D8;--accent-glow:rgba(176,132,32,.26);--paper:#FDFAF2}
-html[data-theme="dark"]{--paper:#111416;--paper-raised:#1B1F23;--paper-soft:#15191C;--ink:#E8E6E1;--ink-soft:#A0A6AD;--ink-faint:#6E7580;--line:#252A30;--line-soft:#1E2328;--shadow-sm:0 1px 2px rgba(0,0,0,.4);--shadow-md:0 12px 32px rgba(0,0,0,.5)}
+.theme-normal{--accent:#2D6A4F;--accent-strong:#1B4332;--accent-tint:#E7F0EA;--accent-glow:rgba(45,106,79,.14);--accent-btn:#2D6A4F}
+.theme-warm{--accent:#C08A2E;--accent-strong:#8F6414;--accent-tint:#FBF0DC;--accent-glow:rgba(192,138,46,.18);--accent-btn:#8F6414}
+.theme-fire{--accent:#C1572A;--accent-strong:#96401C;--accent-tint:#FBE7DA;--accent-glow:rgba(193,87,42,.2);--accent-btn:#A8481D}
+.theme-electric{--accent:#A6459A;--accent-strong:#7B2E72;--accent-tint:#F6E4F3;--accent-glow:rgba(166,69,154,.2);--accent-btn:#A6459A}
+.theme-rocket{--accent:#5B4FCF;--accent-strong:#3E349E;--accent-tint:#E9E6FB;--accent-glow:rgba(91,79,207,.22);--accent-btn:#5B4FCF}
+.theme-legendary{--accent:#B08420;--accent-strong:#8A6414;--accent-tint:#FAF0D8;--accent-glow:rgba(176,132,32,.26);--accent-btn:#8A6414;--paper:#FDFAF2}
+html[data-theme="dark"]{--paper:#111416;--paper-raised:#1B1F23;--paper-soft:#15191C;--ink:#E8E6E1;--ink-soft:#A8AEB5;--ink-faint:#9AA1AB;--line:#252A30;--line-soft:#1E2328;--shadow-sm:0 1px 2px rgba(0,0,0,.4);--shadow-md:0 12px 32px rgba(0,0,0,.5)}
+/* dark-mode streak themes: tints blend into the dark surface, strong becomes a light ink */
+html[data-theme="dark"] .theme-normal{--accent-tint:#1E2B2A;--accent-strong:#86D6AE;--accent-glow:rgba(45,106,79,.32)}
+html[data-theme="dark"] .theme-warm{--accent-tint:#353025;--accent-strong:#EFC272;--accent-glow:rgba(192,138,46,.32)}
+html[data-theme="dark"] .theme-fire{--accent-tint:#362825;--accent-strong:#F0A183;--accent-glow:rgba(193,87,42,.32)}
+html[data-theme="dark"] .theme-electric{--accent-tint:#312536;--accent-strong:#E7A0DE;--accent-glow:rgba(166,69,154,.32)}
+html[data-theme="dark"] .theme-rocket{--accent-tint:#25273E;--accent-strong:#A79DF3;--accent-glow:rgba(91,79,207,.32)}
+html[data-theme="dark"] .theme-legendary{--accent-tint:#332F23;--accent-strong:#E5C168;--accent-glow:rgba(176,132,32,.32);--paper:#14161A}
 html[data-theme="dark"] body{background:var(--paper)}
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{background:var(--paper);color:var(--ink);font-family:var(--font-ui);font-size:16px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -118,7 +125,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .score-float.play{animation:floatUp 900ms var(--ease)}
 @keyframes floatUp{0%{opacity:0;transform:translateY(6px)}20%{opacity:1;transform:translateY(0)}75%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-22px)}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:var(--radius-sm);border:1px solid transparent;font-weight:700;font-size:14px;transition:transform var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
-.btn:active{transform:scale(.97)}.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-strong)}
+.btn:active{transform:scale(.97)}.btn-primary{background:var(--accent-btn);color:#fff}.btn-primary:hover{filter:brightness(1.12)}
 .btn-quiet{background:transparent;color:var(--ink-soft);border-color:var(--line)}.btn-quiet:hover{border-color:var(--accent);color:var(--ink)}
 .btn-secondary{background:var(--ink);color:var(--paper)}.btn-secondary:hover{opacity:.9}
 .btn-danger{background:var(--incorrect);color:#fff}.btn-danger:hover{background:#963F1A}
@@ -150,14 +157,20 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .modal-body-text{font-size:14px;color:var(--ink-soft);margin:0 0 8px}.modal-list{margin:0 0 16px;padding-left:18px;font-size:14px}.modal-actions{display:flex;gap:8px;justify-content:flex-end}
 .confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}.confetti-piece{position:absolute;top:-10px;width:8px;height:14px;opacity:.9;animation:confettiFall 1s cubic-bezier(.4,0,.6,1) forwards}
 @keyframes confettiFall{0%{transform:translateY(0) rotate(0);opacity:.95}100%{transform:translateY(300px) rotate(280deg);opacity:0}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}.confetti-layer{display:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}.confetti-layer{display:none}}
 @media(max-width:560px){.app{padding:12px 12px 32px}.settings-form{grid-template-columns:1fr}.add-word-row{grid-template-columns:1fr 1fr 1fr}.game-top-bar{flex-wrap:wrap}.session-line{justify-content:flex-start}.game-footer-actions{grid-template-columns:1fr;gap:6px}}
 @media(max-width:760px){.header-inner{flex-wrap:wrap}.status-group{order:3;flex-basis:100%;justify-content:flex-start}.pill-label{display:none}}
 @media(max-width:380px){.status-group{gap:4px}.pill{padding:5px 8px;font-size:12px}}
+/* single-column layout: no empty deck headings, and no dashboard duplicate (header pills already carry it) */
+@media(max-width:999px){
+  .deck-title{display:none}
+  .deck .dashboard{display:none}
+  .deck-left .settings-panel{margin-top:0}
+}
 .deck-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
 .deck-group{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
-@media(min-width:900px){
-  .app{max-width:1280px;display:grid;grid-template-columns:290px minmax(0,660px) 290px;gap:18px;align-items:start;justify-content:center;padding:22px 18px 40px}
+@media(min-width:1000px){
+  .app{max-width:1360px;display:grid;grid-template-columns:minmax(230px,270px) minmax(0,1fr) minmax(230px,270px);gap:18px;align-items:start;justify-content:center;padding:22px 18px 40px}
   .header{grid-column:1/-1;position:sticky;top:0;padding:0;background:var(--paper);z-index:30}
   .header-inner{padding:12px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
   .status-group{justify-content:center}
@@ -175,6 +188,6 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
   .deck .dashboard .stat-card{flex-direction:row;justify-content:space-between;padding:12px 14px;min-height:52px}
   .deck .dashboard .stat-label{flex:1;text-align:left}.deck .dashboard .stat-value{text-align:right;min-width:44px}
 }
-@media(min-width:1180px){
-  .app{grid-template-columns:300px minmax(0,660px) 300px;column-gap:22px}
+@media(min-width:1400px){
+  .app{grid-template-columns:minmax(260px,300px) minmax(0,1fr) minmax(260px,300px);column-gap:22px}
 }
