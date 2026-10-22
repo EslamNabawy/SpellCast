@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SPELLSPRINT — SCRIPT.JS
+   SPELLCAST — SCRIPT.JS
    Vanilla JS spelling trainer. No frameworks, no build step, no backend.
    ========================================================================== */
 
@@ -102,21 +102,50 @@ const BUCKET_MIX_RATIO = 0.6; // 60% bucket words when bucket has entries
 // ================================
 
 const LS_KEYS = {
-  highScore: "spellsprint.highScore",
-  bestStreak: "spellsprint.bestStreak",
-  totalLifetimeWords: "spellsprint.totalLifetimeWords",
-  lifetimeCorrect: "spellsprint.lifetimeCorrect",
-  preferredCategory: "spellsprint.preferredCategory",
-  preferredDifficulty: "spellsprint.preferredDifficulty",
-  preferredDuration: "spellsprint.preferredDuration",
-  soundEnabled: "spellsprint.soundEnabled",
-  soundVolume: "spellsprint.soundVolume",
-  bucket: "spellsprint.bucket",
-  customWords: "spellsprint.customWords",
-  srsCards: "spellsprint.srsCards",
-  reviewMode: "spellsprint.reviewMode",
-  darkMode: "spellsprint.darkMode"
+  schemaVersion: "spellcast.schemaVersion",
+  highScore: "spellcast.highScore",
+  bestStreak: "spellcast.bestStreak",
+  totalLifetimeWords: "spellcast.totalLifetimeWords",
+  lifetimeCorrect: "spellcast.lifetimeCorrect",
+  preferredCategory: "spellcast.preferredCategory",
+  preferredDifficulty: "spellcast.preferredDifficulty",
+  preferredDuration: "spellcast.preferredDuration",
+  soundEnabled: "spellcast.soundEnabled",
+  soundVolume: "spellcast.soundVolume",
+  bucket: "spellcast.bucket",
+  customWords: "spellcast.customWords",
+  srsCards: "spellcast.srsCards",
+  reviewMode: "spellcast.reviewMode",
+  darkMode: "spellcast.darkMode"
 };
+
+// Current storage schema. Bump when the SHAPE of a stored value changes and
+// add a migration step in migrateLegacyStorage() below.
+const SCHEMA_VERSION = 2;
+
+// One-shot migration: the pre-rename build stored everything under
+// "spellsprint.*". If a browser still holds those keys, move them to their
+// "spellcast.*" equivalent instead of starting over.
+function migrateLegacyStorage() {
+  const legacy = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.indexOf("spellsprint.") === 0) legacy.push(key);
+  }
+  if (!legacy.length) return 0;
+  let moved = 0;
+  legacy.forEach((oldKey) => {
+    const newKey = "spellcast." + oldKey.slice("spellsprint.".length);
+    const value = localStorage.getItem(oldKey);
+    if (value !== null && localStorage.getItem(newKey) === null) {
+      localStorage.setItem(newKey, value);
+      moved++;
+    }
+    localStorage.removeItem(oldKey);
+  });
+  if (moved) console.info(`SpellCast: migrated ${moved} legacy spellsprint.* key(s) to spellcast.*`);
+  return moved;
+}
 
 // ================================
 // APPLICATION STATE
@@ -1981,6 +2010,8 @@ function attachEventListeners() {
 // ================================
 
 function init() {
+  migrateLegacyStorage();
+  saveLocal(LS_KEYS.schemaVersion, SCHEMA_VERSION);
   loadAllPersisted();
   applySettingsToForm();
   buildPool();
