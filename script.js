@@ -1784,12 +1784,15 @@ function attachEventListeners() {
     beginRound();
   });
 
-  // Pasting into the answer field is not allowed — desktop clipboard,
-  // drag-and-drop, or a mobile keyboard all count. The app exists to train
-  // recall from memory, so text can only arrive through typing.
+  // Pasting into the answer field: allowed in general (password managers,
+  // natural text entry), but the target word itself may not arrive via the
+  // clipboard — desktop, drag-and-drop, or a mobile keyboard all count.
   dom.answerInput.addEventListener("paste", (e) => {
-    e.preventDefault();
     if (state.phase !== "type") return;
+    const text = e.clipboardData ? (e.clipboardData.getData("text") || "").trim().toLowerCase() : "";
+    const word = state.currentWord ? state.currentWord.word.toLowerCase() : "";
+    if (!word || !text.includes(word)) return;
+    e.preventDefault();
     const toast = document.createElement("div");
     toast.className = "toast";
     toast.innerHTML = `<span class="toast-text"><span class="toast-title">No pasting</span><span class="toast-sub">Type it from memory — that's the practice.</span></span>`;
