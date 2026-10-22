@@ -10,7 +10,10 @@ const checks = {
   "bespoke modals removed": !html.includes("finishOverlay") && !html.includes("resetAllOverlay") && !html.includes("resetSessionOverlay"),
   "h1 brand": html.includes('<h1 class="brand-name"'),
   "og tags": html.includes("og:image") && html.includes("twitter:card"),
-  "v=27 x3": (html.match(/\?v=27/g) || []).length === 3,
+  "v refs all match": (() => {
+    const v = (html.match(/\?v=(\d+)/g) || []).map((s) => s.split("=")[1]);
+    return v.length === 3 && v.every((x) => x === v[0]);
+  })(),
   "no mojibake": !html.includes("â€") && !html.includes("\uFFFD"),
   "icons intact": html.includes("✎") && html.includes("⏱") && html.includes("×") && html.includes("✓"),
   "em dash intact": html.includes("—")
