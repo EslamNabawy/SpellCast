@@ -1,10 +1,10 @@
 # SpellCast — UI/UX Design Handover
 
-**Product:** SpellCast — a fast, single-purpose English spelling trainer
+**Product:** SpellCast — a fast, single-purpose English spelling trainer (storage keys keep the historical `spellsprint.*` prefix; the UI name is SpellCast — plan §0 naming decision recorded below)
 **Live:** https://eslamnabawy.github.io/SpellCast/
 **Repo:** https://github.com/EslamNabawy/SpellCast (branch `main`)
 **Stack:** Plain HTML + CSS + vanilla JS. No frameworks, no build step, no backend. All state is `localStorage`.
-**Prepared:** October 2026 · v2 word library (457 words in `words.js`)
+**Prepared:** October 2026 · v2 word library (457 words in `words.js`) · updated for Release v=26
 
 ---
 
@@ -22,6 +22,8 @@ Everything runs in one page. No routes, no pages.
 
 ## 2. Current layout (recording of structure, not a design brief)
 
+**Cache-bust:** assets now ship as `?v=26`. Header carries exactly two pills: **streak** and the **session clock** (labelled "time", with a tooltip) — score/best/accuracy live only in the right-panel stat cards (Streak's stat card is hidden on desktop so no metric appears twice at the same viewport). The game-card top bar shows one **12-segment deck-progress bar** (`#deckProgress`, `role=progressbar`, aria-valuenow = words revealed in the current full-deck pass; `state.deckRevealed` resets whenever `buildPool()` runs) plus small correct/incorrect chips. Feedback already ships icon + text + `aria-live` (✓/"Correct" and ×/"Not quite").
+
 One column, max-width `--max: 640px`, centered:
 
 | Region | Element (`id`) | Role |
@@ -30,13 +32,15 @@ One column, max-width `--max: 640px`, centered:
 | Left deck | `aside.deck.deck-left` > `section.settings-panel#settingsPanel` | Settings drawer: category select, difficulty select, timer select (2s default), sound toggle, My Words manager (add word / create category / export / import / reset), SRS management (bucket, category stats toggles) |
 | Center | `main.game-card#gameCard` | The actual game: category tag pill + timer pill, definition/hint text, answer input, Check/Skip buttons, keyboard shortcuts (Enter = check/next, Esc = inline modals only) |
 | Expanders | `section.expand-panel#bucketPanel`, `#categoryStatsPanel` | Weak-word review list; per-category accuracy chips |
-| Right deck | `aside.deck.deck-right` > `section.dashboard` | Session stats: streak, best streak, time, input accuracy chips, categories |
+| Right deck | `aside.deck.deck-right` > `section.dashboard` | Session stats: score, accuracy, best (streak lives in the header) |
 | Session end | Summary modal (via `#summaryCloseBtn`, `#summaryNewSessionBtn`) | Words seen, correct, mastered, records |
 | Feedback | Toast system (bottom), `aria-live` announcements | Correct/incorrect flashes, "No pasting" warning |
 
 Mobile (≤ 720px): left/right decks become one stacked column; the settings drawer opens as a **full-height sheet** (`body.settings-open` slides the game card aside). Desktop shows decks on the sides.
 
 ## 3. Design system as it exists today (tokens in `style.css`)
+
+*(CSS block unchanged — see `style.css`. Updated for v=26: header pills reduced to streak + labelled clock; session progress is a single 12-segment deck bar (`#deckProgress`); Finish is a ghost button with a mid-deck confirm modal (`#finishOverlay`); Reset all sits in a separated "danger zone" in the settings panel; internal scrollbars are thin and subtle; the old "Word N"/"Word X of 12" dual readouts are gone.)*
 
 ```
 --paper #FAF8F3 (warm cream bg)   --paper-raised #FFFFFF   --paper-soft #F2EFE8
@@ -86,11 +90,13 @@ Ranked by user impact:
 
 - `index.html` is one file; the game DOM lives inside `#gameCard` (`id`s used by JS — keep ids stable or update `script.js` refs: `dom.answerInput`, `dom.startBtn`, `dom.checkBtn`, etc., all wired in one block at the top).
 - `style.css` is 216 lines of plain CSS organized by region (header/decks/game/panels/dark). Media queries: 720px (stack), plus pointer handling for the settings sheet.
-- **Cache busting:** every asset URL carries `?v=N`. Current: `style.css?v=25`, `words.js?v=25`, `script.js?v=25`. Any CSS change needs a `v=26` bump in `index.html` or GitHub Pages will serve stale CSS (rebuild is ~60–90s).
+- **Cache busting:** every asset URL carries `?v=N`. Current: `style.css?v=26`, `words.js?v=26`, `script.js?v=26`. Any CSS change needs a `v=27` bump in `index.html` (all three files) or GitHub Pages will serve stale assets (rebuild is ~60–90s).
 - Deploy is just `git push` to `main`. No CI. Keeping Lighthouse clean requires re-auditing after major visual changes.
 - Fonts: currently system + Georgia by choice (fast, no webfont request). If adding a display webfont, subset it and keep total transfer < 60KB to preserve the 1/1/1 scores.
 
 ## 8. Suggested design deliverables
+
+**Release v=26 is done (2026-10-22).** Shipped: single-home stats, single progress bar, overflow guards + thin scrollbars, ghost Finish with mid-deck confirm, danger-zone Reset-all, human microcopy, labelled session clock. Tasks 26.4 (volume greyed with sound off) and 26.7 (icon+text feedback) were verified as already shipped in v=25. Baseline audit + QA evidence: `docs/baseline/BASELINE.md`. Next release is v=27 (SRS vocabulary unification, session-setup merge, spelling diff, actionable summary, onboarding, timer stages, difficulty previews).
 
 1. **Theme audit + tokens refresh** — keep the stationery soul, tighten hierarchy; produce revised `:root` token sheet.
 2. **Game screen hero states** — home (pre-session), in-play, correct flash, incorrect reveal, summary modal. Desktop + 390px mobile frames.3. **Progress/mastery visualization** concept in the stats deck (collections per category, streak calendar, weakest-words callout).
