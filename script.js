@@ -113,6 +113,7 @@ const LS_KEYS = {
   customWords: "spellcast.customWords",
   srsCards: "spellcast.srsCards",
   reviewMode: "spellcast.reviewMode",
+  chunkWords: "spellcast.chunkWords",
   darkMode: "spellcast.darkMode"
 };
 
@@ -170,6 +171,7 @@ const state = {
   difficulty: "medium",
   duration: 2000,
   soundEnabled: false,
+  chunkWords: true, // render long words as syllable chips (user option)
 
   sessionWords: 0,
   sessionBucketAdds: 0,
@@ -218,6 +220,7 @@ const dom = {
   difficultySelect: document.getElementById("difficultySelect"),
   durationSelect: document.getElementById("durationSelect"),
   soundToggle: document.getElementById("soundToggle"),
+  chunkToggle: document.getElementById("chunkToggle"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   resetAllBtn: document.getElementById("resetAllBtn"),
   themeToggle: document.getElementById("themeToggle"),
@@ -516,6 +519,10 @@ function setPhase(phase) {
   // keyboard shut after every answer. Parked, it keeps focus and the keyboard
   // stays up; only the session summary (which blurs it on purpose) closes it.
   dom.phaseType.classList.toggle("phase-parked", phase !== "type");
+  // parked, the field stays focusable (the keyboard must survive) but must not
+  // sit in the tab order — only the type phase exposes it
+  if (phase === "type") dom.answerInput.removeAttribute("tabindex");
+  else dom.answerInput.tabIndex = -1;
   dom.phaseCorrect.hidden = phase !== "correct";
   dom.phaseIncorrect.hidden = phase !== "incorrect";
   if (phase === "ready") {
@@ -524,15 +531,15 @@ function setPhase(phase) {
     // don't steal focus to div — keep announce only
   } else if (phase === "type") {
     requestAnimationFrame(() => dom.answerInput.focus());
-  } else if (phase === "correct") {
-    requestAnimationFrame(() => dom.nextAfterCorrectBtn.focus());
-  } else if (phase === "incorrect") {
-    requestAnimationFrame(() => dom.nextAfterIncorrectBtn.focus());
   }
+  // correct/incorrect deliberately take no focus: stealing it to the Next
+  // button would blur the parked answer input and close the keyboard the
+  // moment you check the word (Enter advances via the global handler)
 }
 
 // ---- syllable chunking: long words render as chunk chips so the spelling can
-// be memorised in pieces (the mockup's chunk chips, always on). The spans hold
+// be memorised in pieces (the mockup's chunk chips — switchable via "Word
+// chunks" in Practice). The spans hold
 // no whitespace between them, so #wordDisplay.textContent is still exactly the
 // word — for tests and for screen readers. Anything that does not reassemble
 // to the exact word falls back to plain display.
@@ -545,7 +552,7 @@ function splitIntoSyllables(word) {
 }
 
 function renderWordDisplay(word) {
-  if (word.length > 4) {
+  if (state.chunkWords && word.length > 4) {
     const chunks = splitIntoSyllables(word);
     if (chunks.length > 1 && chunks.join("") === word) {
       dom.wordDisplay.innerHTML = chunks.map((c) => `<span class="chunk">${c}</span>`).join("");
@@ -948,6 +955,7 @@ function loadAllPersisted() {
   state.soundEnabled = loadLocal(LS_KEYS.soundEnabled, false);
   state.soundVolume = loadLocal(LS_KEYS.soundVolume, 0.5);
   state.reviewMode = loadLocal(LS_KEYS.reviewMode, "mixed");
+  state.chunkWords = loadLocal(LS_KEYS.chunkWords, true);
   state.darkMode = loadLocal(LS_KEYS.darkMode, false);
   // inject customs into WORDS
   rebuildCustomWordsIntoWORDS();
@@ -1479,7 +1487,9 @@ function closeSummary() {
   dom.summaryOverlay.hidden = true;
   state.sessionStartTime = null;
   refreshReadyState();
-  if (summaryOpener && document.contains(summaryOpener)) {
+  // never hand focus back to the parked answer input — that would pop a
+  // software keyboard open with no visible field under it
+  if (summaryOpener && summaryOpener !== dom.answerInput && document.contains(summaryOpener)) {
     try { summaryOpener.focus(); } catch (e) { /* ignore */ }
   }
   summaryOpener = null;
@@ -1560,8 +1570,6 @@ function handleCorrectAnswer(word, category, fromBucket, isSrs) {
   if (result.newHighScore && state.score > 0) {
     setTimeout(() => showHighScoreToast(), 250);
   }
-
-  dom.nextAfterCorrectBtn.focus();
 }
 
 function handleIncorrectAnswer(word, category, rawInput, isSrs) {
@@ -1587,8 +1595,6 @@ function handleIncorrectAnswer(word, category, rawInput, isSrs) {
   flashCard("incorrect");
   playTone("incorrect");
   announce(`Not quite. The correct spelling is ${word}. Added to your practice bucket.`);
-
-  dom.nextAfterIncorrectBtn.focus();
 }
 
 // ================================
@@ -1608,6 +1614,7 @@ const SETTING_DEFS = {
   reviewMode: { label: "Review mode", storageKey: "reviewMode", affectsSession: true, values: () => ["mixed", "dueOnly"] },
   soundEnabled: { label: "Sound", storageKey: "soundEnabled", affectsSession: false, values: () => [true, false] },
   soundVolume: { label: "Volume", storageKey: "soundVolume", affectsSession: false, values: () => [0, 0.25, 0.5, 0.75, 1] },
+  chunkWords: { label: "Word chunks", storageKey: "chunkWords", affectsSession: false, values: () => [true, false] },
   darkMode: { label: "Dark mode", storageKey: "darkMode", affectsSession: false, values: () => [true, false] }
 };
 
@@ -1634,6 +1641,9 @@ function setSetting(key, value, options) {
     if (value) { getAudioCtx(); playTone("correct"); }
   }
   if (key === "darkMode") applyTheme();
+  if (key === "chunkWords" && state.currentWord && (state.phase === "see" || state.phase === "type")) {
+    renderWordDisplay(state.currentWord.word); // take effect on the word on screen
+  }
   applySettingsToForm();
   if (opts.announce !== false) announce(`${def.label}: ${settingLabel(key, value)}`);
   return true;
@@ -1696,6 +1706,7 @@ function applySettingsToForm() {
   dom.durationSelect.value = String(state.duration);
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   setSoundToggleUI(state.soundEnabled);
+  setChunkToggleUI(state.chunkWords);
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
   if (dom.volumeField) dom.volumeField.hidden = !state.soundEnabled;
   applyTheme();
@@ -1707,6 +1718,11 @@ function setSoundToggleUI(enabled) {
   if (dom.volumeField) {
     dom.volumeField.hidden = !enabled;
   }
+}
+
+function setChunkToggleUI(enabled) {
+  dom.chunkToggle.setAttribute("aria-checked", String(enabled));
+  dom.chunkToggle.querySelector(".toggle-state").textContent = enabled ? "On" : "Off";
 }
 
 // Virtual keyboards refuse the suggestion strip (and the clipboard chip) for
@@ -1989,12 +2005,14 @@ function attachEventListeners() {
   // while a modal is open.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
-    if (isTextEntryTarget(e.target)) return;
     if (anyModalOpen()) return;
     if (state.phase === "correct" || state.phase === "incorrect") {
+      // the parked answer input keeps focus (keyboard stays up) — Enter on it
+      // must still advance; every other text field keeps its Enter behaviour
+      if (isTextEntryTarget(e.target) && e.target !== dom.answerInput) return;
       e.preventDefault();
       beginRound();
-    } else if (state.phase === "ready" && document.activeElement !== dom.answerInput) {
+    } else if (state.phase === "ready" && !isTextEntryTarget(e.target) && document.activeElement !== dom.answerInput) {
       // allow starting with Enter when focus isn't inside a form control
       const tag = document.activeElement.tagName;
       if (tag !== "SELECT" && tag !== "BUTTON") {
@@ -2032,6 +2050,10 @@ function attachEventListeners() {
 
   dom.soundToggle.addEventListener("click", () => {
     setSetting("soundEnabled", !state.soundEnabled);
+  });
+
+  dom.chunkToggle.addEventListener("click", () => {
+    setSetting("chunkWords", !state.chunkWords);
   });
 
   dom.volumeSlider.addEventListener("input", () => {

@@ -34,6 +34,12 @@
 .theme-electric{--accent:#A6459A;--accent-strong:#7B2E72;--accent-tint:#F6E4F3;--accent-glow:rgba(166,69,154,.2);--accent-btn:#A6459A;--progress-fill:var(--accent)}
 .theme-rocket{--accent:#5B4FCF;--accent-strong:#3E349E;--accent-tint:#E9E6FB;--accent-glow:rgba(91,79,207,.22);--accent-btn:#5B4FCF;--progress-fill:var(--accent)}
 .theme-legendary{--accent:#B08420;--accent-strong:#8A6414;--accent-tint:#FAF0D8;--accent-glow:rgba(176,132,32,.26);--accent-btn:#8A6414;--paper:#FDFAF2;--progress-fill:var(--accent)}
+/* these two reference other custom props and MUST substitute on the theme
+   element (body): declared at :root they freeze html's own default accent
+   and ignore every .theme-* override — the dark ON-track fell back to
+   :root's #1B4332 (1.61:1 on the deck) instead of the dark accent */
+body{--brand-tile:var(--accent-strong);--accent-on:var(--accent)}
+html[data-theme="dark"] body{--brand-tile:var(--accent-strong);--accent-on:var(--accent-strong)}
 html[data-theme="dark"]{
   color-scheme:dark;
   --paper:#020617; --paper-raised:#0F172A; --paper-soft:#0B1122;
@@ -331,4 +337,6 @@ details[open] > .section-head{background:var(--paper)}
 /* parked phase: the answer input stays in the DOM (focus/keyboard intact)
    but is moved fully off-canvas — visibility/pointer-events instead of
    hidden, so the mobile keyboard survives the reveal→type swaps */
-.phase-parked{position:fixed;left:-10000px;top:0;opacity:0;pointer-events:none;visibility:hidden}
+/* visibility:hidden would force-blur the field (slamming the mobile keyboard
+   shut at every answer); opacity + off-canvas keeps it focused and invisible */
+.phase-parked{position:fixed;left:-10000px;top:0;opacity:0;pointer-events:none}

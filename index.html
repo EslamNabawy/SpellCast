@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=31">
+<link rel="stylesheet" href="style.css?v=32">
 </head>
 <body class="theme-normal">
 
@@ -132,6 +132,13 @@
             <option value="3000">3s</option>
             <option value="4000">4s</option>
           </select>
+        </div>
+        <div class="field field-toggle">
+          <label for="chunkToggle">Word chunks</label>
+          <button type="button" class="toggle" id="chunkToggle" role="switch" aria-checked="true">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-state">On</span>
+          </button>
         </div>
         <div class="field field-toggle">
           <label for="soundToggle">Sound</label>
@@ -375,7 +382,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=31"></script>
-<script src="script.js?v=31"></script>
+<script src="words.js?v=32"></script>
+<script src="script.js?v=32"></script>
 </body>
 </html>
