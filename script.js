@@ -1747,6 +1747,24 @@ function attachEventListeners() {
     beginRound();
   });
 
+  // Pasting into the answer field is not allowed — desktop clipboard,
+  // drag-and-drop, or a mobile keyboard all count. The app exists to train
+  // recall from memory, so text can only arrive through typing.
+  dom.answerInput.addEventListener("paste", (e) => {
+    e.preventDefault();
+    if (state.phase !== "type") return;
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `<span class="toast-text"><span class="toast-title">No pasting</span><span class="toast-sub">Type it from memory — that's the practice.</span></span>`;
+    dom.toastRegion.appendChild(toast);
+    setTimeout(() => toast.remove(), 2600);
+  });
+  dom.answerInput.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (state.phase !== "type") return;
+    dom.answerInput.focus();
+  });
+
   dom.answerForm.addEventListener("submit", (e) => {
     e.preventDefault();
     handleSubmitAnswer(dom.answerInput.value);
