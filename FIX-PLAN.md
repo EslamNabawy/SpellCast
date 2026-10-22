@@ -21,6 +21,14 @@ All Phase 0, 1, and 2 items below are **implemented and verified** in a real bro
 
 Remaining Phase 3 (optional, not implemented): near-miss letter-diff feedback, automated test infra, fresh Lighthouse run on the deployed site.
 
+## App-shell layout (post-deploy follow-up)
+
+The page is now a fixed app shell on every breakpoint: `body` overflow is hidden, `.app` is exactly `100dvh` tall, and nothing ever scrolls the page. Panels size themselves to the viewport instead:
+
+- Desktop (>=1000px): header row + one content row (`auto minmax(0,1fr)`); side decks fill the column height and scroll internally if their lists grow; the game card stretches the full remaining height.
+- Mobile (<1000px): header / game (flex-fills) / review deck; the "My words" settings drawer is capped at 56dvh and scrolls internally; the review deck is capped at 36dvh; the game card gains `overflow-y:auto` so it degrades to internal scrolling if squeezed.
+- Verified at 1440x900, 1280x700, 390x844 and 580x750 (settings open and closed): zero page scroll, zero horizontal overflow, nothing clipped.
+
 Status: **plan only, nothing changed yet** (working tree is clean).
 Method: read all 4 source files, then drove the running app in a real browser
 (local static server + headless Chrome) to confirm every claim below.
