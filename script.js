@@ -203,6 +203,23 @@ const CATEGORY_LABELS = {
 
 const CATEGORY_KEYS = Object.keys(WORDS);
 
+// Pristine snapshot of the built-in word list.
+// Custom words and custom categories are injected into WORDS at runtime, so we
+// keep an untouched copy to rebuild from when the user wipes their data.
+const BUILTIN_WORDS = JSON.parse(JSON.stringify(WORDS));
+const BUILTIN_CATEGORY_KEYS = Object.keys(BUILTIN_WORDS);
+
+// Find the real category + difficulty a word belongs to (used for SRS cards).
+function findWordMeta(word) {
+  for (const cat of Object.keys(WORDS)) {
+    for (const diff of ["easy", "medium", "hard"]) {
+      const arr = WORDS[cat][diff];
+      if (arr && arr.indexOf(word) !== -1) return { category: cat, difficulty: diff };
+    }
+  }
+  return null;
+}
+
 // ================================
 // STREAK MILESTONES & THEME BANDS
 // ================================
@@ -256,6 +273,7 @@ const LS_KEYS = {
   bucket: "spellsprint.bucket",
   customWords: "spellsprint.customWords",
   srsCards: "spellsprint.srsCards",
+  reviewMode: "spellsprint.reviewMode",
   darkMode: "spellsprint.darkMode"
 };
 
@@ -287,6 +305,8 @@ const state = {
 
   sessionWords: 0,
   sessionBucketAdds: 0,
+  sessionRecordAtStart: 0, // the all-time record this session is trying to beat
+  recordCelebrated: false,  // ensures the "new high score" toast fires once
 
   categoryStats: {}, // { nouns: { correct: n, total: n }, ... }
 
@@ -306,8 +326,7 @@ const state = {
   soundVolume: 0.5,
   sessionStartTime: null,
   sessionTimerHandle: null,
-  wordsSeen: [], // track words shown in session for "X of Y"
-  skippedWords: new Set()
+  wordsSeen: [] // words shown in this session, for the "Word N of M" chip
 };
 
 let seeTimerHandle = null;
@@ -426,11 +445,13 @@ const dom = {
   summaryScore: document.getElementById("summaryScore"),
   summaryAccuracy: document.getElementById("summaryAccuracy"),
   summaryBestStreak: document.getElementById("summaryBestStreak"),
+  summaryHighScore: document.getElementById("summaryHighScore"),
   summaryWordsPracticed: document.getElementById("summaryWordsPracticed"),
   summaryBucketAdds: document.getElementById("summaryBucketAdds"),
   summaryStrongest: document.getElementById("summaryStrongest"),
   summaryWeakest: document.getElementById("summaryWeakest"),
   summaryCloseBtn: document.getElementById("summaryCloseBtn"),
+  summaryNewSessionBtn: document.getElementById("summaryNewSessionBtn"),
 
   resetAllOverlay: document.getElementById("resetAllOverlay"),
   resetAllCancelBtn: document.getElementById("resetAllCancelBtn"),
@@ -463,7 +484,7 @@ function buildPool() {
   const pool = [];
   const cats = state.category === "all" ? CATEGORY_KEYS : [state.category];
   cats.forEach((cat) => {
-    const list = WORDS[cat][state.difficulty] || [];
+    const list = (WORDS[cat] && WORDS[cat][state.difficulty]) || [];
     list.forEach((w) => pool.push({ word: w, category: cat }));
   });
   shuffleArray(pool);
@@ -481,22 +502,27 @@ function getNextFreshWord() {
   if (!state.wordPool.length || state.poolIndex >= state.wordPool.length) {
     buildPool();
   }
-  // try to avoid recent queue repeats
-  let attempts = 0;
-  let candidate = null;
+  const pool = state.wordPool;
+  if (!pool.length) return null; // nothing to draw from — caller must handle it
+
+  // Prefer a word that was not shown recently, but never stall on a small pool.
+  // The pool is scanned with an index only — it is never mutated, so it can not
+  // grow duplicates and "Word N of M" stays accurate.
   const recentSet = new Set(state.recentQueue);
-  while (attempts < state.wordPool.length) {
-    if (state.poolIndex >= state.wordPool.length) buildPool();
-    candidate = state.wordPool[state.poolIndex++];
-    if (!recentSet.has(candidate.word) || state.wordPool.length <= state.maxRecent) break;
-    // if candidate is recent, push it to end and try next
-    attempts++;
-    // rotate: move candidate to end so we don't lose it
-    state.wordPool.push(candidate);
-    candidate = null;
+  const n = pool.length;
+  const canAvoidRecent = n > state.maxRecent;
+  let candidate = null;
+  for (let i = 0; i < n; i++) {
+    const c = pool[(state.poolIndex + i) % n];
+    if (!recentSet.has(c.word) || !canAvoidRecent) {
+      candidate = c;
+      state.poolIndex = (state.poolIndex + i + 1) % n;
+      break;
+    }
   }
   if (!candidate) {
-    candidate = state.wordPool[state.poolIndex++ % state.wordPool.length];
+    candidate = pool[state.poolIndex % n];
+    state.poolIndex = (state.poolIndex + 1) % n;
   }
   // track recent
   state.recentQueue.push(candidate.word);
@@ -504,7 +530,8 @@ function getNextFreshWord() {
   return candidate;
 }
 
-// Returns { word, category, fromBucket, isSrs }
+// Returns { word, category, fromBucket, isSrs } or null when there is
+// nothing to serve (empty pool / nothing due in "due only" mode).
 function selectNextWord() {
   // 1) SRS due cards — highest priority (Anki-like)
   const dueAll = getDueCards();
@@ -533,6 +560,10 @@ function selectNextWord() {
       if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
       return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: true };
     }
+    // "Due only" means exactly that — never fall through to fresh words.
+    if (state.reviewMode === "dueOnly") return null;
+  } else if (state.reviewMode === "dueOnly") {
+    return null;
   }
 
   // 2) legacy bucket (kept for compatibility) — also maps to SRS but keep weight
@@ -549,16 +580,42 @@ function selectNextWord() {
       state.recentQueue.push(chosen.word);
       if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
     }
-    return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: false };
+    return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: !!state.srsCards[chosen.word] };
   }
 
+  // 3) fresh word from the pool
   const picked = getNextFreshWord();
+  if (!picked) return null;
   return { word: picked.word, category: picked.category, fromBucket: false, isSrs: false };
 }
 
 function resetWordPool() {
   buildPool();
   state.recentQueue = [];
+  refreshReadyState();
+}
+
+// ---- ready-screen messaging (empty word list / nothing due for review) ----
+
+const READY_HINT_DEFAULT = "Memorize, then type from memory.";
+const READY_HINT_NO_WORDS = "No words for this category and difficulty yet — add one below or pick another difficulty.";
+const READY_HINT_NOTHING_DUE = "Nothing is due for review right now — switch Review mode to Mixed to keep practising.";
+
+function setReadyHint(text, disableStart) {
+  if (dom.readyHint) dom.readyHint.textContent = text;
+  if (dom.startBtn) dom.startBtn.disabled = !!disableStart;
+}
+
+function refreshReadyState() {
+  if (!state.wordPool.length) {
+    setReadyHint(READY_HINT_NO_WORDS, true);
+    return;
+  }
+  if (state.reviewMode === "dueOnly" && getDueCards().length === 0) {
+    setReadyHint(READY_HINT_NOTHING_DUE, true);
+    return;
+  }
+  setReadyHint(READY_HINT_DEFAULT, false);
 }
 
 // ================================
@@ -588,6 +645,13 @@ function setPhase(phase) {
 function beginRound() {
   clearSeeTimer();
   const picked = selectNextWord();
+  if (!picked) {
+    // Nothing to serve (empty pool, or nothing due in "due only" mode).
+    refreshReadyState();
+    setPhase("ready");
+    announce("Nothing to practise right now.");
+    return;
+  }
   state.currentWord = picked;
 
   dom.categoryTag.textContent = CATEGORY_LABELS[picked.category];
@@ -651,7 +715,7 @@ function goToTypePhase() {
   setPhase("type");
   dom.answerInput.value = "";
   if (state.currentWord) state.wordsSeen.push(state.currentWord.word);
-  if (dom.phaseProgress) dom.phaseProgress.textContent = `Word ${state.wordsSeen.length + 1} of ${poolSize()}`;
+  if (dom.phaseProgress) dom.phaseProgress.textContent = `Word ${state.wordsSeen.length} of ${poolSize()}`;
 }
 
 function poolSize() {
@@ -729,15 +793,18 @@ function resetStreak() {
 
 function applyStreakTheme(streak) {
   const theme = themeForStreak(streak);
-  if (theme.key === state.currentThemeKey) return;
-  state.currentThemeKey = theme.key;
+  if (theme.key !== state.currentThemeKey) {
+    state.currentThemeKey = theme.key;
 
-  dom.body.classList.remove(
-    "theme-normal", "theme-warm", "theme-fire",
-    "theme-electric", "theme-rocket", "theme-legendary"
-  );
-  dom.body.classList.add(`theme-${theme.key}`);
+    dom.body.classList.remove(
+      "theme-normal", "theme-warm", "theme-fire",
+      "theme-electric", "theme-rocket", "theme-legendary"
+    );
+    dom.body.classList.add(`theme-${theme.key}`);
+  }
 
+  // Always refresh the banner text — it carries the live streak count, so it
+  // must not go stale while the theme band stays the same.
   dom.stateBannerText.textContent = theme.label
     ? `${theme.label.toUpperCase()} · ${streak} STREAK`
     : "";
@@ -759,13 +826,18 @@ function checkMilestone(streak) {
 
 function awardPoints(points) {
   state.score += points;
+  let newHighScore = false;
   if (state.score > state.highScore) {
-    const wasNewHigh = true;
     state.highScore = state.score;
     saveLocal(LS_KEYS.highScore, state.highScore);
-    return { points, newHighScore: wasNewHigh };
+    // Celebrate only the first time this session passes the record that was
+    // standing when the session started — not on every answer after that.
+    if (!state.recordCelebrated && state.sessionRecordAtStart > 0 && state.score > state.sessionRecordAtStart) {
+      state.recordCelebrated = true;
+      newHighScore = true;
+    }
   }
-  return { points, newHighScore: false };
+  return { points, newHighScore };
 }
 
 // ================================
@@ -857,10 +929,25 @@ function wordExistsAnywhere(word) {
   return false;
 }
 
+// Strip anything that could be injected as markup from a user supplied label.
+function sanitizeLabel(label, fallback) {
+  const clean = String(label == null ? "" : label)
+    .replace(/[<>&"']/g, "")
+    .trim()
+    .slice(0, 40);
+  return clean || fallback;
+}
+
+function showFieldError(message) {
+  if (!dom.customWordError) return;
+  dom.customWordError.textContent = message || "";
+  dom.customWordError.hidden = !message;
+}
+
 function ensureCategory(catKey, label) {
   if (WORDS[catKey]) return;
   WORDS[catKey] = { easy: [], medium: [], hard: [] };
-  CATEGORY_LABELS[catKey] = label || catKey.charAt(0).toUpperCase() + catKey.slice(1);
+  CATEGORY_LABELS[catKey] = sanitizeLabel(label, catKey.charAt(0).toUpperCase() + catKey.slice(1));
   if (!CATEGORY_KEYS.includes(catKey)) CATEGORY_KEYS.push(catKey);
   [dom.categorySelect, dom.customWordCategory].forEach(sel => {
     if (!sel) return;
@@ -938,6 +1025,7 @@ function loadAllPersisted() {
   state.duration = loadLocal(LS_KEYS.preferredDuration, 2000);
   state.soundEnabled = loadLocal(LS_KEYS.soundEnabled, false);
   state.soundVolume = loadLocal(LS_KEYS.soundVolume, 0.5);
+  state.reviewMode = loadLocal(LS_KEYS.reviewMode, "mixed");
   state.darkMode = loadLocal(LS_KEYS.darkMode, false);
   // inject customs into WORDS
   rebuildCustomWordsIntoWORDS();
@@ -1040,8 +1128,19 @@ function renderSrsStats() {
   dom.srsStats.innerHTML = `<span class="pill" style="padding:3px 8px;font-size:11px"><span class="pill-value">${s.due} due</span></span><span>${s.total} cards</span><span>· learning ${s.learning}</span><span>· mature ${s.mature}</span>`;
 }
 
+const VALID_DIFFICULTIES = ["easy", "medium", "hard"];
+
+// Categories are keyed by a slug; the human label is stored separately.
+function sanitizeCategoryKey(name) {
+  return String(name == null ? "" : name)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .replace(/^[0-9]+/, "")
+    .slice(0, 24);
+}
+
 function exportJSON() {
-  const payload = { version: 1, exportedAt: new Date().toISOString(), customWords: state.customWords, srsCards: state.srsCards, categories: Object.keys(WORDS) };
+  const payload = { version: 2, exportedAt: new Date().toISOString(), customWords: state.customWords, srsCards: state.srsCards, categories: Object.keys(WORDS) };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = `spellcast-export-${new Date().toISOString().slice(0,10)}.json`;
@@ -1056,21 +1155,50 @@ function importJSONFile(file) {
       const sc = data.srsCards && typeof data.srsCards === "object" ? data.srsCards : {};
       let added=0, updated=0, skipped=0;
       cw.forEach(e => {
-        if (!e.word || !e.category || !e.difficulty) { skipped++; return; }
+        if (!e || !e.word || !e.category) { skipped++; return; }
         const w = normalizeWordRaw(e.word);
         if (!isValidWord(w)) { skipped++; return; }
-        if (wordExistsAnywhere(w) && !state.customWords.find(x=>x.word===w)) { skipped++; return; }
+        const catKey = sanitizeCategoryKey(e.category);
+        if (!catKey) { skipped++; return; }
+        const diff = VALID_DIFFICULTIES.includes(e.difficulty) ? e.difficulty : "medium";
         const existing = state.customWords.find(x=>x.word===w);
-        if (!existing) { ensureCategory(e.category, CATEGORY_LABELS[e.category]||e.category); state.customWords.push({ word:w, category:e.category, difficulty:e.difficulty, addedAt:e.addedAt||Date.now() }); if (!WORDS[e.category][e.difficulty].includes(w)) WORDS[e.category][e.difficulty].push(w); added++; } else updated++;
+        if (!existing) {
+          if (wordExistsAnywhere(w)) { skipped++; return; }
+          ensureCategory(catKey, CATEGORY_LABELS[catKey] || e.category);
+          state.customWords.push({ word:w, category:catKey, difficulty:diff, addedAt:e.addedAt||Date.now() });
+          if (!WORDS[catKey][diff].includes(w)) WORDS[catKey][diff].push(w);
+          initSrsCard(w, catKey, diff);
+          added++;
+        } else updated++;
       });
       Object.keys(sc).forEach(k => {
-        const incoming = sc[k]; const existing = state.srsCards[k];
+        const incoming = sc[k];
         if (!incoming || !incoming.word) return;
-        if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) { state.srsCards[k] = incoming; ensureCategory(incoming.category, CATEGORY_LABELS[incoming.category]||incoming.category); if (!wordExistsAnywhere(k)) { const diff = incoming.difficulty||"medium"; if (!WORDS[incoming.category][diff].includes(k)) WORDS[incoming.category][diff].push(k); } }
+        const w = normalizeWordRaw(incoming.word);
+        if (!isValidWord(w)) return;
+        const catKey = sanitizeCategoryKey(incoming.category) || "custom";
+        const diff = VALID_DIFFICULTIES.includes(incoming.difficulty) ? incoming.difficulty : "medium";
+        const existing = state.srsCards[w];
+        if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) {
+          ensureCategory(catKey, CATEGORY_LABELS[catKey] || incoming.category);
+          state.srsCards[w] = {
+            word: w,
+            category: catKey,
+            difficulty: diff,
+            interval: Number(incoming.interval) || 0,
+            ease: Number(incoming.ease) || 2.3,
+            due: Number(incoming.due) || Date.now(),
+            reps: Number(incoming.reps) || 0,
+            lapses: Number(incoming.lapses) || 0,
+            lastReviewed: Number(incoming.lastReviewed) || 0
+          };
+          const arr = WORDS[catKey][diff];
+          if (arr && arr.indexOf(w) === -1) arr.push(w);
+        }
       });
       saveCustomWords(); saveSrsCards(); rebuildCustomWordsIntoWORDS(); renderCustomWordsList(); renderSrsStats(); resetWordPool(); announce(`Import: ${added} added, ${updated} updated, ${skipped} skipped`);
       const toast = document.createElement("div"); toast.className="toast"; toast.innerHTML=`<span class="toast-text"><span class="toast-title">Import done</span><span class="toast-sub">${added} added · ${updated} updated · ${skipped} skipped</span></span>`; dom.toastRegion.appendChild(toast); setTimeout(()=>toast.remove(),3200);
-    } catch(err){ alert("Import failed: "+err.message); }
+    } catch(err){ const toast = document.createElement("div"); toast.className="toast"; toast.innerHTML=`<span class="toast-text"><span class="toast-title">Import failed</span><span class="toast-sub">${escapeHtml(err.message || "Invalid file")}</span></span>`; dom.toastRegion.appendChild(toast); setTimeout(()=>toast.remove(),4200); }
   }; reader.readAsText(file);
 }
 
@@ -1182,12 +1310,12 @@ function launchConfetti() {
 
 function renderStats() {
   dom.headerStreak.textContent = state.streak;
-  dom.headerBest.textContent = state.highScore;
+  dom.headerBest.textContent = state.bestStreak;
   if (dom.headerScore) dom.headerScore.textContent = state.score;
 
   dom.statScore.textContent = state.score;
   dom.statStreak.textContent = state.streak;
-  dom.statBest.textContent = state.highScore;
+  dom.statBest.textContent = state.bestStreak;
 
   const attempted = state.correct + state.incorrect;
   const accuracy = attempted === 0 ? null : Math.round((state.correct / attempted) * 100);
@@ -1203,7 +1331,7 @@ function renderStats() {
 
   // update phase progress if in type phase
   if (state.phase === "type" && dom.phaseProgress) {
-    dom.phaseProgress.textContent = `Word ${state.wordsSeen.length + 1} of ${poolSize()}`;
+    dom.phaseProgress.textContent = `Word ${state.wordsSeen.length} of ${poolSize()}`;
   }
 }
 
@@ -1247,7 +1375,7 @@ function renderCategoryStats() {
     li.className = "category-stat-row";
     li.innerHTML = `
       <div class="category-stat-top">
-        <span class="category-stat-name">${CATEGORY_LABELS[key]}</span>
+        <span class="category-stat-name">${escapeHtml(CATEGORY_LABELS[key] || key)}</span>
         <span class="category-stat-pct">${pct}%</span>
       </div>
       <div class="category-stat-bar-track">
@@ -1348,6 +1476,7 @@ function computeSessionSummary() {
     score: state.score,
     accuracy,
     bestStreak: state.bestStreak,
+    highScore: state.highScore,
     wordsPracticed: state.sessionWords,
     bucketAdds: state.sessionBucketAdds,
     strongest: strongest ? CATEGORY_LABELS[strongest] : "—",
@@ -1361,12 +1490,22 @@ function showSessionSummary() {
   dom.summaryScore.textContent = summary.score;
   dom.summaryAccuracy.textContent = summary.accuracy + "%";
   dom.summaryBestStreak.textContent = summary.bestStreak;
+  dom.summaryHighScore.textContent = summary.highScore;
   dom.summaryWordsPracticed.textContent = summary.wordsPracticed;
   dom.summaryBucketAdds.textContent = summary.bucketAdds;
   dom.summaryStrongest.textContent = summary.strongest;
   dom.summaryWeakest.textContent = summary.weakest;
   dom.summaryOverlay.hidden = false;
   dom.summaryCloseBtn.focus();
+}
+
+// Close the recap without throwing the session away — "Keep playing" resumes
+// the current session, "New session" is the explicit way to start over.
+function closeSummary() {
+  dom.summaryOverlay.hidden = true;
+  state.sessionStartTime = null;
+  refreshReadyState();
+  announce("Recap closed. Session continues.");
 }
 
 // ================================
@@ -1394,6 +1533,7 @@ function handleSubmitAnswer(rawInput) {
 
   renderStats();
   renderSrsStats();
+  refreshReadyState();
 }
 
 function handleCorrectAnswer(word, category, fromBucket, isSrs) {
@@ -1402,14 +1542,16 @@ function handleCorrectAnswer(word, category, fromBucket, isSrs) {
   // SRS update — long/short memory
   const srs = updateSrsCard(word, true);
 
-  let points = streakBonus(newStreak);
-  let mastered = false;
-  if (fromBucket) {
-    points = BUCKET_MASTER_BONUS;
-    mastered = removeFromBucket(word);
-    // for SRS, mastered means reaching learning -> mature transition
-    if (isSrs && srs.interval >= 3) mastered = true;
-  }
+  // The word leaves the practice bucket whenever it is answered correctly —
+  // no matter which path served it (bucket pick, SRS review or fresh draw).
+  const wasInBucket = removeFromBucket(word);
+  // A word you got wrong before is a known weak spot: it pays the flat
+  // recovery bonus instead of the streak bonus.
+  const wasWeak = wasInBucket || fromBucket || srs.lapses > 0;
+
+  let points = wasWeak ? BUCKET_MASTER_BONUS : streakBonus(newStreak);
+  const graduated = !!(isSrs && srs.interval >= 21);
+  const mastered = wasInBucket || graduated;
 
   const result = awardPoints(points);
 
@@ -1417,6 +1559,9 @@ function handleCorrectAnswer(word, category, fromBucket, isSrs) {
   dom.correctWordEcho.textContent = word;
   dom.correctPoints.textContent = "+" + points;
   dom.masteredNote.hidden = !mastered;
+  dom.masteredNote.textContent = wasInBucket
+    ? "Removed from practice bucket."
+    : "Card graduated to mature.";
 
   setPhase("correct");
   flashCard("correct");
@@ -1515,7 +1660,8 @@ function resetSession() {
   state.categoryStats = {};
   state.bucket = [];
   state.wordsSeen = [];
-  state.skippedWords.clear();
+  state.sessionRecordAtStart = state.highScore;
+  state.recordCelebrated = false;
   saveBucket();
   resetWordPool();
 
@@ -1527,13 +1673,37 @@ function resetSession() {
   announce("Session reset. High score and best streak are preserved.");
 }
 
+// Rebuild the word list from the pristine built-in snapshot and remove every
+// custom category (options, labels and key list included).
+function restoreBuiltinCategories() {
+  Object.keys(WORDS).forEach((k) => delete WORDS[k]);
+  Object.assign(WORDS, JSON.parse(JSON.stringify(BUILTIN_WORDS)));
+  Object.keys(CATEGORY_LABELS).forEach((k) => {
+    if (!BUILTIN_WORDS[k]) delete CATEGORY_LABELS[k];
+  });
+  CATEGORY_KEYS.length = 0;
+  CATEGORY_KEYS.push(...BUILTIN_CATEGORY_KEYS);
+  [dom.categorySelect, dom.customWordCategory].forEach((sel) => {
+    if (!sel) return;
+    [...sel.options].forEach((opt) => {
+      if (!BUILTIN_CATEGORY_KEYS.includes(opt.value)) opt.remove();
+    });
+  });
+}
+
 function resetAllData() {
   Object.values(LS_KEYS).forEach((key) => {
     try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
   });
+
+  // The in-memory state must go too — otherwise the next save writes the
+  // "deleted" data straight back into localStorage.
   state.highScore = 0;
   state.bestStreak = 0;
   state.bucket = [];
+  state.customWords = [];
+  state.srsCards = {};
+  state.reviewMode = "mixed";
   state.category = "all";
   state.difficulty = "medium";
   state.duration = 2000;
@@ -1541,7 +1711,8 @@ function resetAllData() {
   state.soundVolume = 0.5;
   state.darkMode = false;
   state.wordsSeen = [];
-  state.skippedWords.clear();
+
+  restoreBuiltinCategories();
 
   document.documentElement.removeAttribute("data-theme");
   dom.themeIcon.textContent = "🌙";
@@ -1549,12 +1720,26 @@ function resetAllData() {
 
   resetSession();
   applySettingsToForm();
+  renderCustomWordsList();
+  renderSrsStats();
+  if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   announce("All saved progress has been deleted.");
 }
 
 // ================================
 // EVENT LISTENERS
 // ================================
+
+// True when the event came from a control the user is typing into.
+function isTextEntryTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!el.isContentEditable;
+}
+
+function anyModalOpen() {
+  return !dom.summaryOverlay.hidden || !dom.resetAllOverlay.hidden || !dom.resetSessionOverlay.hidden;
+}
 
 function attachEventListeners() {
   dom.startBtn.addEventListener("click", () => {
@@ -1569,13 +1754,14 @@ function attachEventListeners() {
   dom.nextAfterCorrectBtn.addEventListener("click", beginRound);
   dom.nextAfterIncorrectBtn.addEventListener("click", beginRound);
 
-  // Enter-to-advance on result screens (without hijacking the type input, which uses its own form submit)
+  // Enter-to-advance on result screens (without hijacking the type input, which uses its own form submit).
+  // Enter is never hijacked while the user is typing into a field, and never
+  // while a modal is open.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Enter") return;
-    if (state.phase === "correct") {
-      e.preventDefault();
-      beginRound();
-    } else if (state.phase === "incorrect") {
+    if (isTextEntryTarget(e.target)) return;
+    if (anyModalOpen()) return;
+    if (state.phase === "correct" || state.phase === "incorrect") {
       e.preventDefault();
       beginRound();
     } else if (state.phase === "ready" && document.activeElement !== dom.answerInput) {
@@ -1631,18 +1817,28 @@ function attachEventListeners() {
       const cat = dom.customWordCategory.value;
       const diff = dom.customWordDifficulty.value;
       const res = addCustomWord(raw, cat, diff);
-      if (!res.ok) { dom.customWordError.textContent = res.error; dom.customWordError.hidden = false; }
-      else { dom.customWordError.hidden = true; dom.customWordInput.value = ""; dom.customWordInput.focus(); }
+      if (!res.ok) {
+        showFieldError(res.error);
+      } else {
+        showFieldError("");
+        dom.customWordInput.value = "";
+        dom.customWordInput.focus();
+      }
     });
   }
   if (dom.createCategoryBtn) {
     dom.createCategoryBtn.addEventListener("click", () => {
       const name = dom.newCategoryInput.value.trim();
-      if (!name) { alert("Enter category name"); return; }
-      const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/^[0-9]+/, "");
-      if (!key) { alert("Invalid name"); return; }
-      if (WORDS[key]) { alert("Category exists"); return; }
-      ensureCategory(key, name); saveCustomWords(); dom.newCategoryInput.value = ""; dom.customWordCategory.value = key; renderCustomWordsList(); announce(`Category ${name} created`);
+      const key = sanitizeCategoryKey(name);
+      if (!name) { showFieldError("Enter a category name."); return; }
+      if (!key) { showFieldError("Use letters or numbers only."); return; }
+      if (WORDS[key]) { showFieldError(`"${name}" already exists.`); return; }
+      ensureCategory(key, name);
+      dom.newCategoryInput.value = "";
+      dom.customWordCategory.value = key;
+      renderCustomWordsList();
+      refreshReadyState();
+      announce(`Category ${name} created`);
     });
   }
   if (dom.exportBtn) dom.exportBtn.addEventListener("click", exportJSON);
@@ -1652,7 +1848,11 @@ function attachEventListeners() {
   }
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
-    dom.reviewModeSelect.addEventListener("change", () => { state.reviewMode = dom.reviewModeSelect.value; });
+    dom.reviewModeSelect.addEventListener("change", () => {
+      state.reviewMode = dom.reviewModeSelect.value;
+      saveLocal(LS_KEYS.reviewMode, state.reviewMode);
+      refreshReadyState();
+    });
   }
 
   // dark mode toggle
@@ -1674,15 +1874,17 @@ function attachEventListeners() {
 
   // skip button during type phase
   dom.skipBtn.addEventListener("click", () => {
-    if (state.phase === "type") {
-      const word = state.currentWord?.word;
-      state.skippedWords.add(word);
-      clearSeeTimer();
-      addToBucket(word, state.currentWord?.category);
-      // don't count as incorrect for streak
-      announce(`Skipped ${word}. Added to practice bucket.`);
-      beginRound();
-    }
+    if (state.phase !== "type") return;
+    const word = state.currentWord?.word;
+    const category = state.currentWord?.category;
+    clearSeeTimer();
+    state.sessionWords += 1;    // a skipped word still happened
+    updateSrsCard(word, false); // and comes back for a short review
+    addToBucket(word, category);
+    // don't count as incorrect for streak
+    announce(`Skipped ${word}. Added to practice bucket.`);
+    renderStats();
+    beginRound();
   });
 
   // back button after incorrect
@@ -1739,33 +1941,42 @@ function attachEventListeners() {
     showSessionSummary();
   });
 
-  // keyboard shortcuts
+  // keyboard shortcuts — a single Escape handler for the whole app.
+  // Modals take priority over the game.
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      if (state.phase === "type") {
-        e.preventDefault();
-        dom.skipBtn.click();
-      } else if (!dom.resetAllOverlay.hidden) {
-        dom.resetAllOverlay.hidden = true;
-      } else if (!dom.summaryOverlay.hidden) {
-        dom.summaryOverlay.hidden = true;
-        resetSession();
-      } else if (!dom.resetSessionOverlay.hidden) {
-        dom.resetSessionOverlay.hidden = true;
-      }
+    if (e.key !== "Escape") return;
+    if (!dom.resetAllOverlay.hidden) {
+      dom.resetAllOverlay.hidden = true;
+      dom.resetAllBtn.focus();
+      return;
+    }
+    if (!dom.resetSessionOverlay.hidden) {
+      dom.resetSessionOverlay.hidden = true;
+      dom.resetSessionBtn.focus();
+      return;
+    }
+    if (!dom.summaryOverlay.hidden) {
+      closeSummary();
+      return;
+    }
+    if (state.phase === "type") {
+      e.preventDefault();
+      dom.skipBtn.click();
     }
   });
 
-  dom.summaryCloseBtn.addEventListener("click", () => {
-    dom.summaryOverlay.hidden = true;
-    resetSession();
-  });
+  dom.summaryCloseBtn.addEventListener("click", closeSummary);
+  if (dom.summaryNewSessionBtn) {
+    dom.summaryNewSessionBtn.addEventListener("click", () => {
+      dom.summaryOverlay.hidden = true;
+      resetSession();
+    });
+  }
 
   // close modals on backdrop click
   dom.summaryOverlay.addEventListener("click", (e) => {
     if (e.target === dom.summaryOverlay) {
-      dom.summaryOverlay.hidden = true;
-      resetSession();
+      closeSummary();
     }
   });
   dom.resetAllOverlay.addEventListener("click", (e) => {
@@ -1775,17 +1986,6 @@ function attachEventListeners() {
   });
   dom.resetSessionOverlay.addEventListener("click", (e) => {
     if (e.target === dom.resetSessionOverlay) dom.resetSessionOverlay.hidden = true;
-  });
-
-  // Escape closes any open modal
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    if (!dom.resetAllOverlay.hidden) {
-      dom.resetAllOverlay.hidden = true;
-    } else if (!dom.summaryOverlay.hidden) {
-      dom.summaryOverlay.hidden = true;
-      resetSession();
-    }
   });
 }
 
@@ -1810,11 +2010,11 @@ function init() {
     dom.themeIcon.textContent = "☀️";
     dom.themeLabel.textContent = "Dark mode on";
   }
-  // restore volume
-  if (state.soundVolume > 0) {
-    dom.volumeSlider.value = Math.round(state.soundVolume * 100);
-    dom.volumeField.hidden = false;
-  }
+  // restore volume — the slider only makes sense while sound is on
+  dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+  dom.volumeField.hidden = !state.soundEnabled;
+  state.sessionRecordAtStart = state.highScore;
+  refreshReadyState();
   setPhase("ready");
   attachEventListeners();
 }
