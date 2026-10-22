@@ -54,7 +54,47 @@ The master prompt assumed the next cache-bust was `v=26`. **`v=26` already shipp
 
 ## Phase 1 — Repo audit and cleanup (GATE G1)
 
-AUDITOR ran read-only; findings in `docs/AUDIT-PHASE1.md`. Execution is blocked until `APPROVE G1`.
+AUDITOR ran read-only; full report in `docs/AUDIT-PHASE1.md` (569 lines, every claim grep-verified).
+
+### Verified bugs the audit found in the shipped code (none of these were visible in the light-theme Lighthouse run)
+
+| id | Finding | Risk | Path |
+|---|---|---|---|
+| **B15** | `loadWordLibrary()` never populates the category `<select>`s — the 12 options are hand-maintained twice in `index.html`, and **a category added to `words.js` is unselectable**. "Medium" vs "Med" labels disagree. | med-high | index.html + script.js |
+| **B1** | `.pill-timer` is overridden by `.pill` (equal specificity, later wins) → the resting timer pill is *not* transparent/inset as designed and `.lit` looks identical to resting. The a11y dimming and the "session running" indicator are dead. | med | style.css |
+| **B2** | `flashCard()` adds `.correct`/`.incorrect` to `#gameCard`, but no such CSS exists — the "card flash" advertised in the handover does not exist. | med | script.js + style.css |
+| **B3** | Two more dead class hooks: `.new-high-score`, `.toast.milestone`. | med | script.js + style.css |
+| **B4–B6** | Dead code: `findWordMeta()` and `pickCategory()` (0 call sites), 7 zero-use `dom` keys, write-only `state.wordsSeen`. | low-med | script.js |
+| **B9–B10** | `.session-chip-incorrect` border is a different hue from its own text; 4 hardcoded colours outside the token system, none with a dark-mode variant. | low-med | style.css |
+| **B12** | 3 CSS selectors match nothing (`.header-stats`, `.btn-secondary`, `.btn-lg`); 9 HTML classes have no rule. | med | index.html + style.css |
+| **B14** | The meta description promises "Works offline" — there is no service worker anywhere in the repo. | med | index.html |
+| **B19** | Modals do not restore focus to the opener on the backdrop-click paths, although the README claims they do. | med | script.js |
+| **B18** | Two different `[hidden]` idioms (`.phase[hidden]`, `.modal-overlay[hidden]`) instead of one global rule. | med | style.css |
+| **B16–B17** | 4 duplicated blocks (recent-queue push/trim, SRS record literal) and ~10 unnamed magic numbers in the scoring/SRS logic. | med / low-med | script.js |
+| **B13, B20** | Missing OG/Twitter/canonical metadata and no `og-image`; `#deckProgress` is missing `aria-valuemax`/`aria-valuenow` in the static HTML. | low-med | index.html |
+
+### Documentation drift (no runtime risk)
+
+- **README is actively wrong:** it tells contributors to edit `const WORDS` in `script.js` with `{easy,medium,hard}` keys — the real source is `words.js` with `{e,m,h}`, so following the README is a silent no-op. It also claims "142 built-in words" (actual **457**), lists no `words.js`/icons/`docs/`/`tools/qa`, and never states the `?v=26` cache-bust.
+- **No `LICENSE`** at all → a public repo is "all rights reserved" by default.
+- **`FIX-PLAN.md` / `DESIGN-HANDOVER.md`** are written in the present tense and contradict the running app (720px vs 999px breakpoint, "toast system (bottom)" vs `top:76px`, a "definition/hint" that does not exist, `?v=7→v=8`).
+- `.gitignore` misses `playwright-report/`, `lighthouse-report/`, `coverage/`, `.env`, `*.tmp`.
+- **The harness dirtied the tracked tree** by writing reports straight into `docs/baseline/` — fixed in this pass: artifacts now land in the git-ignored `tools/qa/test-results/`, and `docs/baseline/` is only rewritten when `QA_BASELINE=1` is set explicitly.
+
+### Phase 1 proposal (awaiting approval)
+
+**PART 1 — do now, zero runtime risk (documentation + tooling):** add LICENSE (MIT) · rewrite the README's word-library section to point at `words.js` and fix its false numbers · refresh the file-structure block and state the `?v=26` rule · add a QA-harness section to the README · mark `FIX-PLAN.md` and `DESIGN-HANDOVER.md` as historical with a banner + fix the actively-wrong lines · add `tools/qa/README.md` (done) · extend `.gitignore` · decide the fate of the 66 committed baseline PNGs (3 MB in the published tree) · update the two plan docs to say **v=27** and record the naming decision.
+
+**PART 2 — touches a served path, needs care:** in the auditor's recommended order —
+1. single-line/low-risk fixes: B9, B10, B11, B7, B8 (one `?v=27` bump at the end of the batch)
+2. the three verified visual bugs: B1, B2, B3 (with before/after screenshots from the matrix)
+3. pure deletions: B4, B5, B6
+4. B12 (index.html + style.css in lockstep)
+5. one commit each with a manual smoke test: B14, **B15** (largest diff — the audit's biggest single win), B16, B17, B18, B19, B20
+
+### Gate G1 — status: **STOPPED, awaiting `APPROVE G1`**
+
+Nothing in PART 1 or PART 2 has been executed. The only changes on `levelup` are Phase 0 (harness, baseline, this log) and the audit document itself. `main` is untouched and still serving `v=26` from `8b91a76`.
 
 ---
 
@@ -106,9 +146,11 @@ The card label shows the *drawn word's* category, so the label and the control l
 ## Commit history (branch `levelup`)
 
 ```
-c2fb1da  0.1 branch levelup + .gitignore
-a145e2a  0.2 QA harness (Playwright matrix, session, fixture, axe+contrast, Lighthouse)
+bdda222  0.2b layout checks (no page scroll, no horizontal scrollbars, mobile sheet)
+12c6eb3  0.3b progress log: harness evidence, 5 defects, P2 category-bug root cause
 2dbb97f  0.3 baseline artifacts + runtime corrections
+a145e2a  0.2 QA harness (Playwright matrix, session, fixture, axe+contrast, Lighthouse)
+c2fb1da  0.1 branch levelup + .gitignore
 ```
 
 `main` history (already live): `8b91a76` docs → `f240113` 26.6 → `af2363b` 26.5 → `2f603e1` 26.3 → `42d0fd7` 26.2 → `7bf3288` 26.1 → `8db0db1` handover doc

@@ -6,7 +6,13 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO = path.resolve(here, "..", "..");
-export const ARTIFACTS = path.join(REPO, "docs", "baseline");
+
+// By default every run writes into the git-ignored tools/qa/test-results/ so a
+// harness run never dirties the tracked tree. Set QA_BASELINE=1 to refresh the
+// committed reference snapshot in docs/baseline/ on purpose.
+export const ARTIFACTS = process.env.QA_BASELINE
+  ? path.join(REPO, "docs", "baseline")
+  : path.join(here, "test-results");
 export const SHOTS = path.join(ARTIFACTS, "shots");
 
 export const VIEWPORTS = [
