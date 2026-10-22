@@ -52,49 +52,55 @@ The master prompt assumed the next cache-bust was `v=26`. **`v=26` already shipp
 
 ---
 
-## Phase 1 — Repo audit and cleanup (GATE G1)
+## Phase 1 — Repo audit and cleanup ✅ (approved: "do the most recommended in all of them")
 
 AUDITOR ran read-only; full report in `docs/AUDIT-PHASE1.md` (569 lines, every claim grep-verified).
 
-### Verified bugs the audit found in the shipped code (none of these were visible in the light-theme Lighthouse run)
+**PART 1 (docs/tooling) — done:** MIT `LICENSE` · README rewritten (points at `words.js` with the real `{e,m,h}` schema, 457 words, file structure, `?v=27` rule, QA-harness section) · historical banners on `FIX-PLAN.md` / `DESIGN-HANDOVER.md` · `.gitignore` gaps closed · `tools/qa/README.md` · scratch probes moved to `tools/qa/scratch/` · **Pages switched from legacy branch deploy to `.github/workflows/pages.yml`**, which publishes **only** the 8 served files — so `docs/`, `tools/qa/`, the 3 MB baseline PNGs and the README are no longer publicly fetchable (verified: they now return 404).
 
-| id | Finding | Risk | Path |
-|---|---|---|---|
-| **B15** | `loadWordLibrary()` never populates the category `<select>`s — the 12 options are hand-maintained twice in `index.html`, and **a category added to `words.js` is unselectable**. "Medium" vs "Med" labels disagree. | med-high | index.html + script.js |
-| **B1** | `.pill-timer` is overridden by `.pill` (equal specificity, later wins) → the resting timer pill is *not* transparent/inset as designed and `.lit` looks identical to resting. The a11y dimming and the "session running" indicator are dead. | med | style.css |
-| **B2** | `flashCard()` adds `.correct`/`.incorrect` to `#gameCard`, but no such CSS exists — the "card flash" advertised in the handover does not exist. | med | script.js + style.css |
-| **B3** | Two more dead class hooks: `.new-high-score`, `.toast.milestone`. | med | script.js + style.css |
-| **B4–B6** | Dead code: `findWordMeta()` and `pickCategory()` (0 call sites), 7 zero-use `dom` keys, write-only `state.wordsSeen`. | low-med | script.js |
-| **B9–B10** | `.session-chip-incorrect` border is a different hue from its own text; 4 hardcoded colours outside the token system, none with a dark-mode variant. | low-med | style.css |
-| **B12** | 3 CSS selectors match nothing (`.header-stats`, `.btn-secondary`, `.btn-lg`); 9 HTML classes have no rule. | med | index.html + style.css |
-| **B14** | The meta description promises "Works offline" — there is no service worker anywhere in the repo. | med | index.html |
-| **B19** | Modals do not restore focus to the opener on the backdrop-click paths, although the README claims they do. | med | script.js |
-| **B18** | Two different `[hidden]` idioms (`.phase[hidden]`, `.modal-overlay[hidden]`) instead of one global rule. | med | style.css |
-| **B16–B17** | 4 duplicated blocks (recent-queue push/trim, SRS record literal) and ~10 unnamed magic numbers in the scoring/SRS logic. | med / low-med | script.js |
-| **B13, B20** | Missing OG/Twitter/canonical metadata and no `og-image`; `#deckProgress` is missing `aria-valuemax`/`aria-valuenow` in the static HTML. | low-med | index.html |
+**PART 2 (served paths) — done, in the auditor's risk order:**
 
-### Documentation drift (no runtime risk)
+| id | what shipped |
+|---|---|
+| B1 | `.pill.pill-timer` / `.pill.pill-timer.lit` — the resting timer state and the "session running" indicator now actually exist |
+| B2/B3 | Real rules for `.game-card.correct/.incorrect/.new-high-score` and `.toast.milestone` (the result frame is cleared on the next round) |
+| B4–B8 | Deleted `findWordMeta`, `pickCategory`, 7 dead `dom` keys, write-only `state.wordsSeen`, the unused `srsStats().fresh`; `answerMirror` registered in `dom` |
+| B9/B10/B11 | Chip border now matches `--incorrect`; 4 hardcoded colours tokenised (`--danger-strong`, `--warn`, `--on-accent`); storage keys renamed `spellsprint.*` → `spellcast.*` **with a one-shot legacy migration** and `spellcast.schemaVersion = 2` |
+| B12 | Dead selectors removed; duplicate `footer-actions` class removed (semantic `phase-*`/`pill-icon` hooks kept — documented deviation) |
+| B13/B14 | Full OG/Twitter/canonical metadata + generated `og-image.png`; the "Works offline" claim reworded (there is still no service worker) |
+| B16/B17 | `pushRecent()`, `makeSrsCard()` helpers; named constants (`REVIEW_DUE_WEIGHT`, `MS_PER_DAY`, `SRS_EASE_*`, `SRS_MATURE_DAYS`, …) |
+| B18 | One global `[hidden]{display:none!important}` idiom |
+| B19 | Summary modal returns focus to its opener |
+| B20 | `#deckProgress` ships with `aria-valuemin/max/now` in the static HTML |
 
-- **README is actively wrong:** it tells contributors to edit `const WORDS` in `script.js` with `{easy,medium,hard}` keys — the real source is `words.js` with `{e,m,h}`, so following the README is a silent no-op. It also claims "142 built-in words" (actual **457**), lists no `words.js`/icons/`docs/`/`tools/qa`, and never states the `?v=26` cache-bust.
-- **No `LICENSE`** at all → a public repo is "all rights reserved" by default.
-- **`FIX-PLAN.md` / `DESIGN-HANDOVER.md`** are written in the present tense and contradict the running app (720px vs 999px breakpoint, "toast system (bottom)" vs `top:76px`, a "definition/hint" that does not exist, `?v=7→v=8`).
-- `.gitignore` misses `playwright-report/`, `lighthouse-report/`, `coverage/`, `.env`, `*.tmp`.
-- **The harness dirtied the tracked tree** by writing reports straight into `docs/baseline/` — fixed in this pass: artifacts now land in the git-ignored `tools/qa/test-results/`, and `docs/baseline/` is only rewritten when `QA_BASELINE=1` is set explicitly.
+**Plus the 5 defects the harness found** (all dark-mode, all invisible to a light-theme Lighthouse): danger-button contrast 2.81 → 7.8:1 · My Words selects now styled (were native white boxes, 1.25:1) · `<h1>` added · progress segments and switch track now ≥3:1 · heading order fixed (deck headings stay in the a11y tree, visually hidden).
 
-### Phase 1 proposal (awaiting approval)
+**Result:** axe **0 violations** across 12 runs, **138/138** contrast probes pass, reduced-motion verified, Lighthouse desktop `1/1/1/1` and mobile `0.99/1/1/1`.
 
-**PART 1 — do now, zero runtime risk (documentation + tooling):** add LICENSE (MIT) · rewrite the README's word-library section to point at `words.js` and fix its false numbers · refresh the file-structure block and state the `?v=26` rule · add a QA-harness section to the README · mark `FIX-PLAN.md` and `DESIGN-HANDOVER.md` as historical with a banner + fix the actively-wrong lines · add `tools/qa/README.md` (done) · extend `.gitignore` · decide the fate of the 66 committed baseline PNGs (3 MB in the published tree) · update the two plan docs to say **v=27** and record the naming decision.
+## Phase 2 — Settings integrity + confirm-before-disrupting ✅ (shipped as v=27)
 
-**PART 2 — touches a served path, needs care:** in the auditor's recommended order —
-1. single-line/low-risk fixes: B9, B10, B11, B7, B8 (one `?v=27` bump at the end of the batch)
-2. the three verified visual bugs: B1, B2, B3 (with before/after screenshots from the matrix)
-3. pure deletions: B4, B5, B6
-4. B12 (index.html + style.css in lockstep)
-5. one commit each with a manual smoke test: B14, **B15** (largest diff — the audit's biggest single win), B16, B17, B18, B19, B20
+- **P2.1/P2.2 — the reported bug, reproduced and root-caused:** `tools/qa/repro-category-bug.mjs` showed 16 of 25 draws were nouns while "verbs" was selected. Cause: the category filter only constrained the *fresh* pool; SRS cards fell back to other categories and the bucket had no filter at all.
+- **P2.3 — one source of truth:** `setSetting(key, value)` validates → persists → rebuilds what depends on it → re-renders every view; controls are rendered *from* stored state. `SETTING_DEFS` names the label, storage key, allowed values and whether a setting affects the session.
+- **P2.4 — one reusable dialog:** `confirmAction({title, body, actions, requireText})` returns a promise; it traps focus, returns focus to the opener, suspends the game key handlers, pauses the session clock, becomes a bottom sheet on phones, and supports a typed confirmation. It replaced the three bespoke modals (finish / reset session / delete all) — delete-all now requires typing **DELETE** (case-sensitive) and lists exactly what is removed.
+- **Strict category scope:** every source (fresh deck, bucket, due cards) now honours the selected category, so the card label can never disagree with the control. "Due only" + a category with nothing due says so by name.
+- **Mid-session change:** *Keep current session* / *Switch & start fresh* (two buttons, because answers are recorded per word immediately and cannot be un-recorded).
 
-### Gate G1 — status: **STOPPED, awaiting `APPROVE G1`**
+## Release v=27 — shipped
 
-Nothing in PART 1 or PART 2 has been executed. The only changes on `levelup` are Phase 0 (harness, baseline, this log) and the audit document itself. `main` is untouched and still serving `v=26` from `8b91a76`.
+`main` @ `900a685` (merge of `levelup`), deployed via the new Pages workflow, **verified live**: v=27 assets, 457 words, 12 categories, `spellcast.*` keys + schemaVersion 2, action dialog present, old modals gone, **Lighthouse 1/1/1**, zero console errors, and the three behavioural checks (idle change applies instantly, only the selected category is served, mid-session change asks first and applies nothing until confirmed).
+
+## Decisions taken (owner: "do the most recommended in all of them")
+
+1. **Category vs SRS words** → strict filtering in every source (the label can never lie).
+2. **Confirm dialog** → two buttons (Keep current session / Switch & start fresh) + typed `DELETE` for wiping data.
+3. **Baseline PNGs / harness exposure** → kept in git, removed from the published site by the Pages workflow.
+4. **Naming** → SpellCast everywhere, including storage keys (`spellcast.*`), with a legacy migration; the owner authorised wiping any old data.
+5. **Daily goal unit** (v=28) → **words** (matches the loop; minutes reward idling). Default 20.
+6. **"Show again"** (v=28) → **include it**, costs 5 points and does not break the streak.
+
+## Next
+
+Phase 4 (visual redesign spec + `docs/mock.html`) and Phase 5 (implement it) are the remaining large pieces, then v=28 (progress/motivation), v=29 (data safety) and v=30 (polish/PWA).
 
 ---
 
@@ -143,14 +149,20 @@ The card label shows the *drawn word's* category, so the label and the control l
 
 ---
 
-## Commit history (branch `levelup`)
+## Commit history
+
+`main` (live):
 
 ```
-bdda222  0.2b layout checks (no page scroll, no horizontal scrollbars, mobile sheet)
-12c6eb3  0.3b progress log: harness evidence, 5 defects, P2 category-bug root cause
-2dbb97f  0.3 baseline artifacts + runtime corrections
-a145e2a  0.2 QA harness (Playwright matrix, session, fixture, axe+contrast, Lighthouse)
-c2fb1da  0.1 branch levelup + .gitignore
+900a685  merge levelup -> main: release v=27 (audit cleanup, SpellCast rename, a11y fixes, settings integrity, strict category scope)
+eb40e95  P2 settings integrity: one source of truth, shared confirm dialog, strict category scope (bump v=27)
+067d65d  B4-B10, B12-B14, B16-B18: dead code, tokens, hidden idiom, constants, OG metadata
+7acb474  B1-B3 + BUG-1..5: timer pill cascade, card-flash rules, dark-mode tokens, selects, h1
+160a6ce  B11 rename: SpellCast everywhere, spellsprint.* -> spellcast.* + legacy migration
+ec6e2f3  A1-A10 part 1: LICENSE, README, banners, gitignore, Pages workflow
+b350723  0.4 phase 1 audit + gate G1 writeup
 ```
 
-`main` history (already live): `8b91a76` docs → `f240113` 26.6 → `af2363b` 26.5 → `2f603e1` 26.3 → `42d0fd7` 26.2 → `7bf3288` 26.1 → `8db0db1` handover doc
+`levelup` (kept for the next release) holds the same work plus the phase 0 harness commits.
+
+Earlier `main` history (live before v=27): `8b91a76` docs, `f240113` 26.6, `af2363b` 26.5, `2f603e1` 26.3, `42d0fd7` 26.2, `7bf3288` 26.1, `8db0db1` handover doc
