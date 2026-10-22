@@ -1635,6 +1635,7 @@ function toggleSettingsPanel() {
   const isHidden = dom.settingsPanel.hidden;
   dom.settingsPanel.hidden = !isHidden;
   dom.settingsToggle.setAttribute("aria-expanded", String(isHidden));
+  document.body.classList.toggle("settings-open", isHidden);
 }
 
 function toggleExpandPanel(panelEl, toggleBtn) {
@@ -2014,6 +2015,9 @@ function init() {
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
   dom.volumeField.hidden = !state.soundEnabled;
   state.sessionRecordAtStart = state.highScore;
+  // mobile takes the settings sheet compact — start with "My words" collapsed
+  const myWordsDetails = document.querySelector("#settingsPanel details");
+  if (myWordsDetails && window.matchMedia("(max-width: 999px)").matches) myWordsDetails.removeAttribute("open");
   refreshReadyState();
   setPhase("ready");
   attachEventListeners();

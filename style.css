@@ -161,7 +161,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}.confetti-piece{position:absolute;top:-10px;width:8px;height:14px;opacity:.9;animation:confettiFall 1s cubic-bezier(.4,0,.6,1) forwards}
 @keyframes confettiFall{0%{transform:translateY(0) rotate(0);opacity:.95}100%{transform:translateY(300px) rotate(280deg);opacity:0}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}.confetti-layer{display:none}}
-@media(max-width:560px){.app{padding:12px 12px 16px}.settings-form{grid-template-columns:1fr}.add-word-row{grid-template-columns:1fr 1fr 1fr}.game-top-bar{flex-wrap:wrap}.session-line{justify-content:flex-start}.game-footer-actions{grid-template-columns:1fr;gap:6px}}
+@media(max-width:560px){.app{padding:12px 12px 16px}.settings-form{grid-template-columns:minmax(0,1fr)}.add-word-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,auto)}.game-top-bar{flex-wrap:wrap}.session-line{justify-content:flex-start}.game-footer-actions{grid-template-columns:1fr;gap:6px}}
 @media(max-width:760px){.header-inner{flex-wrap:wrap}.status-group{order:3;flex-basis:100%;justify-content:flex-start}.pill-label{display:none}}
 @media(max-width:380px){.status-group{gap:4px}.pill{padding:5px 8px;font-size:12px}}
 /* single-column layout: the game flexes to fill the viewport; open panels are
@@ -172,10 +172,21 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
   .deck .dashboard{display:none}
   .deck-left .settings-panel{margin-top:0}
   .deck-left,.deck-right{flex:0 1 auto;min-height:0}
-  #settingsPanel{max-height:56dvh;overflow-y:auto}
-  .deck-right{max-height:36dvh;overflow-y:auto}
+  #settingsPanel{flex:0 0 auto;max-height:calc(100dvh - 150px);overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+  #settingsPanel::-webkit-scrollbar{display:none}
+  .deck-right{max-height:36dvh;overflow-y:auto;scrollbar-width:none}
+  .deck-right::-webkit-scrollbar{display:none}
   .center{flex:1 1 auto;min-height:0;display:flex}
-  .game-card{flex:1 1 auto;width:100%;min-height:0;overflow-y:auto}
+  .game-card{flex:1 1 auto;width:100%;min-height:0;overflow-y:auto;scrollbar-width:none}
+  .game-card::-webkit-scrollbar{display:none}
+  /* settings sheet: while the drawer is open the game card and stats deck
+     step aside so the form usually fits without scrolling at all */
+  body.settings-open .center,
+  body.settings-open .deck-right{display:none}
+  body.settings-open #settingsPanel{max-height:calc(100dvh - 140px);padding:10px}
+  body.settings-open .app{padding-bottom:8px}
+  body.settings-open .settings-group{margin-top:10px;padding-top:10px}
+  .field{min-width:0;overflow-x:clip}
 }
 .deck-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
 .deck-group{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
