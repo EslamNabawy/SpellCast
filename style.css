@@ -135,6 +135,9 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:var(--radius-sm);border:1px solid transparent;font-weight:700;font-size:14px;transition:transform var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
 .btn:active{transform:scale(.97)}.btn-primary{background:var(--accent-btn);color:#fff}.btn-primary:hover{filter:brightness(1.12)}
 .btn-quiet{background:transparent;color:var(--ink-soft);border-color:var(--line)}.btn-quiet:hover{border-color:var(--accent);color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--accent-strong);border-color:var(--accent-glow)}.btn-ghost:hover{border-color:var(--accent)}
+.danger-zone{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.danger-zone-note{font-size:11px;color:var(--ink-faint);margin:0}
 .btn-secondary{background:var(--ink);color:var(--paper)}.btn-secondary:hover{opacity:.9}
 .btn-danger{background:var(--incorrect);color:#fff}.btn-danger:hover{background:#963F1A}
 .btn-danger-quiet{background:transparent;color:var(--incorrect);border-color:var(--line)}.btn-lg{padding:14px 28px;font-size:16px}.btn-sm{padding:8px 12px;font-size:13px}

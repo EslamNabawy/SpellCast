@@ -278,6 +278,9 @@ const dom = {
   categoryStatsEmptyHint: document.getElementById("categoryStatsEmptyHint"),
 
   finishSessionBtn: document.getElementById("finishSessionBtn"),
+  finishOverlay: document.getElementById("finishOverlay"),
+  finishCancelBtn: document.getElementById("finishCancelBtn"),
+  finishConfirmBtn: document.getElementById("finishConfirmBtn"),
 
   summaryOverlay: document.getElementById("summaryOverlay"),
   summaryScore: document.getElementById("summaryScore"),
@@ -1664,7 +1667,7 @@ function isTextEntryTarget(el) {
 }
 
 function anyModalOpen() {
-  return !dom.summaryOverlay.hidden || !dom.resetAllOverlay.hidden || !dom.resetSessionOverlay.hidden;
+  return !dom.summaryOverlay.hidden || !dom.resetAllOverlay.hidden || !dom.resetSessionOverlay.hidden || !dom.finishOverlay.hidden;
 }
 
 function attachEventListeners() {
@@ -1887,14 +1890,48 @@ function attachEventListeners() {
   });
 
   // session timer
+  // Finish is the low-key way out: if words are still unrevealed in the
+  // current deck pass it asks once before opening the recap.
   dom.finishSessionBtn.addEventListener("click", () => {
+    const pending = state.deckRevealed < poolSize();
+    if (pending && !state.sessionWords) {
+      // untouched session — treating "finish" before any word as safe
+      showSessionSummary();
+      return;
+    }
+    if (pending) {
+      dom.finishOverlay.hidden = false;
+      dom.finishCancelBtn.focus();
+      return;
+    }
     showSessionSummary();
+  });
+
+  dom.finishCancelBtn.addEventListener("click", () => {
+    dom.finishOverlay.hidden = true;
+    dom.finishSessionBtn.focus();
+  });
+
+  dom.finishConfirmBtn.addEventListener("click", () => {
+    dom.finishOverlay.hidden = true;
+    showSessionSummary();
+  });
+
+  dom.finishOverlay.addEventListener("click", (e) => {
+    if (e.target === dom.finishOverlay) {
+      dom.finishOverlay.hidden = true;
+    }
   });
 
   // keyboard shortcuts — a single Escape handler for the whole app.
   // Modals take priority over the game.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
+    if (!dom.finishOverlay.hidden) {
+      dom.finishOverlay.hidden = true;
+      dom.finishSessionBtn.focus();
+      return;
+    }
     if (!dom.resetAllOverlay.hidden) {
       dom.resetAllOverlay.hidden = true;
       dom.resetAllBtn.focus();

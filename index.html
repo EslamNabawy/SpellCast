@@ -104,7 +104,10 @@
       </form>
       <div class="settings-actions">
         <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn">Reset session</button>
-        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Reset all</button>
+      </div>
+      <div class="danger-zone">
+        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Delete all data</button>
+        <p class="danger-zone-note">Removes progress, custom words and settings.</p>
       </div>
     </div>
 
@@ -221,7 +224,7 @@
     <div class="footer-actions game-footer-actions">
       <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Bucket <span class="bucket-count" id="bucketCount">0</span></button>
       <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
-      <button class="btn btn-secondary btn-sm" id="finishSessionBtn" type="button">Finish</button>
+      <button class="btn btn-ghost btn-sm" id="finishSessionBtn" type="button">Finish</button>
     </div>
   </main>
 
@@ -291,6 +294,14 @@
       <div class="summary-cat-block"><span class="summary-cat-label">Needs work</span><span class="summary-cat-value" id="summaryWeakest">—</span></div>
     </div>
     <div class="modal-actions"><button class="btn btn-quiet" id="summaryNewSessionBtn" type="button">New session</button><button class="btn btn-primary" id="summaryCloseBtn" type="button">Keep playing</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="finishOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+    <h2 id="finishTitle">Finish session?</h2>
+    <p class="modal-body-text">You still have words left in this deck. Finishing shows your recap now — you can always start a new session after.</p>
+    <div class="modal-actions"><button class="btn btn-quiet" id="finishCancelBtn" type="button">Keep going</button><button class="btn btn-primary" id="finishConfirmBtn" type="button">Finish</button></div>
   </div>
 </div>
 
