@@ -30,10 +30,12 @@ async function run() {
       await gotoApp(page, origin);
       await setTheme(page, theme);
 
-      // open the panels that are most likely to overflow
+      // open the panels that are most likely to overflow — bucket last, since
+      // the exclusive accordion keeps only the most recently opened one open
+      // and the bucket list is the tallest section
       await page.evaluate(() => {
-        document.getElementById("bucketToggle").click();
         document.getElementById("categoryStatsToggle").click();
+        document.getElementById("bucketToggle").click();
       });
       await page.waitForTimeout(200);
 

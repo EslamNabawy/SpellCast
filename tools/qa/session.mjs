@@ -87,11 +87,11 @@ async function run() {
 
   // --- bucket + categories panels ---
   await page.evaluate(() => document.getElementById("bucketToggle").click());
-  await page.waitForSelector("#bucketPanel:not([hidden])");
+  await page.waitForSelector("#bucketPanel[open]");
   const bucketItems = await page.locator("#bucketList li").count();
   check("bucket panel lists the missed words", bucketItems >= 1, `${bucketItems} items`);
   await page.evaluate(() => document.getElementById("categoryStatsToggle").click());
-  await page.waitForSelector("#categoryStatsPanel:not([hidden])");
+  await page.waitForSelector("#categoryStatsPanel[open]");
   const catRows = await page.locator("#categoryStatsList li").count();
   check("category stats panel renders rows", catRows >= 1, `${catRows} rows`);
 
@@ -106,6 +106,12 @@ async function run() {
   // settings below apply instantly
   await page.evaluate(() => resetSession());
   await page.waitForTimeout(100);
+  // v=30: the review-mode select lives inside the collapsed "Memory queue"
+  // accordion section — open it before driving the select
+  await page.evaluate(() => {
+    const d = document.getElementById("reviewModeSelect").closest("details");
+    if (d) d.open = true;
+  });
   for (const [sel, value] of settings) {
     await page.selectOption(sel, value);
     await page.waitForTimeout(120);

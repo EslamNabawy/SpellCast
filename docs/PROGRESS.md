@@ -203,3 +203,25 @@ Scope (user-approved via question): adopt the supplied mockup''s layout & look p
 - Full run 6/6 PASS — session, fixture, a11y (150 probes, 0 failures; axe 12 runs, 0 violations), layout, matrix (66 screenshots), Lighthouse: desktop perf 1 / a11y 1 (LCP 0.4 s), mobile perf 0.96 / a11y 1 (LCP 2.5 s — self-hosted fonts cost ~0.8 s LCP vs v=28).
 - **Rollout:** `e40334a` pushed to `main` (Pages run `39814510857`, 16 m incl. queue wait); `7a57b30` fixed the Pages staging allowlist in `pages.yml`, which never copied `fonts/` — run `39817142909` (1 m 50 s).
 - **Verified live:** `index.html?v=29` 23,633 B · CSS 31,215 B · script 83,248 B · both woff2 200 · reloaded live page reports **0 console errors**, `document.fonts` loaded (Jakarta + Outfit = true), body background `rgb(234, 231, 224)` = `#EAE7E0`.
+
+---
+
+## v=30 — Accordion decks & panel polish ✅ · 2026-10-22
+
+Scope (user review of v=29): kill the scrollable panels in the right deck, move Bucket + Categories out of the centre column into the right deck, and neat the left control panel + status row.
+
+**Layout**
+- Right deck rebuilt as a 4-section **exclusive accordion** — `<details class="deck-group session-group" name="rightDeck">`: Performance (open by default) · Memory queue · Bucket · Categories. Opening one closes the others, so the deck keeps a near-constant height and **no scrollbar anywhere** (`.deck`/`.deck-right` scrollbars hidden; mobile deck-right is `flex:1 1 auto; min-height:0; overflow-y:auto` as an invisible safety valve only).
+- Centre column loses both expand-panels; bucket list + category stats render inside the right-deck sections. Ids preserved (`bucketToggle`/`bucketPanel`/`bucketCount`/`bucketList`, `categoryStatsToggle`/`categoryStatsPanel`); the Memory-queue summary gained `id="reviewModeToggle"`.
+- Game footer slims to a single right-aligned Finish button; counts stay visible as badges in the section heads.
+
+**Behaviour**
+- `renderBucketPanel` clamps at 8 visible items + a "+N more in bucket" dashed row (`.bucket-item-more`) — the bucket can never force a scroll.
+- Opening the Categories section triggers `renderCategoryStats`; accordion is exclusive at every width.
+
+**Polish**
+- Left panel: Practice + My words share one `.section-head` treatment (icon + chevron, hairline divider between groups); My words closes by default. Status row: tally chips + badges share a uniform 26 px height; `.section-head`/`.section-body` carry the spacing rhythm.
+
+**Harness / QA** (session.mjs + capture-matrix.mjs wait on `#bucketPanel[open]`/`#categoryStatsPanel[open]`; session.mjs/fixture.mjs open the containing `<details>` before driving `#reviewModeSelect`/`#customWordInput`; layout.mjs opens the tallest (bucket) section during overflow measurement)
+- Full run 6/6 PASS — session 29/29, fixture 8/8, a11y (12 axe runs, 0 violations; 150 probes, 0 failures; reduced-motion neutralised), layout 21 checks (incl. 375 px sheet), matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile perf 0.96 / a11y 1 (LCP 2.5 s, CLS 0).
+- **Rollout:** this release lands as one code+docs commit on `levelup` → merge `main` → push (Pages); hash + run id + live verification appended in the follow-up docs commit, as with v=29.

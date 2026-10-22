@@ -162,13 +162,13 @@ html[data-theme="dark"] .field select,html[data-theme="dark"] .add-word-row sele
 .seg.is-incorrect{background:var(--incorrect)}
 .session-strip{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .session-tally{display:flex;align-items:center;gap:8px}
-.tally-item{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.tally-item{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:800}
 .tally-ico{width:13px;height:13px}
 .tally-correct{background:var(--correct-tint);color:var(--correct)}
 .tally-incorrect{background:var(--incorrect-tint);color:var(--incorrect)}
 .tally-value{font-variant-numeric:tabular-nums}
 .session-badges{display:flex;align-items:center;gap:6px;min-width:0}
-.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
 .badge-category{background:var(--accent-tint);color:var(--accent-strong)}
 .badge-difficulty{background:var(--paper-soft);color:var(--ink-soft)}
 #sessionTimer.is-running{color:var(--accent-strong)}
@@ -221,7 +221,7 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--kbd-line);border
 .danger-zone-note{font-size:11px;color:var(--ink-faint);margin:0}
 .btn-danger{background:var(--incorrect);color:var(--on-danger)}.btn-danger:hover{background:var(--danger-strong)}
 .btn-danger-quiet{background:transparent;color:var(--danger-text);border-color:var(--line)}.btn-danger-quiet:hover{border-color:var(--danger-text)}.btn-sm{padding:8px 12px;font-size:13px}
-.game-footer-actions{width:100%;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:10px 14px;background:transparent;border-top:1px solid var(--line-soft)}
+.game-footer-actions{width:100%;display:flex;justify-content:flex-end;padding:10px 14px;background:transparent;border-top:1px solid var(--line-soft)}
 .game-footer-actions .ico{width:14px;height:14px;color:var(--ink-faint)}
 .toast-region{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(92vw,360px);pointer-events:none}
 .toast{pointer-events:auto;background:var(--paper-raised);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:10px;animation:toastIn var(--dur-med) var(--ease),toastOut var(--dur-med) var(--ease) 2.6s forwards;width:100%}
@@ -230,12 +230,26 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--kbd-line);border
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes toastOut{to{opacity:0;transform:translateY(6px)}}
 .bucket-count,.count-pill{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;border-radius:999px;background:var(--accent-tint);color:var(--accent-strong);font-size:11px;font-weight:800;margin-left:6px}
-.expand-panel{margin-top:12px;padding:14px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
-.panel-title{font-size:13px;font-weight:800;margin:0 0 8px;display:flex;align-items:center;gap:8px}
 .panel-hint{font-size:13px;color:var(--ink-soft);margin:0 0 8px}
+
+/* accordion section heads — right-deck sections and control-panel groups share one look */
+.section-head{display:flex;align-items:center;gap:8px;width:100%;padding:11px 12px;cursor:pointer;list-style:none;border-bottom:1px solid var(--line-soft)}
+.section-head.static{cursor:default}
+.section-head::-webkit-details-marker{display:none}
+.section-head-label{flex:1;display:flex;align-items:center;gap:8px}
+.section-head-label .ico{color:var(--accent-strong)}
+.section-head .chevron{color:var(--ink-faint);transition:transform var(--dur-fast) var(--ease)}
+details[open] > .section-head .chevron{transform:rotate(180deg)}
+details[open] > .section-head{background:var(--paper)}
+.section-body{padding:10px 12px 12px;display:grid;gap:10px}
+.deck-group + .deck-group,.deck-section + .deck-section{border-top:1px solid var(--line-soft)}
+.custom-words-group > :not(summary){margin-left:12px;margin-right:12px}
+.custom-words-group > .panel-hint{margin-top:12px}
+.custom-words-group{padding-bottom:6px}
 .bucket-list,.category-stats-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .bucket-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--paper);border:1px solid var(--line-soft);border-radius:10px;font-size:13px}
 .bucket-item-word{font-weight:700;font-family:var(--font-display)}.bucket-item-meta{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:6px}
+.bucket-item-more{justify-content:center;font-size:11px;font-weight:700;color:var(--ink-soft);background:transparent;border-style:dashed}
 .priority-dot{width:8px;height:8px;border-radius:50%}.priority-high{background:var(--danger-text)}.priority-medium{background:var(--warn)}.priority-normal{background:var(--ink-faint)}
 .category-stat-row{display:flex;flex-direction:column;gap:4px}.category-stat-top{display:flex;justify-content:space-between;font-size:13px}.category-stat-name{font-weight:700}.category-stat-pct{font-variant-numeric:tabular-nums;color:var(--ink-soft)}.category-stat-bar-track{height:6px;border-radius:999px;background:var(--line-soft);overflow:hidden}.category-stat-bar-fill{height:100%;background:var(--accent);border-radius:999px}
 .modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100}
@@ -283,8 +297,8 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--kbd-line);border
    stats scroll under the card, deck titles stay hidden. */
 @media(max-width:999px){
   .deck-left{position:relative;padding:0}
-  .deck-right{position:relative;padding:0;margin-top:12px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);max-height:36dvh;overflow-y:auto}
-  .deck-right .deck-group{padding:10px 12px}
+  .deck-right{position:relative;padding:0;margin-top:12px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .deck-right .deck-group{padding:0}
   .deck-title{clip:rect(0,0,0,0);clip-path:inset(50%);height:1px;width:1px;overflow:hidden;position:absolute;white-space:nowrap}
   .settings-panel{margin-top:0}
   body.settings-open .center,body.settings-open .deck-right{display:none}
@@ -311,4 +325,4 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--kbd-line);border
   #settingsToggle{display:none}
 }
 @media(min-width:1400px){.app{max-width:1360px}}
-@media(min-width:900px) and (max-width:999px){.settings-form{grid-template-columns:1fr 1fr}.deck-right{max-height:30dvh}}
+@media(min-width:900px) and (max-width:999px){.settings-form{grid-template-columns:1fr 1fr}}

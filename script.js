@@ -1298,8 +1298,11 @@ function renderBucketPanel() {
   }
   dom.bucketEmptyHint.hidden = true;
 
+  // the list stays clamp-short so the accordion never needs a scrollbar —
+  // the "+N more" row signals the rest without scrolling
+  const VISIBLE_LIMIT = 8;
   const sorted = [...state.bucket].sort((a, b) => b.mistakes - a.mistakes);
-  sorted.forEach((entry) => {
+  sorted.slice(0, VISIBLE_LIMIT).forEach((entry) => {
     const li = document.createElement("li");
     li.className = "bucket-item";
     const level = priorityLevel(entry.mistakes);
@@ -1312,6 +1315,12 @@ function renderBucketPanel() {
     `;
     dom.bucketList.appendChild(li);
   });
+  if (sorted.length > VISIBLE_LIMIT) {
+    const more = document.createElement("li");
+    more.className = "bucket-item bucket-item-more";
+    more.textContent = `+${sorted.length - VISIBLE_LIMIT} more in bucket`;
+    dom.bucketList.appendChild(more);
+  }
 }
 
 function renderCategoryStats() {
@@ -1735,12 +1744,6 @@ function toggleSettingsPanel() {
   document.body.classList.toggle("settings-open", isHidden);
 }
 
-function toggleExpandPanel(panelEl, toggleBtn) {
-  const isHidden = panelEl.hidden;
-  panelEl.hidden = !isHidden;
-  toggleBtn.setAttribute("aria-expanded", String(isHidden));
-}
-
 // ================================
 // RESETS
 // ================================
@@ -2128,13 +2131,20 @@ function attachEventListeners() {
     if (choice === "delete") resetAllData();
   });
 
-  dom.bucketToggle.addEventListener("click", () => {
-    toggleExpandPanel(dom.bucketPanel, dom.bucketToggle);
-  });
-
-  dom.categoryStatsToggle.addEventListener("click", () => {
-    toggleExpandPanel(dom.categoryStatsPanel, dom.categoryStatsToggle);
-    renderCategoryStats();
+  // The right deck is an accordion: opening one section closes the others, so
+  // the deck never grows past a single panel — no scrollbars anywhere. The
+  // `name` attribute gives this natively in modern browsers; the toggle
+  // listener is the fallback that keeps the promise in older ones. The panels
+  // are plain <summary> toggles now, so aria-expanded tracks itself.
+  const deckSections = Array.from(document.querySelectorAll(".deck-right .session-group"));
+  deckSections.forEach((section) => {
+    section.addEventListener("toggle", () => {
+      if (!section.open) return;
+      deckSections.forEach((other) => {
+        if (other !== section) other.open = false;
+      });
+      if (section.id === "categoryStatsPanel") renderCategoryStats();
+    });
   });
 
   // session timer

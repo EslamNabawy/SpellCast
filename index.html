@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=29">
+<link rel="stylesheet" href="style.css?v=30">
 </head>
 <body class="theme-normal">
 
@@ -94,8 +94,8 @@
   <aside class="deck deck-left" aria-label="Controls">
     <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-sliders"></use></svg>Controls</h2>
   <section class="settings-panel" id="settingsPanel" hidden>
-    <div class="settings-group">
-      <h3 class="settings-heading">Practice</h3>
+    <div class="deck-section settings-group">
+      <div class="section-head settings-heading static"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg>Practice</span></div>
       <form class="settings-form" id="settingsForm">
         <div class="field">
           <label for="categorySelect">Category</label>
@@ -154,8 +154,8 @@
       </div>
     </div>
 
-    <details class="settings-group custom-words-group" open>
-      <summary class="settings-heading summary-row"><span class="summary-row-label"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</span> <span class="summary-badge" id="customCountBadge">0</span></summary>
+    <details class="deck-section settings-group custom-words-group">
+      <summary class="section-head settings-heading"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</span> <span class="summary-badge" id="customCountBadge">0</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
       <p class="panel-hint">Missed words come back in 10 minutes. Words you know come back in days.</p>
       <form class="add-word-form" id="addWordForm" autocomplete="off">
         <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -275,61 +275,69 @@
     </div>
 
     <div class="game-footer-actions">
-      <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel"><svg class="ico" aria-hidden="true"><use href="#i-layers"></use></svg>Bucket <span class="bucket-count" id="bucketCount">0</span></button>
-      <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel"><svg class="ico" aria-hidden="true"><use href="#i-bars"></use></svg>Categories</button>
       <button class="btn btn-ghost btn-sm" id="finishSessionBtn" type="button"><svg class="ico" aria-hidden="true"><use href="#i-power"></use></svg>Finish</button>
     </div>
   </main>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
-
-  <section class="expand-panel" id="bucketPanel" hidden>
-    <h2 class="panel-title">Practice bucket <span class="count-pill" id="bucketCount2">0</span></h2>
-    <p class="panel-hint" id="bucketEmptyHint">Empty — great work.</p>
-    <ul class="bucket-list" id="bucketList"></ul>
-  </section>
-
-  <section class="expand-panel" id="categoryStatsPanel" hidden>
-    <h2 class="panel-title">By category</h2>
-    <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
-    <ul class="category-stats-list" id="categoryStatsList"></ul>
-  </section>
   </div>
 
   <aside class="deck deck-right" aria-label="Stats and review">
     <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-trophy"></use></svg>Stats</h2>
-    <section class="deck-group" aria-label="Session statistics">
-      <h3 class="settings-heading">Performance</h3>
-      <div class="dashboard">
-        <div class="stat-card">
-          <span class="stat-label">Score</span>
-          <span class="stat-value" id="statScore">0</span>
-        </div>
-        <div class="stat-card stat-card-streak" title="Also shown in the header streak pill">
-          <span class="stat-label">Streak</span>
-          <span class="stat-value" id="statStreak">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Best</span>
-          <span class="stat-value" id="statBest">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Accuracy</span>
-          <span class="stat-value" id="statAccuracy">—</span>
+
+    <details class="deck-group session-group" name="rightDeck" open>
+      <summary class="section-head settings-heading"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-trophy"></use></svg>Performance</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
+      <div class="section-body">
+        <div class="dashboard">
+          <div class="stat-card">
+            <span class="stat-label">Score</span>
+            <span class="stat-value" id="statScore">0</span>
+          </div>
+          <div class="stat-card stat-card-streak" title="Also shown in the header streak pill">
+            <span class="stat-label">Streak</span>
+            <span class="stat-value" id="statStreak">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Best</span>
+            <span class="stat-value" id="statBest">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Accuracy</span>
+            <span class="stat-value" id="statAccuracy">—</span>
+          </div>
         </div>
       </div>
-    </section>
-    <div class="deck-group">
-      <h3 class="settings-heading">Memory queue</h3>
-      <div class="field">
-        <label for="reviewModeSelect">Review</label>
-        <select id="reviewModeSelect">
-          <option value="mixed">Mixed</option>
-          <option value="dueOnly">Due only</option>
-        </select>
+    </details>
+
+    <details class="deck-group session-group" name="rightDeck">
+      <summary class="section-head settings-heading" id="reviewModeToggle"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-clock"></use></svg>Memory queue</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
+      <div class="section-body">
+        <div class="field">
+          <label for="reviewModeSelect">Review</label>
+          <select id="reviewModeSelect">
+            <option value="mixed">Mixed</option>
+            <option value="dueOnly">Due only</option>
+          </select>
+        </div>
+        <div class="srs-stats" id="srsStats"></div>
       </div>
-      <div class="srs-stats" id="srsStats"></div>
-    </div>
+    </details>
+
+    <details class="deck-group session-group" name="rightDeck" id="bucketPanel">
+      <summary class="section-head settings-heading" id="bucketToggle"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-layers"></use></svg>Bucket</span><span class="count-pill bucket-count" id="bucketCount">0</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
+      <div class="section-body">
+        <p class="panel-hint" id="bucketEmptyHint">Empty — great work.</p>
+        <ul class="bucket-list" id="bucketList"></ul>
+      </div>
+    </details>
+
+    <details class="deck-group session-group" name="rightDeck" id="categoryStatsPanel">
+      <summary class="section-head settings-heading" id="categoryStatsToggle"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-bars"></use></svg>Categories</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
+      <div class="section-body">
+        <p class="panel-hint" id="categoryStatsEmptyHint">Play a few words to see stats.</p>
+        <ul class="category-stats-list" id="categoryStatsList"></ul>
+      </div>
+    </details>
   </aside>
 
 </div>
@@ -367,7 +375,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=29"></script>
-<script src="script.js?v=29"></script>
+<script src="words.js?v=30"></script>
+<script src="script.js?v=30"></script>
 </body>
 </html>

@@ -28,6 +28,11 @@ async function run() {
   await playOneWord(page, "incorrect");
   // back to idle so the settings below apply without a confirmation dialog
   await page.evaluate(() => resetSession());
+  // v=30: the custom-word manager lives in the collapsed "My words" section
+  await page.evaluate(() => {
+    const d = document.getElementById("customWordInput").closest("details");
+    if (d) d.open = true;
+  });
   await page.fill("#customWordInput", "zephyrine");
   await page.selectOption("#customWordCategory", "nouns");
   await page.selectOption("#customWordDifficulty", "hard");

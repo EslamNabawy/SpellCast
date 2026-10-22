@@ -53,13 +53,13 @@ const STATES = {
   bucket: async (page) => {
     await playOneWord(page, "incorrect");
     await page.evaluate(() => document.getElementById("bucketToggle").click());
-    await page.waitForSelector("#bucketPanel:not([hidden])");
+    await page.waitForSelector("#bucketPanel[open]");
     return "bucket panel";
   },
   categories: async (page) => {
     await playOneWord(page, "correct");
     await page.evaluate(() => document.getElementById("categoryStatsToggle").click());
-    await page.waitForSelector("#categoryStatsPanel:not([hidden])");
+    await page.waitForSelector("#categoryStatsPanel[open]");
     return "category stats panel";
   },
   mywords: async (page) => {
