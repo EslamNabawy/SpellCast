@@ -98,6 +98,20 @@ AUDITOR ran read-only; full report in `docs/AUDIT-PHASE1.md` (569 lines, every c
 5. **Daily goal unit** (v=28) → **words** (matches the loop; minutes reward idling). Default 20.
 6. **"Show again"** (v=28) → **include it**, costs 5 points and does not break the streak.
 
+## Release v=28 — session strip redesign
+
+The game-card top bar was rebuilt from scratch (the "skeleton bar + loud pills + floating tag" strip):
+
+- **Left**: an accent dot (which now carries the streak theme) + the category name in sentence case — no uppercase, no tracking, no pill.
+- **Right**: a 4px continuous track that fills as words are answered, the word count ("4 words"), and bare tallies next to a ✓/✗ mark. The marks carry the meaning, so the state is never colour-only; screen readers get "N correct / N incorrect" from the visually-hidden labels.
+- The progress is now **session-based** (words answered, target 20) instead of a deck crawl that moved 1% per word with a 163-word pool.
+- The card's gradient edge is gone (the accent dot does that job) and the beige band is now a hairline rule on the card surface.
+- **Toasts moved to the bottom** — they were fixed at `top:76px` and covered the new strip.
+
+Two real bugs the redesign surfaced and fixed: in dark mode `--progress-fill` resolved against the **root** value (custom properties substitute where they are declared), so the fill was nearly invisible; the floating "+10" score popup failed contrast mid-fade in dark mode (now uses a dedicated `--score-float` token).
+
+Live: **v=28** — Lighthouse 1/1/1, 0 axe violations, 150/150 contrast probes, 0 console errors.
+
 ## Next
 
 Phase 4 (visual redesign spec + `docs/mock.html`) and Phase 5 (implement it) are the remaining large pieces, then v=28 (progress/motivation), v=29 (data safety) and v=30 (polish/PWA).
