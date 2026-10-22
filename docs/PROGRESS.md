@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** Phase 0 complete → Phase 1 audit running → **stopped at GATE G1**
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `8b91a76`, serving `v=26`)
+**Current phase:** Phase 4/5 visual redesign — **v=29 shipped** (mockup layout + self-hosted type + segment strip)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `7a57b30`, serving `v=29`)
 
 ---
 
@@ -180,3 +180,26 @@ b350723  0.4 phase 1 audit + gate G1 writeup
 `levelup` (kept for the next release) holds the same work plus the phase 0 harness commits.
 
 Earlier `main` history (live before v=27): `8b91a76` docs, `f240113` 26.6, `af2363b` 26.5, `2f603e1` 26.3, `42d0fd7` 26.2, `7bf3288` 26.1, `8db0db1` handover doc
+
+---
+
+## v=29 — Visual redesign (mockup adoption) ✅ · commits `e40334a` + `7a57b30` · 2026-10-22
+
+Scope (user-approved via question): adopt the supplied mockup''s layout & look plus only the features that map onto what exists — real game logic, SRS, categories, themes, a11y and the QA harness all kept. Explicitly not ported: 4 game modes, confetti-every-3rd, WebAudio redesign, fullscreen, custom-deck modal, TTS.
+
+**Design**
+- Header restyled as the mockup bar: gradient brand tile with an inlined Lucide-style SVG sprite (no CDN), sun/moon theme icons switched by CSS, streak/timer pills, icon settings/theme buttons.
+- Warm light palette (`#EAE7E0` page, `#F7F5F0` cards, `#D9D4C8` borders, `#2D3748` ink, muted darkened to `#5C6674` for 4.5:1), slate dark (`#020617`/`#0F172A`), dot-grid page background, 12/18/24 px radii, uppercase micro-labels.
+- Self-hosted type: Plus Jakarta Sans + Outfit variable woff2 (latin subset, 60 KB total, `font-display: swap`, preloaded) — no Google Fonts dependency.
+- Phase frames: icon tiles, `<kbd>` chips, result icon tiles (SVG check/x), mockup headline "Ready to cast?", transparent footer action band.
+
+**Behaviour**
+- Strip v29: 12-segment rolling outcome window (`#segmentRow` `role="img"` with dynamic aria-label; `.seg.is-correct/is-incorrect/is-empty`) plus the ✓/✗ tally chips, category + difficulty badges. The v=28 track and word-count label are gone (words = correct + incorrect).
+- Syllable chunk chips always on for words > 4 chars that reassemble exactly; chunk spans hold no whitespace so `#wordDisplay.textContent === word`; bullet separators are pseudo-content.
+- Space-to-skip during the memorise phase + "Skip ahead" button (`#seeAdvanceBtn`); Enter/Esc unchanged; guards keep Space from firing in modals or text entry.
+- Memory queue tiles (Due/Learning/Mastered + total) in the right deck; difficulty badge mirrors the stored difficulty.
+
+**Harness / QA** (probes updated for the new markup: `.badge-*` text probes, `.seg.is-correct` vs `.seg.is-empty` non-text probe, sprite check in check-files)
+- Full run 6/6 PASS — session, fixture, a11y (150 probes, 0 failures; axe 12 runs, 0 violations), layout, matrix (66 screenshots), Lighthouse: desktop perf 1 / a11y 1 (LCP 0.4 s), mobile perf 0.96 / a11y 1 (LCP 2.5 s — self-hosted fonts cost ~0.8 s LCP vs v=28).
+- **Rollout:** `e40334a` pushed to `main` (Pages run `39814510857`, 16 m incl. queue wait); `7a57b30` fixed the Pages staging allowlist in `pages.yml`, which never copied `fonts/` — run `39817142909` (1 m 50 s).
+- **Verified live:** `index.html?v=29` 23,633 B · CSS 31,215 B · script 83,248 B · both woff2 200 · reloaded live page reports **0 console errors**, `document.fonts` loaded (Jakarta + Outfit = true), body background `rgb(234, 231, 224)` = `#EAE7E0`.
