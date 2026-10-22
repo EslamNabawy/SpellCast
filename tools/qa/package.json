@@ -8,7 +8,7 @@
     "serve": "node server.mjs",
     "matrix": "node capture-matrix.mjs",
     "session": "node session.mjs",
-    "fixture": "node fixture.mjs",
+    "fixture": "node fixture.mjs",`n    "layout": "node layout.mjs",
     "a11y": "node a11y.mjs",
     "lighthouse": "node lighthouse.mjs",
     "all": "node run-all.mjs"

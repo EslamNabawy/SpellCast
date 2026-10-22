@@ -7,7 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const steps = [
   ["session", "session.mjs"],
   ["fixture", "fixture.mjs"],
-  ["a11y", "a11y.mjs"],
+  ["a11y", "a11y.mjs"],`n  ["layout", "layout.mjs"],
   ["matrix", "capture-matrix.mjs"],
   ["lighthouse", "lighthouse.mjs"]
 ];
