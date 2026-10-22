@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SpellSprint — Spelling Trainer</title>
+<title>SpellCast — Spelling Trainer</title>
+<meta name="description" content="SpellCast is a free spelling trainer: see a word, type it from memory, build a streak and let spaced repetition track the words you keep missing. Works offline, no sign-up.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2D6A4F">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body class="theme-normal">
 
@@ -19,7 +20,7 @@
     <div class="header-inner">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">✎</span>
-        <span class="brand-name">SpellSprint</span>
+        <span class="brand-name">SpellCast</span>
       </div>
       <div class="status-group" aria-label="Session status">
         <div class="pill pill-streak" id="headerStreakPill">
@@ -186,7 +187,7 @@
     </div>
 
     <div class="phase phase-see" id="phaseSee" hidden>
-      <div class="word-display" id="wordDisplay" aria-live="polite">apple</div>
+      <div class="word-display" id="wordDisplay">apple</div>
       <p class="see-hint" id="seeHint">Memorize it</p>
       <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
       <div class="timer-caption" id="timerCaption">2.0s</div>
@@ -295,6 +296,7 @@
       <div class="summary-item"><span class="summary-label">Score</span><span class="summary-value" id="summaryScore">0</span></div>
       <div class="summary-item"><span class="summary-label">Accuracy</span><span class="summary-value" id="summaryAccuracy">0%</span></div>
       <div class="summary-item"><span class="summary-label">Best streak</span><span class="summary-value" id="summaryBestStreak">0</span></div>
+      <div class="summary-item"><span class="summary-label">High score</span><span class="summary-value" id="summaryHighScore">0</span></div>
       <div class="summary-item"><span class="summary-label">Words</span><span class="summary-value" id="summaryWordsPracticed">0</span></div>
       <div class="summary-item"><span class="summary-label">Added to bucket</span><span class="summary-value" id="summaryBucketAdds">0</span></div>
     </div>
@@ -302,7 +304,7 @@
       <div class="summary-cat-block"><span class="summary-cat-label">Strongest</span><span class="summary-cat-value" id="summaryStrongest">—</span></div>
       <div class="summary-cat-block"><span class="summary-cat-label">Needs work</span><span class="summary-cat-value" id="summaryWeakest">—</span></div>
     </div>
-    <div class="modal-actions"><button class="btn btn-primary" id="summaryCloseBtn" type="button">Continue</button></div>
+    <div class="modal-actions"><button class="btn btn-quiet" id="summaryNewSessionBtn" type="button">New session</button><button class="btn btn-primary" id="summaryCloseBtn" type="button">Keep playing</button></div>
   </div>
 </div>
 
@@ -325,6 +327,6 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="script.js?v=7"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>
