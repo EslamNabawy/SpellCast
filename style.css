@@ -4,7 +4,7 @@
   --ink:#1F2421; --ink-soft:#5B6560; --ink-faint:#676E68;
   --line:#E7E2D6; --line-soft:#EDE9DE;
   --accent:#2D6A4F; --accent-strong:#1B4332; --accent-tint:#E7F0EA; --accent-glow:rgba(45,106,79,.16); --accent-btn:#2D6A4F;
-  --correct:#2D6A4F; --correct-tint:#E7F0EA; --incorrect:#B4532A; --incorrect-tint:#F7EBE6;
+  --correct:#2D6A4F; --correct-tint:#E7F0EA; --incorrect:#A84620; --incorrect-tint:#F7EBE6;
   --font-display:Georgia,"Iowan Old Style",Palatino,serif;
   --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --radius-sm:10px; --radius-md:16px; --radius-lg:22px;
