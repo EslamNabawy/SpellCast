@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=31 shipped — hidden scrollbars + keyboard persistence (v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `107582c`, serving `v=31`)
+**Current phase:** v=32 shipped — keyboard stays open at check + Word chunks switch (v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `e5803ff`, serving `v=32`)
 
 ---
 
@@ -243,3 +243,24 @@ Scope (user review of v=30): the drawer/decks still showed ugly scrollbar tracks
 **Harness / QA** (evidence probes committed as `tools/qa/scratch/probe-drawer.mjs` + `probe-park.mjs`)
 - Full run 6/6 PASS — session 29/29, fixture 8/8, a11y (0 axe violations; 150 probes, 0 failures), layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile 0.96 / a11y 1 (LCP 2.5 s).
 - **Rollout:** code commit `107582c` on `main` (+110/−9, incl. both probes); docs commit follows; Pages verified after push (see header line).
+
+---
+
+## v=32 — Keyboard stays open at check + Word chunks ✅ · commit `e5803ff` · 2026-10-23
+
+Scope (user review of v=31): the keyboard still closed when the answer was checked, and long words needed an on/off switch to un-cut on mobile.
+
+**Behaviour — keyboard**
+- Focus steal removed at all four sites: the `setPhase("correct"/"incorrect")` branches no longer rAF-focus `#nextBtn`, and both `handleCorrectAnswer`/`handleIncorrectAnswer` dropped their `.focus()` calls — focus rides on the parked `#answerInput` through check → reveal → type (proven across a full cycle by the probe).
+- Enter now advances from the parked answer input too (modal guard kept; other text fields unaffected); the session-end blur in `showSessionSummary` stays, guarded from refocusing the parked input.
+- `.phase-parked` no longer sets `visibility:hidden` — off-canvas + `tabindex=-1` while parked is enough and keeps focus-ability.
+
+**Behaviour — Word chunks**
+- New `state.chunkWords` (optional `spellcast.chunkWords` key, default on; the 7 fixed progress keys watched byte-for-byte by fixture.mjs are untouched — no migration). `SETTING_DEFS` entry "Word chunks" (`affectsSession:false`) toggles immediately and re-renders the current word; `renderWordDisplay` gates on it; field-toggle in index.html after Duration.
+
+**Colour fix**
+- Dark `--accent-on` was substituted at `html` where theme classes (on `body`) don't reach → ON-toggle track rendered `#1B4332` = 1.61:1 vs the dark card. Declared at `body` level (`style.css` lines 41/42, html line 54 as fallback) → dark track = `#86D6AE` ≈ 10:1.
+
+**Harness / QA** (evidence probes `probe-v32.mjs` — focus across type→check→reveal→type + chunks 0/4 chips with stable textContent — plus `probe-toggle.mjs` and `probe-cascade.mjs`)
+- Full run 6/6 PASS — session 29/29, fixture 8/8, a11y 12 axe runs 0 violations + 150 probes 0 failures + reduced-motion neutralised, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile 0.96 / a11y 1 (LCP 2.5 s).
+- **Rollout:** code commit `e5803ff` on `main` (6 files, +220/−17, incl. three probes); docs commit follows; Pages verified after push (see header line).
