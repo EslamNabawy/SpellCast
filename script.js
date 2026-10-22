@@ -511,7 +511,11 @@ function setPhase(phase) {
   state.phase = phase;
   dom.phaseReady.hidden = phase !== "ready";
   dom.phaseSee.hidden = phase !== "see";
-  dom.phaseType.hidden = phase !== "type";
+  // The answer input is parked off-canvas between words instead of hidden:
+  // display:none force-blurs the focused field, which slams the mobile
+  // keyboard shut after every answer. Parked, it keeps focus and the keyboard
+  // stays up; only the session summary (which blurs it on purpose) closes it.
+  dom.phaseType.classList.toggle("phase-parked", phase !== "type");
   dom.phaseCorrect.hidden = phase !== "correct";
   dom.phaseIncorrect.hidden = phase !== "incorrect";
   if (phase === "ready") {
@@ -1460,6 +1464,9 @@ function showSessionSummary() {
   dom.summaryStrongest.textContent = summary.strongest;
   dom.summaryWeakest.textContent = summary.weakest;
   summaryOpener = document.activeElement;
+  // closing the keyboard on purpose: the overlay takes over and the parked
+  // answer input must not keep a software keyboard up underneath it
+  dom.answerInput.blur();
   dom.summaryOverlay.hidden = false;
   dom.summaryCloseBtn.focus();
 }

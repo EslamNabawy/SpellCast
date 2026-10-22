@@ -99,7 +99,8 @@ html[data-theme="dark"] .ico-dark-only{display:block}
 .icon-btn:hover{border-color:var(--accent)}.icon-btn:active{transform:scale(.96)}
 .state-banner{text-align:center;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--accent-strong);max-height:0;opacity:0;overflow:hidden;transition:all var(--dur-med) var(--ease)}
 .theme-warm .state-banner,.theme-fire .state-banner,.theme-electric .state-banner,.theme-rocket .state-banner,.theme-legendary .state-banner{max-height:28px;opacity:1;padding-top:8px}
-.settings-panel{margin-top:12px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:14px;animation:panelIn var(--dur-med) var(--ease)}
+.settings-panel{margin-top:12px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:14px;animation:panelIn var(--dur-med) var(--ease);scrollbar-width:none;-ms-overflow-style:none}
+.settings-panel::-webkit-scrollbar{display:none}
 @keyframes panelIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .settings-group + .settings-group{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
 .settings-heading{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px}
@@ -108,7 +109,7 @@ html[data-theme="dark"] .ico-dark-only{display:block}
 .summary-row::-webkit-details-marker{display:none}
 .summary-row-label{display:inline-flex;align-items:center}
 .summary-badge{background:var(--accent-tint);color:var(--accent-strong);font-size:11px;padding:2px 8px;border-radius:999px;font-variant-numeric:tabular-nums}
-.settings-form{display:grid;grid-template-columns:1fr;gap:10px}
+.settings-form{display:grid;grid-template-columns:1fr;gap:10px;overflow-x:clip}
 .field{display:flex;flex-direction:column;gap:6px}.field label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
 .field select,.add-word-row select{appearance:none;-webkit-appearance:none;padding:10px 32px 10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background-color:var(--paper);width:100%;font-weight:600;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235C6674' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -123,7 +124,7 @@ html[data-theme="dark"] .field select,html[data-theme="dark"] .add-word-row sele
 .input-sm{padding:9px 10px;font-size:14px}
 .field-toggle{flex-direction:row;align-items:center;justify-content:space-between}
 .toggle{display:flex;align-items:center;gap:8px;background:none;border:none;padding:0}.toggle-track{width:36px;height:20px;border-radius:999px;background:var(--control-track);position:relative;transition:background var(--dur-fast) var(--ease)}.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--paper-raised);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform var(--dur-fast) var(--ease)}.toggle[aria-checked="true"] .toggle-track{background:var(--accent-on)}.toggle[aria-checked="true"] .toggle-thumb{transform:translateX(16px)}.toggle-state{font-size:13px;color:var(--ink-soft)}
-.volume-slider{width:100%;accent-color:var(--accent)}
+.volume-slider{width:100%;min-width:0;box-sizing:border-box;padding:0;display:block;accent-color:var(--accent)}
 .settings-actions{display:flex;gap:8px;margin-top:12px}
 .add-word-form{display:flex;flex-direction:column;gap:8px}
 .add-word-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px}
@@ -302,7 +303,7 @@ details[open] > .section-head{background:var(--paper)}
   .deck-title{clip:rect(0,0,0,0);clip-path:inset(50%);height:1px;width:1px;overflow:hidden;position:absolute;white-space:nowrap}
   .settings-panel{margin-top:0}
   body.settings-open .center,body.settings-open .deck-right{display:none}
-  body.settings-open .deck-left .settings-panel{display:flex;flex-direction:column;overflow-y:auto;max-height:calc(100dvh - 210px)}
+  body.settings-open .deck-left .settings-panel{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;max-height:calc(100dvh - 140px)}
   body.settings-open .settings-actions{position:sticky;bottom:0;background:var(--paper-raised);padding-top:10px;margin-top:auto;border-top:1px solid var(--line-soft);z-index:2}
 }
 /* Desktop: three columns — controls, the card, stats. */
@@ -326,3 +327,8 @@ details[open] > .section-head{background:var(--paper)}
 }
 @media(min-width:1400px){.app{max-width:1360px}}
 @media(min-width:900px) and (max-width:999px){.settings-form{grid-template-columns:1fr 1fr}}
+
+/* parked phase: the answer input stays in the DOM (focus/keyboard intact)
+   but is moved fully off-canvas — visibility/pointer-events instead of
+   hidden, so the mobile keyboard survives the reveal→type swaps */
+.phase-parked{position:fixed;left:-10000px;top:0;opacity:0;pointer-events:none;visibility:hidden}
