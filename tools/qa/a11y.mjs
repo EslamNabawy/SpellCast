@@ -20,7 +20,8 @@ const CONTRAST_RULES = [
   { selector: ".field label", min: 4.5, label: "field label" },
   { selector: ".type-instruction", min: 4.5, label: "type instruction" },
   { selector: ".result-headline", min: 4.5, label: "result headline" },
-  { selector: ".session-category", min: 4.5, label: "session category" },
+  { selector: ".badge-category", min: 4.5, label: "category badge" },
+  { selector: ".badge-difficulty", min: 4.5, label: "difficulty badge" },
   { selector: ".bucket-count", min: 4.5, label: "bucket count badge" },
   { selector: ".summary-badge", min: 4.5, label: "summary badge" },
   { selector: ".tally-value", min: 4.5, label: "tally value" },
@@ -36,10 +37,10 @@ const CONTRAST_RULES = [
 // their adjacent background. These are the pieces a colour-only reading of
 // the UI depends on (progress segments, toggles, bars).
 const NONTEXT_RULES = [
-  // the track is only the background of the indicator — what matters is the
-  // filled part against the track it sits on
-  { selector: ".session-track-fill", against: ".session-track", min: 3, label: "session track fill vs track" },
-  { selector: ".session-accent-dot", min: 3, label: "accent dot" },
+  // a filled segment against the empty slot beside it — the colour-only
+  // reading of the session shape in the strip
+  { selector: ".seg.is-correct", against: ".seg.is-empty", min: 3, label: "segment fill vs empty segment" },
+  { selector: ".seg.is-incorrect", against: ".seg.is-empty", min: 3, label: "incorrect segment vs empty segment" },
   { selector: ".toggle-track", min: 3, label: "toggle track" },
   { selector: ".category-stat-bar-track", min: 3, label: "category bar track" },
   { selector: ".category-stat-bar-fill", min: 3, label: "category bar fill" }

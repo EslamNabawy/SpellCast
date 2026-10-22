@@ -15,7 +15,7 @@ const checks = {
     return v.length === 3 && v.every((x) => x === v[0]);
   })(),
   "no mojibake": !html.includes("â€") && !html.includes("\uFFFD"),
-  "icons intact": html.includes("✎") && html.includes("⏱") && html.includes("×") && html.includes("✓"),
+  "icon sprite intact": html.includes('id="i-wand"') && html.includes('id="i-flame"') && html.includes('id="i-trophy"') && html.includes('id="i-x-circle"'),
   "em dash intact": html.includes("—")
 };
 Object.entries(checks).forEach(([k, v]) => console.log(`${v ? "ok  " : "FAIL"} ${k}`));

@@ -159,6 +159,7 @@ const state = {
 
   correct: 0,
   incorrect: 0,
+  answerHistory: [], // last answers as booleans — drives the segment strip
 
   currentWord: null,     // { word, category, fromBucket }
   currentThemeKey: "normal",
@@ -245,13 +246,12 @@ const dom = {
 
   sessionCorrectCount: document.getElementById("sessionCorrectCount"),
   sessionIncorrectCount: document.getElementById("sessionIncorrectCount"),
-  sessionProgress: document.getElementById("sessionProgress"),
-  sessionProgressFill: document.getElementById("sessionProgressFill"),
-  sessionCount: document.getElementById("sessionCount"),
+  segmentRow: document.getElementById("segmentRow"),
 
   gameCard: document.getElementById("gameCard"),
   scoreFloat: document.getElementById("scoreFloat"),
   categoryTag: document.getElementById("categoryTag"),
+  difficultyTag: document.getElementById("difficultyTag"),
   sessionTimer: document.getElementById("sessionTimer"),
 
   phaseReady: document.getElementById("phaseReady"),
@@ -262,6 +262,7 @@ const dom = {
   wordDisplay: document.getElementById("wordDisplay"),
   timerFill: document.getElementById("timerFill"),
   timerCaption: document.getElementById("timerCaption"),
+  seeAdvanceBtn: document.getElementById("seeAdvanceBtn"),
 
   phaseType: document.getElementById("phaseType"),
   answerForm: document.getElementById("answerForm"),
@@ -526,6 +527,30 @@ function setPhase(phase) {
   }
 }
 
+// ---- syllable chunking: long words render as chunk chips so the spelling can
+// be memorised in pieces (the mockup's chunk chips, always on). The spans hold
+// no whitespace between them, so #wordDisplay.textContent is still exactly the
+// word — for tests and for screen readers. Anything that does not reassemble
+// to the exact word falls back to plain display.
+function splitIntoSyllables(word) {
+  return word
+    .replace(/([^aeiouy]*)/g, "-$1")
+    .replace(/((?:^|[^aeiouy])th|^m)n-/g, "$1n-")
+    .replace(/-/g, "")
+    .match(/[^aeiouy]*[aeiouy]+(?:[^aeiouy]+|$)/gi) || [word];
+}
+
+function renderWordDisplay(word) {
+  if (word.length > 4) {
+    const chunks = splitIntoSyllables(word);
+    if (chunks.length > 1 && chunks.join("") === word) {
+      dom.wordDisplay.innerHTML = chunks.map((c) => `<span class="chunk">${c}</span>`).join("");
+      return;
+    }
+  }
+  dom.wordDisplay.textContent = word;
+}
+
 function beginRound() {
   clearSeeTimer();
   // clear the previous result frame (correct / incorrect / high score)
@@ -541,7 +566,7 @@ function beginRound() {
   state.currentWord = picked;
 
   dom.categoryTag.textContent = CATEGORY_LABELS[picked.category];
-  dom.wordDisplay.textContent = picked.word;
+  renderWordDisplay(picked.word);
   dom.timerCaption.textContent = (state.duration / 1000).toFixed(1) + " seconds";
 
   announce(`Word: ${picked.word}. Category: ${CATEGORY_LABELS[picked.category]}.`);
@@ -1033,8 +1058,13 @@ function renderCustomWordsList() {
 function renderSrsStats() {
   if (!dom.srsStats) return;
   const s = srsStats();
-  if (!s.total) { dom.srsStats.innerHTML = '<span style="color:var(--ink-faint);font-size:12px">No SRS cards yet</span>'; return; }
-  dom.srsStats.innerHTML = `<span class="pill" style="padding:3px 8px;font-size:11px"><span class="pill-value">${s.due} due</span></span><span>${s.total} cards</span><span>· learning ${s.learning}</span><span>· mature ${s.mature}</span>`;
+  if (!s.total) { dom.srsStats.innerHTML = '<span class="srs-empty">No SRS cards yet</span>'; return; }
+  dom.srsStats.innerHTML =
+    `<div class="queue-tiles">` +
+    `<div class="queue-tile queue-due"><span class="queue-count">${s.due}</span><span class="queue-label">Due</span></div>` +
+    `<div class="queue-tile queue-learning"><span class="queue-count">${s.learning}</span><span class="queue-label">Learning</span></div>` +
+    `<div class="queue-tile queue-mastered"><span class="queue-count">${s.mature}</span><span class="queue-label">Mastered</span></div>` +
+    `</div><p class="queue-total">${s.total} cards tracked</p>`;
 }
 
 const VALID_DIFFICULTIES = ["easy", "medium", "hard"];
@@ -1214,22 +1244,29 @@ function launchConfetti() {
 
 // ---- rendering: dashboard + header ----
 
-// The session strip shows how far this session has come: a thin track that
-// fills as words are answered, with the count beside it. Both come from the
-// same number, so they can never disagree.
-const SESSION_TARGET = 20; // a full session is ~20 words
+// The strip shows the last answers as outcome-coloured segments, left to
+// right, so the shape of the session is readable at a glance; the numeric
+// correct/incorrect chips beside it carry the exact totals.
+const SESSION_WINDOW = 12; // answers visible in the segment strip
 
 function renderSessionProgress() {
-  if (!dom.sessionProgress) return;
-  const answered = state.sessionWords;
-  const pct = Math.min(100, Math.round((answered / SESSION_TARGET) * 100));
-  if (dom.sessionProgressFill) dom.sessionProgressFill.style.width = pct + "%";
-  dom.sessionProgress.setAttribute("aria-valuemax", String(SESSION_TARGET));
-  dom.sessionProgress.setAttribute("aria-valuenow", String(answered));
-  dom.sessionProgress.setAttribute("aria-valuetext", `${answered} word${answered === 1 ? "" : "s"} answered this session`);
-  if (dom.sessionCount) {
-    dom.sessionCount.textContent = answered === 1 ? "1 word" : answered + " words";
-  }
+  if (!dom.segmentRow) return;
+  const history = state.answerHistory.slice(-SESSION_WINDOW);
+  const segments = dom.segmentRow.querySelectorAll(".seg");
+  segments.forEach((seg, i) => {
+    seg.classList.toggle("is-correct", history[i] === true);
+    seg.classList.toggle("is-incorrect", history[i] === false);
+    // is-empty doubles as the contrast-probe anchor for "filled vs empty slot"
+    seg.classList.toggle("is-empty", history[i] === undefined);
+  });
+  const total = state.correct + state.incorrect;
+  const correctInWindow = history.filter(Boolean).length;
+  dom.segmentRow.setAttribute(
+    "aria-label",
+    total === 0
+      ? "No answers yet this session"
+      : `Last ${history.length} of ${total} answer${total === 1 ? "" : "s"}: ${correctInWindow} correct, ${history.length - correctInWindow} incorrect`
+  );
 }
 
 function renderStats() {
@@ -1463,6 +1500,7 @@ function handleSubmitAnswer(rawInput) {
 
 function handleCorrectAnswer(word, category, fromBucket, isSrs) {
   state.correct += 1;
+  state.answerHistory.push(true);
   const newStreak = incrementStreak();
   // SRS update — long/short memory
   const srs = updateSrsCard(word, true);
@@ -1512,6 +1550,7 @@ function handleCorrectAnswer(word, category, fromBucket, isSrs) {
 
 function handleIncorrectAnswer(word, category, rawInput, isSrs) {
   state.incorrect += 1;
+  state.answerHistory.push(false);
   const previousStreak = resetStreak();
   updateSrsCard(word, false);
   addToBucket(word, category);
@@ -1624,11 +1663,9 @@ function applyTheme() {
   const on = !!state.darkMode;
   if (on) {
     document.documentElement.setAttribute("data-theme", "dark");
-    dom.themeIcon.textContent = "☀️";
     dom.themeLabel.textContent = "Dark mode on";
   } else {
     document.documentElement.removeAttribute("data-theme");
-    dom.themeIcon.textContent = "🌙";
     dom.themeLabel.textContent = "Dark mode off";
   }
 }
@@ -1637,6 +1674,9 @@ function applySettingsToForm() {
   // Controls are rendered FROM the stored state, never the other way round.
   dom.categorySelect.value = state.category;
   dom.difficultySelect.value = state.difficulty;
+  if (dom.difficultyTag) {
+    dom.difficultyTag.textContent = state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1);
+  }
   dom.durationSelect.value = String(state.duration);
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   setSoundToggleUI(state.soundEnabled);
@@ -1713,6 +1753,7 @@ function resetSession() {
   state.streak = 0;
   state.correct = 0;
   state.incorrect = 0;
+  state.answerHistory = [];
   state.sessionWords = 0;
   state.sessionBucketAdds = 0;
   state.categoryStats = {};
@@ -1950,6 +1991,19 @@ function attachEventListeners() {
         beginRound();
       }
     }
+  });
+
+  // Space jumps straight to typing during the memorise phase — the "skip
+  // ahead" button does the same for touch. Enter and Esc keep their existing
+  // jobs, and Space is never hijacked while typing or while a modal is open.
+  if (dom.seeAdvanceBtn) dom.seeAdvanceBtn.addEventListener("click", goToTypePhase);
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== " " || state.phase !== "see" || anyModalOpen()) return;
+    const tag = e.target && e.target.tagName;
+    if (tag === "BUTTON" || tag === "SELECT" || tag === "TEXTAREA") return;
+    if (isTextEntryTarget(e.target)) return;
+    e.preventDefault();
+    goToTypePhase();
   });
 
   dom.settingsToggle.addEventListener("click", toggleSettingsPanel);

@@ -23,37 +23,67 @@
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2D6A4F">
-<link rel="stylesheet" href="style.css?v=28">
+<link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css?v=29">
 </head>
 <body class="theme-normal">
+
+<!-- line-icon sprite (Lucide geometry, inlined: no network dependency) -->
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0"><defs>
+<symbol id="i-wand" viewBox="0 0 24 24"><path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.91 5.83a2 2 0 0 1-1.27 1.27L3 12l5.83 1.91a2 2 0 0 1 1.27 1.27L12 21l1.91-5.83a2 2 0 0 1 1.27-1.27L21 12l-5.83-1.91a2 2 0 0 1-1.27-1.27L12 3Z"/><path d="M19 3v4M17 5h4"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3l14 9-14 9V3z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+<symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16M18 17V9M13 17V5M8 17v-3"/></symbol>
+<symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10M18.36 6.64a9 9 0 1 1-12.73 0"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</defs></svg>
 
 <div class="app">
 
   <header class="header">
     <div class="header-inner">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">✎</span>
+        <span class="brand-mark" aria-hidden="true"><svg class="ico"><use href="#i-wand"></use></svg></span>
         <h1 class="brand-name">SpellCast</h1>
       </div>
       <div class="status-group" aria-label="Session status">
         <div class="pill pill-streak" id="headerStreakPill" title="Current streak — correct answers in a row">
-          <span class="pill-icon" aria-hidden="true">🔥</span>
+          <svg class="ico pill-ico" aria-hidden="true"><use href="#i-flame"></use></svg>
           <span class="pill-value" id="headerStreak">0</span>
           <span class="pill-label">streak</span>
         </div>
         <div class="pill pill-timer" id="headerTimerPill" title="Session time" aria-label="Session time">
-          <span class="pill-icon" aria-hidden="true">⏱</span>
+          <svg class="ico pill-ico" aria-hidden="true"><use href="#i-clock"></use></svg>
           <span class="pill-value" id="sessionTimer">0:00</span>
           <span class="pill-label">time</span>
         </div>
       </div>
       <div class="header-actions">
         <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
-          <span aria-hidden="true" id="themeIcon">🌙</span>
+          <span aria-hidden="true" id="themeIcon"><svg class="ico ico-light-only"><use href="#i-moon"></use></svg><svg class="ico ico-dark-only"><use href="#i-sun"></use></svg></span>
           <span class="sr-only" id="themeLabel">Dark mode off</span>
         </button>
         <button class="icon-btn" id="settingsToggle" type="button" aria-expanded="false" aria-controls="settingsPanel" title="Settings">
-          <span aria-hidden="true">⚙</span>
+          <svg class="ico" aria-hidden="true"><use href="#i-sliders"></use></svg>
           <span class="sr-only">Settings</span>
         </button>
       </div>
@@ -62,7 +92,7 @@
   </header>
 
   <aside class="deck deck-left" aria-label="Controls">
-    <h2 class="deck-title">Controls</h2>
+    <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-sliders"></use></svg>Controls</h2>
   <section class="settings-panel" id="settingsPanel" hidden>
     <div class="settings-group">
       <h3 class="settings-heading">Practice</h3>
@@ -116,16 +146,16 @@
         </div>
       </form>
       <div class="settings-actions">
-        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn">Reset session</button>
+        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg>Reset session</button>
       </div>
       <div class="danger-zone">
-        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn">Delete all data</button>
+        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"></use></svg>Delete all data</button>
         <p class="danger-zone-note">Removes progress, custom words and settings.</p>
       </div>
     </div>
 
     <details class="settings-group custom-words-group" open>
-      <summary class="settings-heading summary-row">My words <span class="summary-badge" id="customCountBadge">0</span></summary>
+      <summary class="settings-heading summary-row"><span class="summary-row-label"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</span> <span class="summary-badge" id="customCountBadge">0</span></summary>
       <p class="panel-hint">Missed words come back in 10 minutes. Words you know come back in days.</p>
       <form class="add-word-form" id="addWordForm" autocomplete="off">
         <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -149,7 +179,7 @@
             <option value="medium" selected>Med</option>
             <option value="hard">Hard</option>
           </select>
-          <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn">Add</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn"><svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>Add</button>
         </div>
       </form>
       <p class="field-error" id="customWordError" hidden></p>
@@ -159,8 +189,8 @@
       </div>
       <ul class="mini-list" id="customWordsList"></ul>
       <div class="import-export-row">
-        <button type="button" class="btn btn-quiet btn-sm" id="exportBtn">Export</button>
-        <button type="button" class="btn btn-quiet btn-sm" id="importBtn">Import</button>
+        <button type="button" class="btn btn-quiet btn-sm" id="exportBtn"><svg class="ico" aria-hidden="true"><use href="#i-download"></use></svg>Export</button>
+        <button type="button" class="btn btn-quiet btn-sm" id="importBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Import</button>
         <input type="file" id="importFile" accept=".json" hidden>
       </div>
     </details>
@@ -171,38 +201,38 @@
   <main class="game-card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
+      <div class="seg-row" id="segmentRow" role="img" aria-label="No answers yet this session">
+        <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+      </div>
       <div class="session-strip">
-        <div class="session-identity">
-          <span class="session-accent-dot" aria-hidden="true"></span>
-          <span class="session-category" id="categoryTag" aria-live="polite">Animals</span>
+        <div class="session-tally">
+          <span class="tally-item tally-correct"><svg class="ico tally-ico" aria-hidden="true"><use href="#i-check-circle"></use></svg><span class="tally-value" id="sessionCorrectCount">0</span><span class="sr-only">correct</span></span>
+          <span class="tally-item tally-incorrect"><svg class="ico tally-ico" aria-hidden="true"><use href="#i-x-circle"></use></svg><span class="tally-value" id="sessionIncorrectCount">0</span><span class="sr-only">incorrect</span></span>
         </div>
-        <div class="session-metrics">
-          <div class="session-progress">
-            <div class="session-track" id="sessionProgress" role="progressbar" aria-label="Words answered this session" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
-              <div class="session-track-fill" id="sessionProgressFill"></div>
-            </div>
-            <span class="session-word-count" id="sessionCount">0 words</span>
-          </div>
-          <div class="session-tally">
-            <span class="tally-item"><span class="tally-icon tally-correct" aria-hidden="true">✓</span><span class="tally-value" id="sessionCorrectCount">0</span><span class="sr-only">correct</span></span>
-            <span class="tally-item"><span class="tally-icon tally-incorrect" aria-hidden="true">✗</span><span class="tally-value" id="sessionIncorrectCount">0</span><span class="sr-only">incorrect</span></span>
-          </div>
+        <div class="session-badges">
+          <span class="badge badge-difficulty" id="difficultyTag">Medium</span>
+          <span class="badge badge-category" id="categoryTag" aria-live="polite">Nouns</span>
         </div>
       </div>
     </div>
 
     <div class="phase phase-ready" id="phaseReady">
-      <p class="ready-copy">Ready?</p>
+      <div class="phase-tile phase-tile-ready" aria-hidden="true"><svg class="ico ico-xl"><use href="#i-sparkles"></use></svg></div>
+      <p class="ready-copy">Ready to cast?</p>
       <p class="ready-hint" id="readyHint">Memorize, then type from memory.</p>
-      <button class="btn btn-primary btn-large" id="startBtn" type="button">Show word</button>
-      <p class="kbd-hint">Press Enter to start</p>
+      <button class="btn btn-primary btn-large" id="startBtn" type="button"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg>Show word</button>
+      <p class="kbd-hint">Press <kbd>Enter</kbd> to start</p>
     </div>
 
     <div class="phase phase-see" id="phaseSee" hidden>
+      <div class="phase-top-row">
+        <span class="see-label" id="seeHint"><svg class="ico" aria-hidden="true"><use href="#i-eye"></use></svg>Memorize it</span>
+        <button class="btn btn-quiet btn-sm" id="seeAdvanceBtn" type="button">Skip ahead</button>
+      </div>
       <div class="word-display" id="wordDisplay">apple</div>
-      <p class="see-hint" id="seeHint">Memorize it</p>
       <div class="timer-track" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
-      <div class="timer-caption" id="timerCaption">2.0s</div>
+      <div class="timer-caption" id="timerCaption">2.0 seconds</div>
+      <p class="kbd-hint">Or press <kbd>Space</kbd></p>
     </div>
 
     <div class="phase phase-type" id="phaseType" hidden>
@@ -222,7 +252,7 @@
     </div>
 
     <div class="phase phase-result phase-result-correct" id="phaseCorrect" hidden>
-      <div class="result-icon" aria-hidden="true">✓</div>
+      <div class="result-icon" aria-hidden="true"><svg class="ico ico-lg"><use href="#i-check"></use></svg></div>
       <p class="result-headline" id="correctHeadline">Correct</p>
       <p class="result-word" id="correctWordEcho">necessary</p>
       <p class="result-points" id="correctPoints">+10</p>
@@ -231,7 +261,7 @@
     </div>
 
     <div class="phase phase-result phase-result-incorrect" id="phaseIncorrect" hidden>
-      <div class="result-icon" aria-hidden="true">×</div>
+      <div class="result-icon" aria-hidden="true"><svg class="ico ico-lg"><use href="#i-x"></use></svg></div>
       <p class="result-headline">Not quite</p>
       <p class="result-sub-label">Correct</p>
       <p class="result-word" id="incorrectCorrectWord">necessary</p>
@@ -245,9 +275,9 @@
     </div>
 
     <div class="game-footer-actions">
-      <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Bucket <span class="bucket-count" id="bucketCount">0</span></button>
-      <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
-      <button class="btn btn-ghost btn-sm" id="finishSessionBtn" type="button">Finish</button>
+      <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel"><svg class="ico" aria-hidden="true"><use href="#i-layers"></use></svg>Bucket <span class="bucket-count" id="bucketCount">0</span></button>
+      <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel"><svg class="ico" aria-hidden="true"><use href="#i-bars"></use></svg>Categories</button>
+      <button class="btn btn-ghost btn-sm" id="finishSessionBtn" type="button"><svg class="ico" aria-hidden="true"><use href="#i-power"></use></svg>Finish</button>
     </div>
   </main>
 
@@ -267,29 +297,32 @@
   </div>
 
   <aside class="deck deck-right" aria-label="Stats and review">
-    <h2 class="deck-title">Stats</h2>
-    <section class="dashboard" aria-label="Session statistics">
-      <div class="stat-card">
-        <span class="stat-label">Score</span>
-        <span class="stat-value" id="statScore">0</span>
-      </div>
-      <div class="stat-card stat-card-streak" title="Also shown in the header streak pill">
-        <span class="stat-label">Streak</span>
-        <span class="stat-value" id="statStreak">0</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Best</span>
-        <span class="stat-value" id="statBest">0</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Accuracy</span>
-        <span class="stat-value" id="statAccuracy">—</span>
+    <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-trophy"></use></svg>Stats</h2>
+    <section class="deck-group" aria-label="Session statistics">
+      <h3 class="settings-heading">Performance</h3>
+      <div class="dashboard">
+        <div class="stat-card">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" id="statScore">0</span>
+        </div>
+        <div class="stat-card stat-card-streak" title="Also shown in the header streak pill">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value" id="statStreak">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Best</span>
+          <span class="stat-value" id="statBest">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Accuracy</span>
+          <span class="stat-value" id="statAccuracy">—</span>
+        </div>
       </div>
     </section>
     <div class="deck-group">
-      <h3 class="settings-heading">Review</h3>
+      <h3 class="settings-heading">Memory queue</h3>
       <div class="field">
-        <label for="reviewModeSelect">Mode</label>
+        <label for="reviewModeSelect">Review</label>
         <select id="reviewModeSelect">
           <option value="mixed">Mixed</option>
           <option value="dueOnly">Due only</option>
@@ -334,7 +367,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=28"></script>
-<script src="script.js?v=28"></script>
+<script src="words.js?v=29"></script>
+<script src="script.js?v=29"></script>
 </body>
 </html>
