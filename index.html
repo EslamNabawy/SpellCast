@@ -4,13 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SpellCast — Spelling Trainer</title>
-<meta name="description" content="SpellCast is a free spelling trainer: see a word, type it from memory, build a streak and let spaced repetition track the words you keep missing. Works offline, no sign-up.">
+<meta name="description" content="SpellCast is a free spelling trainer: see a word, type it from memory, build a streak and let spaced repetition track the words you keep missing. No sign-up, no server calls.">
+<link rel="canonical" href="https://eslamnabawy.github.io/SpellCast/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpellCast">
+<meta property="og:title" content="SpellCast — Spelling Trainer">
+<meta property="og:description" content="See a word, type it from memory, build a streak. Spaced repetition keeps the words you miss coming back until you master them.">
+<meta property="og:url" content="https://eslamnabawy.github.io/SpellCast/">
+<meta property="og:image" content="https://eslamnabawy.github.io/SpellCast/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SpellCast — Spelling Trainer">
+<meta name="twitter:description" content="A free, offline-friendly spelling trainer with spaced repetition.">
+<meta name="twitter:image" content="https://eslamnabawy.github.io/SpellCast/og-image.png">
+<meta name="apple-mobile-web-app-title" content="SpellCast">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2D6A4F">
-<link rel="stylesheet" href="style.css?v=26">
+<link rel="stylesheet" href="style.css?v=27">
 </head>
 <body class="theme-normal">
 
@@ -20,7 +33,7 @@
     <div class="header-inner">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">✎</span>
-        <span class="brand-name">SpellCast</span>
+        <h1 class="brand-name">SpellCast</h1>
       </div>
       <div class="status-group" aria-label="Session status">
         <div class="pill pill-streak" id="headerStreakPill" title="Current streak — correct answers in a row">
@@ -159,7 +172,7 @@
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
       <div class="progress-wrap">
-        <div class="deck-progress" id="deckProgress" role="progressbar" aria-label="Deck progress" aria-valuemin="0"></div>
+        <div class="deck-progress" id="deckProgress" role="progressbar" aria-label="Deck progress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
         <div class="progress-line">
           <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
           <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
@@ -221,7 +234,7 @@
       </div>
     </div>
 
-    <div class="footer-actions game-footer-actions">
+    <div class="game-footer-actions">
       <button class="btn btn-quiet btn-sm" id="bucketToggle" type="button" aria-expanded="false" aria-controls="bucketPanel">Bucket <span class="bucket-count" id="bucketCount">0</span></button>
       <button class="btn btn-quiet btn-sm" id="categoryStatsToggle" type="button" aria-expanded="false" aria-controls="categoryStatsPanel">Categories</button>
       <button class="btn btn-ghost btn-sm" id="finishSessionBtn" type="button">Finish</button>
@@ -278,6 +291,18 @@
 
 </div>
 
+<div class="modal-overlay" id="actionDialog" hidden>
+  <div class="modal modal-action" role="dialog" aria-modal="true" aria-labelledby="actionDialogTitle" aria-describedby="actionDialogBody">
+    <h2 id="actionDialogTitle">Are you sure?</h2>
+    <p class="modal-body-text" id="actionDialogBody"></p>
+    <div class="action-require" id="actionDialogRequire" hidden>
+      <label for="actionDialogInput" id="actionDialogRequireLabel">Type DELETE to confirm</label>
+      <input type="text" id="actionDialogInput" class="input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="modal-actions" id="actionDialogActions"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="summaryOverlay" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
     <h2 id="summaryTitle">Session done</h2>
@@ -297,34 +322,9 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="finishOverlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
-    <h2 id="finishTitle">Finish session?</h2>
-    <p class="modal-body-text">You still have words left in this deck. Finishing shows your recap now — you can always start a new session after.</p>
-    <div class="modal-actions"><button class="btn btn-quiet" id="finishCancelBtn" type="button">Keep going</button><button class="btn btn-primary" id="finishConfirmBtn" type="button">Finish</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="resetSessionOverlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetSessionTitle">
-    <h2 id="resetSessionTitle">Reset session?</h2>
-    <p class="modal-body-text">Clears score, streak, session stats. Keeps high score.</p>
-    <div class="modal-actions"><button class="btn btn-quiet" id="resetSessionCancelBtn" type="button">Cancel</button><button class="btn btn-primary" id="resetSessionConfirmBtn" type="button">Reset</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="resetAllOverlay" hidden>
-  <div class="modal modal-danger" role="dialog" aria-modal="true" aria-labelledby="resetAllTitle">
-    <h2 id="resetAllTitle">Delete all?</h2>
-    <p class="modal-body-text">Removes high score, best streak, custom words.</p>
-    <ul class="modal-list"><li>High score</li><li>Best streak</li><li>Lifetime stats</li></ul>
-    <div class="modal-actions"><button class="btn btn-quiet" id="resetAllCancelBtn" type="button">Cancel</button><button class="btn btn-danger" id="resetAllConfirmBtn" type="button">Delete</button></div>
-  </div>
-</div>
-
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=26"></script>
-<script src="script.js?v=26"></script>
+<script src="words.js?v=27"></script>
+<script src="script.js?v=27"></script>
 </body>
 </html>

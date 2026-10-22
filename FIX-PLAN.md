@@ -1,4 +1,10 @@
-# SpellCast — Fix Plan
+# SpellSprint — Fix Plan
+
+> **Status: historical.** This plan drove the 2026-10 rebuild that shipped as Release v=26
+> (`v=26` in `index.html`). It is kept for context only — the live source of truth is the code,
+> `docs/PROGRESS.md` and `docs/AUDIT-PHASE1.md`. Several statements below no longer match the
+> running app (the app is now "SpellCast", the breakpoint is 999 px, the toast region is at the
+> top, and the asset cache-buster is `?v=27`).
 
 ## Status (post-implementation)
 

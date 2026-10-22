@@ -1,0 +1,469 @@
+{
+  "generatedAt": "2026-10-22T12:22:51.908Z",
+  "origin": "http://127.0.0.1:8123",
+  "shots": [
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-idle.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-reveal.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-typing.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-correct.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-incorrect.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-summary.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-bucket.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-categories.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-mywords.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-dialog-finish.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "light",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\375-light-dialog-resetall.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-idle.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-reveal.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-typing.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-correct.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-incorrect.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-summary.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-bucket.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-categories.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-mywords.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-dialog-finish.png"
+    },
+    {
+      "viewport": "375",
+      "theme": "dark",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\375-dark-dialog-resetall.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-idle.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-reveal.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-typing.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-correct.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-incorrect.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-summary.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-bucket.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-categories.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-mywords.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-dialog-finish.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "light",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\768-light-dialog-resetall.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-idle.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-reveal.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-typing.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-correct.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-incorrect.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-summary.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-bucket.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-categories.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-mywords.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-dialog-finish.png"
+    },
+    {
+      "viewport": "768",
+      "theme": "dark",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\768-dark-dialog-resetall.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-idle.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-reveal.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-typing.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-correct.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-incorrect.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-summary.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-bucket.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-categories.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-mywords.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-dialog-finish.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "light",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-light-dialog-resetall.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "idle",
+      "label": "ready",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-idle.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "reveal",
+      "label": "word visible with countdown",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-reveal.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "typing",
+      "label": "type phase",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-typing.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "correct",
+      "label": "correct result",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-correct.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "incorrect",
+      "label": "incorrect result",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-incorrect.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "summary",
+      "label": "session summary",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-summary.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "bucket",
+      "label": "bucket panel",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-bucket.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "categories",
+      "label": "category stats panel",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-categories.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "mywords",
+      "label": "my words manager",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-mywords.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "dialog_finish",
+      "label": "finish confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-dialog-finish.png"
+    },
+    {
+      "viewport": "1440",
+      "theme": "dark",
+      "state": "dialog_resetall",
+      "label": "delete all data confirm",
+      "file": "..\\..\\docs\\baseline\\shots\\1440-dark-dialog-resetall.png"
+    }
+  ],
+  "problems": []
+}

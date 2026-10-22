@@ -1,5 +1,10 @@
 # SpellCast — UI/UX Design Handover
 
+> **Status: partly historical.** Written from a static read of the code in October 2026 and
+> updated for Release v=26. Some sections were overtaken by the v=27 work (single-source
+> settings, `confirmAction` dialogs, category behaviour, renamed storage keys). Trust
+> `docs/PROGRESS.md` and the code itself over the details below when they disagree.
+
 **Product:** SpellCast — a fast, single-purpose English spelling trainer (storage keys keep the historical `spellsprint.*` prefix; the UI name is SpellCast — plan §0 naming decision recorded below)
 **Live:** https://eslamnabawy.github.io/SpellCast/
 **Repo:** https://github.com/EslamNabawy/SpellCast (branch `main`)

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SPELLSPRINT — SCRIPT.JS
+   SPELLCAST — SCRIPT.JS
    Vanilla JS spelling trainer. No frameworks, no build step, no backend.
    ========================================================================== */
 
@@ -50,17 +50,6 @@ const CATEGORY_KEYS = Object.keys(WORDS);
 const BUILTIN_WORDS = JSON.parse(JSON.stringify(WORDS));
 const BUILTIN_CATEGORY_KEYS = Object.keys(BUILTIN_WORDS);
 
-// Find the real category + difficulty a word belongs to (used for SRS cards).
-function findWordMeta(word) {
-  for (const cat of Object.keys(WORDS)) {
-    for (const diff of ["easy", "medium", "hard"]) {
-      const arr = WORDS[cat][diff];
-      if (arr && arr.indexOf(word) !== -1) return { category: cat, difficulty: diff };
-    }
-  }
-  return null;
-}
-
 // ================================
 // STREAK MILESTONES & THEME BANDS
 // ================================
@@ -96,27 +85,64 @@ function streakBonus(streak) {
 
 const BUCKET_MASTER_BONUS = 15;
 const BUCKET_MIX_RATIO = 0.6; // 60% bucket words when bucket has entries
+const REVIEW_DUE_WEIGHT = 0.75; // 75% of "Mixed" rounds prefer a due review card
+const MS_PER_DAY = 86400000;
+const MS_PER_SHORT_REVIEW = 10 * 60 * 1000; // a miss comes back in 10 minutes
+const SRS_EASE_START = 2.3;
+const SRS_EASE_MAX = 2.8;
+const SRS_EASE_MIN = 1.3;
+const SRS_MATURE_DAYS = 21; // a card with a >= 21 day interval counts as mastered
+const SRS_LEARNING_DAYS = 7; // below this, a card counts as "learning"
 
 // ================================
 // STORAGE KEYS
 // ================================
 
 const LS_KEYS = {
-  highScore: "spellsprint.highScore",
-  bestStreak: "spellsprint.bestStreak",
-  totalLifetimeWords: "spellsprint.totalLifetimeWords",
-  lifetimeCorrect: "spellsprint.lifetimeCorrect",
-  preferredCategory: "spellsprint.preferredCategory",
-  preferredDifficulty: "spellsprint.preferredDifficulty",
-  preferredDuration: "spellsprint.preferredDuration",
-  soundEnabled: "spellsprint.soundEnabled",
-  soundVolume: "spellsprint.soundVolume",
-  bucket: "spellsprint.bucket",
-  customWords: "spellsprint.customWords",
-  srsCards: "spellsprint.srsCards",
-  reviewMode: "spellsprint.reviewMode",
-  darkMode: "spellsprint.darkMode"
+  schemaVersion: "spellcast.schemaVersion",
+  highScore: "spellcast.highScore",
+  bestStreak: "spellcast.bestStreak",
+  totalLifetimeWords: "spellcast.totalLifetimeWords",
+  lifetimeCorrect: "spellcast.lifetimeCorrect",
+  preferredCategory: "spellcast.preferredCategory",
+  preferredDifficulty: "spellcast.preferredDifficulty",
+  preferredDuration: "spellcast.preferredDuration",
+  soundEnabled: "spellcast.soundEnabled",
+  soundVolume: "spellcast.soundVolume",
+  bucket: "spellcast.bucket",
+  customWords: "spellcast.customWords",
+  srsCards: "spellcast.srsCards",
+  reviewMode: "spellcast.reviewMode",
+  darkMode: "spellcast.darkMode"
 };
+
+// Current storage schema. Bump when the SHAPE of a stored value changes and
+// add a migration step in migrateLegacyStorage() below.
+const SCHEMA_VERSION = 2;
+
+// One-shot migration: the pre-rename build stored everything under
+// "spellsprint.*". If a browser still holds those keys, move them to their
+// "spellcast.*" equivalent instead of starting over.
+function migrateLegacyStorage() {
+  const legacy = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.indexOf("spellsprint.") === 0) legacy.push(key);
+  }
+  if (!legacy.length) return 0;
+  let moved = 0;
+  legacy.forEach((oldKey) => {
+    const newKey = "spellcast." + oldKey.slice("spellsprint.".length);
+    const value = localStorage.getItem(oldKey);
+    if (value !== null && localStorage.getItem(newKey) === null) {
+      localStorage.setItem(newKey, value);
+      moved++;
+    }
+    localStorage.removeItem(oldKey);
+  });
+  if (moved) console.info(`SpellCast: migrated ${moved} legacy spellsprint.* key(s) to spellcast.*`);
+  return moved;
+}
 
 // ================================
 // APPLICATION STATE
@@ -157,7 +183,6 @@ const state = {
   poolIndex: 0,
   recentQueue: [], // last 30 words to avoid immediate repeats
   maxRecent: 30,
-
   // custom + SRS
   customWords: [], // [{word, category, difficulty, addedAt}]
   srsCards: {}, // word -> {word, category, difficulty, interval, ease, due, reps, lapses, lastReviewed}
@@ -167,8 +192,7 @@ const state = {
   darkMode: false,
   soundVolume: 0.5,
   sessionStartTime: null,
-  sessionTimerHandle: null,
-  wordsSeen: [] // words shown in this session, for the "Word N of M" chip
+  sessionTimerHandle: null
 };
 
 let seeTimerHandle = null;
@@ -185,12 +209,10 @@ const dom = {
   headerStreak: document.getElementById("headerStreak"),
   headerStreakPill: document.getElementById("headerStreakPill"),
   headerTimerPill: document.getElementById("headerTimerPill"),
-  stateBanner: document.getElementById("stateBanner"),
   stateBannerText: document.getElementById("stateBannerText"),
 
   settingsToggle: document.getElementById("settingsToggle"),
   settingsPanel: document.getElementById("settingsPanel"),
-  settingsForm: document.getElementById("settingsForm"),
   categorySelect: document.getElementById("categorySelect"),
   difficultySelect: document.getElementById("difficultySelect"),
   durationSelect: document.getElementById("durationSelect"),
@@ -205,7 +227,6 @@ const dom = {
   customWordCategory: document.getElementById("customWordCategory"),
   customWordDifficulty: document.getElementById("customWordDifficulty"),
   addWordForm: document.getElementById("addWordForm"),
-  addWordBtn: document.getElementById("addWordBtn"),
   customCountBadge: document.getElementById("customCountBadge"),
   newCategoryInput: document.getElementById("newCategoryInput"),
   createCategoryBtn: document.getElementById("createCategoryBtn"),
@@ -237,17 +258,14 @@ const dom = {
 
   phaseSee: document.getElementById("phaseSee"),
   wordDisplay: document.getElementById("wordDisplay"),
-  seeHint: document.getElementById("seeHint"),
   timerFill: document.getElementById("timerFill"),
   timerCaption: document.getElementById("timerCaption"),
 
   phaseType: document.getElementById("phaseType"),
-  typeInstruction: document.getElementById("typeInstruction"),
   answerForm: document.getElementById("answerForm"),
   answerInput: document.getElementById("answerInput"),
+  answerMirror: document.getElementById("answerMirror"),
   skipBtn: document.getElementById("skipBtn"),
-  checkBtn: document.getElementById("checkBtn"),
-  typeHint: document.getElementById("typeHint"),
 
   phaseCorrect: document.getElementById("phaseCorrect"),
   correctHeadline: document.getElementById("correctHeadline"),
@@ -278,9 +296,14 @@ const dom = {
   categoryStatsEmptyHint: document.getElementById("categoryStatsEmptyHint"),
 
   finishSessionBtn: document.getElementById("finishSessionBtn"),
-  finishOverlay: document.getElementById("finishOverlay"),
-  finishCancelBtn: document.getElementById("finishCancelBtn"),
-  finishConfirmBtn: document.getElementById("finishConfirmBtn"),
+
+  actionDialog: document.getElementById("actionDialog"),
+  actionDialogTitle: document.getElementById("actionDialogTitle"),
+  actionDialogBody: document.getElementById("actionDialogBody"),
+  actionDialogActions: document.getElementById("actionDialogActions"),
+  actionDialogRequire: document.getElementById("actionDialogRequire"),
+  actionDialogRequireLabel: document.getElementById("actionDialogRequireLabel"),
+  actionDialogInput: document.getElementById("actionDialogInput"),
 
   summaryOverlay: document.getElementById("summaryOverlay"),
   summaryScore: document.getElementById("summaryScore"),
@@ -293,14 +316,6 @@ const dom = {
   summaryWeakest: document.getElementById("summaryWeakest"),
   summaryCloseBtn: document.getElementById("summaryCloseBtn"),
   summaryNewSessionBtn: document.getElementById("summaryNewSessionBtn"),
-
-  resetAllOverlay: document.getElementById("resetAllOverlay"),
-  resetAllCancelBtn: document.getElementById("resetAllCancelBtn"),
-  resetAllConfirmBtn: document.getElementById("resetAllConfirmBtn"),
-
-  resetSessionOverlay: document.getElementById("resetSessionOverlay"),
-  resetSessionCancelBtn: document.getElementById("resetSessionCancelBtn"),
-  resetSessionConfirmBtn: document.getElementById("resetSessionConfirmBtn"),
 
   srAnnouncer: document.getElementById("srAnnouncer"),
   confettiLayer: document.getElementById("confettiLayer"),
@@ -354,9 +369,10 @@ function buildPool() {
   state.deckRevealed = 0;
 }
 
-function pickCategory() {
-  if (state.category !== "all") return state.category;
-  return CATEGORY_KEYS[Math.floor(Math.random() * CATEGORY_KEYS.length)];
+// Remember a word so it is not served again within the recent window.
+function pushRecent(word) {
+  state.recentQueue.push(word);
+  if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
 }
 
 function getNextFreshWord() {
@@ -387,39 +403,37 @@ function getNextFreshWord() {
     state.poolIndex = (state.poolIndex + 1) % n;
   }
   // track recent
-  state.recentQueue.push(candidate.word);
-  if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+  pushRecent(candidate.word);
   return candidate;
 }
 
 // Returns { word, category, fromBucket, isSrs } or null when there is
 // nothing to serve (empty pool / nothing due in "due only" mode).
+// The selected category is honoured by EVERY source — a session set to
+// "verbs" never serves a noun, no matter whether the word comes from the
+// fresh deck, the practice bucket or a due review card.
 function selectNextWord() {
+  const categoryFilter = state.category; // "all" or a category key
+  const inCategory = (cat) => categoryFilter === "all" || cat === categoryFilter;
+
   // 1) SRS due cards — highest priority (Anki-like)
   const dueAll = getDueCards();
   if (dueAll.length) {
-    let filtered = dueAll;
-    if (state.category !== "all") {
-      const catFiltered = dueAll.filter(c => c.category === state.category);
-      if (catFiltered.length) filtered = catFiltered;
-    }
-    // respect reviewMode
-    const useDue = state.reviewMode === "dueOnly" ? true : (Math.random() < 0.75);
+    const filtered = dueAll.filter(c => inCategory(c.category));
+    const useDue = state.reviewMode === "dueOnly" ? true : (Math.random() < REVIEW_DUE_WEIGHT);
     if (useDue && filtered.length) {
       const weighted = [];
       filtered.forEach(c => {
-        const w = Math.min(c.lapses + (c.interval===0?2:0), 5) + 1;
-        for (let i=0;i<w;i++) weighted.push(c);
+        const w = Math.min(c.lapses + (c.interval === 0 ? 2 : 0), 5) + 1;
+        for (let i = 0; i < w; i++) weighted.push(c);
       });
-      let chosen = weighted[Math.floor(Math.random()*weighted.length)];
+      let chosen = weighted[Math.floor(Math.random() * weighted.length)];
       // avoid immediate repeat if possible
       if (state.recentQueue.includes(chosen.word) && filtered.length > 1) {
-        // pick alternative not recent
         const alt = filtered.find(c => !state.recentQueue.includes(c.word));
         if (alt) chosen = alt;
       }
-      state.recentQueue.push(chosen.word);
-      if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+      pushRecent(chosen.word);
       return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: true };
     }
     // "Due only" means exactly that — never fall through to fresh words.
@@ -428,19 +442,17 @@ function selectNextWord() {
     return null;
   }
 
-  // 2) legacy bucket (kept for compatibility) — also maps to SRS but keep weight
-  const bucketEligible = state.bucket.length > 0;
-  const useBucket = bucketEligible && Math.random() < BUCKET_MIX_RATIO;
-  if (useBucket) {
+  // 2) practice bucket — also filtered by the selected category
+  const bucketWords = state.bucket.filter(entry => inCategory(entry.category));
+  if (bucketWords.length && Math.random() < BUCKET_MIX_RATIO) {
     const weighted = [];
-    state.bucket.forEach((entry) => {
+    bucketWords.forEach((entry) => {
       const weight = Math.min(entry.mistakes, 5) + 1;
       for (let i = 0; i < weight; i++) weighted.push(entry);
     });
     const chosen = weighted[Math.floor(Math.random() * weighted.length)];
-    if (!state.recentQueue.includes(chosen.word) || state.bucket.length === 1) {
-      state.recentQueue.push(chosen.word);
-      if (state.recentQueue.length > state.maxRecent) state.recentQueue.shift();
+    if (!state.recentQueue.includes(chosen.word) || bucketWords.length === 1) {
+      pushRecent(chosen.word);
     }
     return { word: chosen.word, category: chosen.category, fromBucket: true, isSrs: !!state.srsCards[chosen.word] };
   }
@@ -473,9 +485,17 @@ function refreshReadyState() {
     setReadyHint(READY_HINT_NO_WORDS, true);
     return;
   }
-  if (state.reviewMode === "dueOnly" && getDueCards().length === 0) {
-    setReadyHint(READY_HINT_NOTHING_DUE, true);
-    return;
+  if (state.reviewMode === "dueOnly") {
+    const due = getDueCards().filter(c => state.category === "all" || c.category === state.category);
+    if (!due.length) {
+      setReadyHint(
+        state.category === "all"
+          ? READY_HINT_NOTHING_DUE
+          : `Nothing is due for ${CATEGORY_LABELS[state.category] || state.category} right now — switch Review mode to Mixed to keep practising.`,
+        true
+      );
+      return;
+    }
   }
   setReadyHint(READY_HINT_DEFAULT, false);
 }
@@ -506,6 +526,8 @@ function setPhase(phase) {
 
 function beginRound() {
   clearSeeTimer();
+  // clear the previous result frame (correct / incorrect / high score)
+  dom.gameCard.classList.remove("correct", "incorrect", "new-high-score");
   const picked = selectNextWord();
   if (!picked) {
     // Nothing to serve (empty pool, or nothing due in "due only" mode).
@@ -578,7 +600,6 @@ function goToTypePhase() {
   dom.answerInput.value = "";
   syncAnswerMirror();
   if (state.currentWord) {
-    state.wordsSeen.push(state.currentWord.word);
     state.deckRevealed += 1;
   }
   renderDeckProgress();
@@ -882,7 +903,11 @@ function loadAllPersisted() {
   // migrate bucket -> SRS if srs empty but bucket has data
   if (Object.keys(state.srsCards).length === 0 && state.bucket.length) {
     state.bucket.forEach(e => {
-      state.srsCards[e.word] = { word:e.word, category:e.category, difficulty:"medium", interval:0, ease:2.3 - Math.min(0.5, e.mistakes*0.1), due:Date.now(), reps:0, lapses:e.mistakes, lastReviewed:0 };
+      state.srsCards[e.word] = makeSrsCard(e.word, e.category, "medium", {
+        ease: SRS_EASE_START - Math.min(0.5, e.mistakes * 0.1),
+        due: Date.now(),
+        lapses: e.mistakes
+      });
     });
     saveSrsCards();
   }
@@ -914,9 +939,26 @@ function recordLifetimeWord(wasCorrect) {
 // SRS (Anki-like, SM-2 simplified) — short/long term
 // ================================
 
+// Build an SRS card record. Every card has the same shape — one factory keeps
+// the stored format in a single place.
+function makeSrsCard(word, category, difficulty, overrides) {
+  const card = {
+    word,
+    category,
+    difficulty,
+    interval: 0,
+    ease: SRS_EASE_START,
+    due: Date.now(),
+    reps: 0,
+    lapses: 0,
+    lastReviewed: 0
+  };
+  return Object.assign(card, overrides || {});
+}
+
 function initSrsCard(word, category, difficulty) {
   if (state.srsCards[word]) return state.srsCards[word];
-  const c = { word, category, difficulty, interval:0, ease:2.3, due:Date.now(), reps:0, lapses:0, lastReviewed:0 };
+  const c = makeSrsCard(word, category, difficulty);
   state.srsCards[word] = c;
   return c;
 }
@@ -932,19 +974,19 @@ function updateSrsCard(word, wasCorrect) {
   c.lastReviewed = now;
   if (wasCorrect) {
     c.reps += 1;
-    c.ease = Math.min(2.8, c.ease + 0.12);
+    c.ease = Math.min(SRS_EASE_MAX, c.ease + 0.12);
     if (c.reps === 1) c.interval = 1;
     else if (c.reps === 2) c.interval = 3;
     else c.interval = Math.round(c.interval * c.ease);
     // long-term vs short-term: <7 days = learning, >=21 = mature
-    c.due = now + c.interval * 86400000;
+    c.due = now + c.interval * MS_PER_DAY;
   } else {
     c.lapses += 1;
     c.reps = 0;
-    c.ease = Math.max(1.3, c.ease - 0.2);
+    c.ease = Math.max(SRS_EASE_MIN, c.ease - 0.2);
     // short-term re-review in 10 min, then again soon
     c.interval = 0;
-    c.due = now + 10 * 60 * 1000; // 10 min
+    c.due = now + MS_PER_SHORT_REVIEW;
     // also keep in bucket for backward compat
   }
   saveSrsCards();
@@ -957,9 +999,8 @@ function srsStats() {
   const all = Object.values(state.srsCards);
   const due = all.filter(c => c.due <= now).length;
   const learning = all.filter(c => c.interval > 0 && c.interval < 7).length;
-  const mature = all.filter(c => c.interval >= 21).length;
-  const fresh = all.filter(c => c.reps===0 && c.interval===0).length;
-  return { total: all.length, due, learning, mature, fresh };
+  const mature = all.filter(c => c.interval >= SRS_MATURE_DAYS).length;
+  return { total: all.length, due, learning, mature };
 }
 
 function renderCustomWordsList() {
@@ -1047,17 +1088,14 @@ function importJSONFile(file) {
         const existing = state.srsCards[w];
         if (!existing || (incoming.lastReviewed||0) > (existing.lastReviewed||0)) {
           ensureCategory(catKey, CATEGORY_LABELS[catKey] || incoming.category);
-          state.srsCards[w] = {
-            word: w,
-            category: catKey,
-            difficulty: diff,
+          state.srsCards[w] = makeSrsCard(w, catKey, diff, {
             interval: Number(incoming.interval) || 0,
-            ease: Number(incoming.ease) || 2.3,
+            ease: Number(incoming.ease) || SRS_EASE_START,
             due: Number(incoming.due) || Date.now(),
             reps: Number(incoming.reps) || 0,
             lapses: Number(incoming.lapses) || 0,
             lastReviewed: Number(incoming.lastReviewed) || 0
-          };
+          });
           const arr = WORDS[catKey][diff];
           if (arr && arr.indexOf(w) === -1) arr.push(w);
         }
@@ -1387,16 +1425,23 @@ function showSessionSummary() {
   dom.summaryBucketAdds.textContent = summary.bucketAdds;
   dom.summaryStrongest.textContent = summary.strongest;
   dom.summaryWeakest.textContent = summary.weakest;
+  summaryOpener = document.activeElement;
   dom.summaryOverlay.hidden = false;
   dom.summaryCloseBtn.focus();
 }
 
 // Close the recap without throwing the session away — "Keep playing" resumes
 // the current session, "New session" is the explicit way to start over.
+let summaryOpener = null;
+
 function closeSummary() {
   dom.summaryOverlay.hidden = true;
   state.sessionStartTime = null;
   refreshReadyState();
+  if (summaryOpener && document.contains(summaryOpener)) {
+    try { summaryOpener.focus(); } catch (e) { /* ignore */ }
+  }
+  summaryOpener = null;
   announce("Recap closed. Session continues.");
 }
 
@@ -1507,12 +1552,109 @@ function handleIncorrectAnswer(word, category, rawInput, isSrs) {
 // SETTINGS
 // ================================
 
+// ================================
+// SETTINGS — one source of truth
+// ================================
+// Controls never own state: they call setSetting(), which validates, stores,
+// rebuilds what depends on the value and re-renders every place the setting
+// is shown. On load the controls are rendered FROM the stored state.
+const SETTING_DEFS = {
+  category: { label: "Category", storageKey: "preferredCategory", affectsSession: true, values: () => ["all"].concat(CATEGORY_KEYS) },
+  difficulty: { label: "Difficulty", storageKey: "preferredDifficulty", affectsSession: true, values: () => ["easy", "medium", "hard"] },
+  duration: { label: "Show for", storageKey: "preferredDuration", affectsSession: true, values: () => [1000, 1500, 2000, 3000, 4000] },
+  reviewMode: { label: "Review mode", storageKey: "reviewMode", affectsSession: true, values: () => ["mixed", "dueOnly"] },
+  soundEnabled: { label: "Sound", storageKey: "soundEnabled", affectsSession: false, values: () => [true, false] },
+  soundVolume: { label: "Volume", storageKey: "soundVolume", affectsSession: false, values: () => [0, 0.25, 0.5, 0.75, 1] },
+  darkMode: { label: "Dark mode", storageKey: "darkMode", affectsSession: false, values: () => [true, false] }
+};
+
+function settingLabel(key, value) {
+  if (key === "category") return value === "all" ? "All categories" : (CATEGORY_LABELS[value] || value);
+  if (key === "difficulty") return value.charAt(0).toUpperCase() + value.slice(1);
+  if (key === "duration") return (value / 1000) + "s";
+  if (key === "reviewMode") return value === "dueOnly" ? "Due only" : "Mixed";
+  if (key === "soundVolume") return Math.round(value * 100) + "%";
+  if (typeof value === "boolean") return value ? "On" : "Off";
+  return String(value);
+}
+
+function setSetting(key, value, options) {
+  const def = SETTING_DEFS[key];
+  if (!def) return false;
+  const opts = options || {};
+  if (!def.values().includes(value)) return false;
+  state[key] = value;
+  saveLocal(LS_KEYS[def.storageKey], value);
+  if (key === "category" || key === "difficulty") resetWordPool();
+  if (key === "soundEnabled") {
+    setSoundToggleUI(value);
+    if (value) { getAudioCtx(); playTone("correct"); }
+  }
+  if (key === "darkMode") applyTheme();
+  applySettingsToForm();
+  if (opts.announce !== false) announce(`${def.label}: ${settingLabel(key, value)}`);
+  return true;
+}
+
+// A session is "in progress" once a word has been answered or is on screen.
+function sessionInProgress() {
+  return state.sessionWords > 0 || state.phase === "see" || state.phase === "type" || state.phase === "correct" || state.phase === "incorrect";
+}
+
+function sessionAccuracyText() {
+  const attempted = state.correct + state.incorrect;
+  if (!attempted) return "0% correct";
+  return Math.round((state.correct / attempted) * 100) + "% correct";
+}
+
+// Settings that change what you practise ask first when a session is running.
+async function requestSettingChange(key, value) {
+  const def = SETTING_DEFS[key];
+  if (!def) return;
+  if (!def.affectsSession || !sessionInProgress()) {
+    setSetting(key, value);
+    return;
+  }
+  const choice = await confirmAction({
+    title: `Change ${def.label.toLowerCase()} to ${settingLabel(key, value)}?`,
+    body: `This ends your current session (${state.sessionWords} answered, ${sessionAccuracyText()}). Every answer you have given is already saved in the review deck — only the session score and streak start over.`,
+    actions: [
+      { id: "keep", label: "Keep current session", variant: "quiet" },
+      { id: "switch", label: "Switch & start fresh", variant: "primary" }
+    ]
+  });
+  if (choice === "switch") {
+    resetSession();
+    setSetting(key, value);
+  } else {
+    // revert the control to the stored value
+    applySettingsToForm();
+  }
+}
+
+function applyTheme() {
+  const on = !!state.darkMode;
+  if (on) {
+    document.documentElement.setAttribute("data-theme", "dark");
+    dom.themeIcon.textContent = "☀️";
+    dom.themeLabel.textContent = "Dark mode on";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    dom.themeIcon.textContent = "🌙";
+    dom.themeLabel.textContent = "Dark mode off";
+  }
+}
+
 function applySettingsToForm() {
+  // Controls are rendered FROM the stored state, never the other way round.
   dom.categorySelect.value = state.category;
   dom.difficultySelect.value = state.difficulty;
   dom.durationSelect.value = String(state.duration);
+  if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   setSoundToggleUI(state.soundEnabled);
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+  if (dom.volumeField) dom.volumeField.hidden = !state.soundEnabled;
+  applyTheme();
 }
 
 function setSoundToggleUI(enabled) {
@@ -1531,8 +1673,7 @@ function setSoundToggleUI(enabled) {
 // The answer mirror shows what was typed while the underlying field is a
 // password field (phone keyboards) — see applyAnswerFieldMode.
 function syncAnswerMirror() {
-  const mirror = document.getElementById("answerMirror");
-  if (mirror) mirror.textContent = dom.answerInput.value;
+  if (dom.answerMirror) dom.answerMirror.textContent = dom.answerInput.value;
 }
 
 function applyAnswerFieldMode() {
@@ -1588,7 +1729,6 @@ function resetSession() {
   state.sessionBucketAdds = 0;
   state.categoryStats = {};
   state.bucket = [];
-  state.wordsSeen = [];
   state.sessionRecordAtStart = state.highScore;
   state.recordCelebrated = false;
   saveBucket();
@@ -1639,7 +1779,6 @@ function resetAllData() {
   state.soundEnabled = false;
   state.soundVolume = 0.5;
   state.darkMode = false;
-  state.wordsSeen = [];
 
   restoreBuiltinCategories();
 
@@ -1666,8 +1805,108 @@ function isTextEntryTarget(el) {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || !!el.isContentEditable;
 }
 
+// ================================
+// CONFIRM DIALOG
+// ================================
+// One reusable promise-based dialog for every "are you sure?" in the app:
+// changing a setting mid-session, finishing early, resetting the session and
+// deleting all data. It traps focus, suspends the game key handlers, pauses
+// the session clock and returns focus to whatever opened it.
+let actionDialogResolver = null;
+let actionDialogOpener = null;
+let actionDialogWasRunning = false;
+
+function confirmAction({ title, body, actions, requireText, requireLabel }) {
+  return new Promise((resolve) => {
+    dom.actionDialogTitle.textContent = title;
+    dom.actionDialogBody.textContent = body || "";
+    dom.actionDialogBody.hidden = !body;
+
+    // optional "type DELETE to confirm" gate
+    if (requireText) {
+      dom.actionDialogRequire.hidden = false;
+      dom.actionDialogRequireLabel.textContent = requireLabel || `Type ${requireText} to confirm`;
+      dom.actionDialogInput.value = "";
+      dom.actionDialogInput.dataset.expect = requireText;
+    } else {
+      dom.actionDialogRequire.hidden = true;
+      dom.actionDialogInput.value = "";
+      delete dom.actionDialogInput.dataset.expect;
+    }
+
+    // buttons
+    dom.actionDialogActions.innerHTML = "";
+    actions.forEach((action) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-" + (action.variant || "quiet");
+      btn.textContent = action.label;
+      btn.dataset.actionId = action.id;
+      btn.addEventListener("click", () => {
+        // a required confirmation word gates the action buttons (case-sensitive:
+        // the label says exactly what to type)
+        const expect = dom.actionDialogInput.dataset.expect;
+        if (expect && dom.actionDialogInput.value.trim() !== expect) {
+          dom.actionDialogInput.focus();
+          announce("Type the confirmation word to continue.");
+          return;
+        }
+        closeActionDialog(action.id);
+      });
+      dom.actionDialogActions.appendChild(btn);
+    });
+
+    actionDialogResolver = resolve;
+    actionDialogOpener = document.activeElement;
+    actionDialogWasRunning = !!state.sessionStartTime;
+    if (actionDialogWasRunning) stopSessionTimer(); // pause the session clock
+    dom.actionDialog.hidden = false;
+    document.body.classList.add("dialog-open");
+
+    // focus: the confirmation input, else the primary action, else the first button
+    const first = dom.actionDialogActions.querySelector(".btn-primary") || dom.actionDialogActions.querySelector("button");
+    if (requireText) dom.actionDialogInput.focus();
+    else if (first) first.focus();
+  });
+}
+
+function closeActionDialog(actionId) {
+  if (!actionDialogResolver) return;
+  const resolve = actionDialogResolver;
+  actionDialogResolver = null;
+  dom.actionDialog.hidden = true;
+  document.body.classList.remove("dialog-open");
+  // resume the session clock where it left off
+  if (actionDialogWasRunning) {
+    actionDialogWasRunning = false;
+    startSessionTimer();
+  }
+  // return focus to the opener
+  if (actionDialogOpener && document.contains(actionDialogOpener)) {
+    try { actionDialogOpener.focus(); } catch (e) { /* ignore */ }
+  }
+  actionDialogOpener = null;
+  resolve(actionId);
+}
+
+// Keep Tab inside the open dialog.
+function trapDialogFocus(e) {
+  if (e.key !== "Tab" || dom.actionDialog.hidden) return;
+  const focusables = dom.actionDialog.querySelectorAll("button, input, [href], select, textarea");
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
 function anyModalOpen() {
-  return !dom.summaryOverlay.hidden || !dom.resetAllOverlay.hidden || !dom.resetSessionOverlay.hidden || !dom.finishOverlay.hidden;
+  return !dom.actionDialog.hidden || !dom.summaryOverlay.hidden;
 }
 
 function attachEventListeners() {
@@ -1728,38 +1967,23 @@ function attachEventListeners() {
   dom.settingsToggle.addEventListener("click", toggleSettingsPanel);
 
   dom.categorySelect.addEventListener("change", () => {
-    state.category = dom.categorySelect.value;
-    saveLocal(LS_KEYS.preferredCategory, state.category);
-    resetWordPool();
+    requestSettingChange("category", dom.categorySelect.value);
   });
 
   dom.difficultySelect.addEventListener("change", () => {
-    state.difficulty = dom.difficultySelect.value;
-    saveLocal(LS_KEYS.preferredDifficulty, state.difficulty);
-    resetWordPool();
+    requestSettingChange("difficulty", dom.difficultySelect.value);
   });
 
   dom.durationSelect.addEventListener("change", () => {
-    state.duration = Number(dom.durationSelect.value);
-    saveLocal(LS_KEYS.preferredDuration, state.duration);
+    requestSettingChange("duration", Number(dom.durationSelect.value));
   });
 
   dom.soundToggle.addEventListener("click", () => {
-    state.soundEnabled = !state.soundEnabled;
-    setSoundToggleUI(state.soundEnabled);
-    saveLocal(LS_KEYS.soundEnabled, state.soundEnabled);
-    if (state.soundEnabled) {
-      getAudioCtx();
-      playTone("correct");
-      dom.volumeField.hidden = false;
-    } else {
-      dom.volumeField.hidden = true;
-    }
+    setSetting("soundEnabled", !state.soundEnabled);
   });
 
   dom.volumeSlider.addEventListener("input", () => {
-    state.soundVolume = parseInt(dom.volumeSlider.value) / 100;
-    saveLocal(LS_KEYS.soundVolume, state.soundVolume);
+    setSetting("soundVolume", parseInt(dom.volumeSlider.value) / 100, { announce: false });
   });
 
   if (dom.addWordForm) {
@@ -1801,27 +2025,13 @@ function attachEventListeners() {
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
     dom.reviewModeSelect.addEventListener("change", () => {
-      state.reviewMode = dom.reviewModeSelect.value;
-      saveLocal(LS_KEYS.reviewMode, state.reviewMode);
-      refreshReadyState();
+      requestSettingChange("reviewMode", dom.reviewModeSelect.value);
     });
   }
 
   // dark mode toggle
   dom.themeToggle.addEventListener("click", () => {
-    state.darkMode = !state.darkMode;
-    if (state.darkMode) {
-      document.documentElement.setAttribute("data-theme", "dark");
-      dom.themeIcon.textContent = "☀️";
-      dom.themeLabel.textContent = "Dark mode on";
-      announce("Dark mode enabled");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      dom.themeIcon.textContent = "🌙";
-      dom.themeLabel.textContent = "Dark mode off";
-      announce("Dark mode disabled");
-    }
-    saveLocal(LS_KEYS.darkMode, state.darkMode);
+    setSetting("darkMode", !state.darkMode);
   });
 
   // skip button during type phase
@@ -1850,34 +2060,30 @@ function attachEventListeners() {
   });
 
   // reset session confirmation
-  dom.resetSessionBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = false;
-    dom.resetSessionCancelBtn.focus();
+  dom.resetSessionBtn.addEventListener("click", async () => {
+    const choice = await confirmAction({
+      title: "Reset this session?",
+      body: `${state.sessionWords} answered ${state.sessionWords === 1 ? "word" : "words"} will be discarded. Your high score, best streak and review deck stay.`,
+      actions: [
+        { id: "cancel", label: "Cancel", variant: "quiet" },
+        { id: "reset", label: "Reset session", variant: "primary" }
+      ]
+    });
+    if (choice === "reset") resetSession();
   });
 
-  dom.resetSessionCancelBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = true;
-    dom.resetSessionBtn.focus();
-  });
-
-  dom.resetSessionConfirmBtn.addEventListener("click", () => {
-    dom.resetSessionOverlay.hidden = true;
-    resetSession();
-  });
-
-  dom.resetAllBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = false;
-    dom.resetAllCancelBtn.focus();
-  });
-
-  dom.resetAllCancelBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = true;
-    dom.resetAllBtn.focus();
-  });
-
-  dom.resetAllConfirmBtn.addEventListener("click", () => {
-    dom.resetAllOverlay.hidden = true;
-    resetAllData();
+  dom.resetAllBtn.addEventListener("click", async () => {
+    const choice = await confirmAction({
+      title: "Delete all data?",
+      body: "This removes everything SpellCast has stored in this browser: high score, best streak, lifetime stats, your custom words and categories, the whole review deck, and your settings. It cannot be undone.",
+      requireText: "DELETE",
+      requireLabel: "Type DELETE to confirm",
+      actions: [
+        { id: "cancel", label: "Cancel", variant: "quiet" },
+        { id: "delete", label: "Delete everything", variant: "danger" }
+      ]
+    });
+    if (choice === "delete") resetAllData();
   });
 
   dom.bucketToggle.addEventListener("click", () => {
@@ -1892,54 +2098,50 @@ function attachEventListeners() {
   // session timer
   // Finish is the low-key way out: if words are still unrevealed in the
   // current deck pass it asks once before opening the recap.
-  dom.finishSessionBtn.addEventListener("click", () => {
+  dom.finishSessionBtn.addEventListener("click", async () => {
     const pending = state.deckRevealed < poolSize();
-    if (pending && !state.sessionWords) {
-      // untouched session — treating "finish" before any word as safe
+    if (!pending || !state.sessionWords) {
       showSessionSummary();
       return;
     }
-    if (pending) {
-      dom.finishOverlay.hidden = false;
-      dom.finishCancelBtn.focus();
+    const choice = await confirmAction({
+      title: "Finish session?",
+      body: "You still have words left in this deck. Finishing shows your recap now, and you can always start a new session after.",
+      actions: [
+        { id: "cancel", label: "Keep going", variant: "quiet" },
+        { id: "finish", label: "Finish", variant: "primary" }
+      ]
+    });
+    if (choice === "finish") showSessionSummary();
+  });
+
+  // the shared confirm dialog: Esc cancels, backdrop cancels, Tab is trapped
+  document.addEventListener("keydown", (e) => {
+    if (dom.actionDialog.hidden) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeActionDialog("cancel");
       return;
     }
-    showSessionSummary();
-  });
-
-  dom.finishCancelBtn.addEventListener("click", () => {
-    dom.finishOverlay.hidden = true;
-    dom.finishSessionBtn.focus();
-  });
-
-  dom.finishConfirmBtn.addEventListener("click", () => {
-    dom.finishOverlay.hidden = true;
-    showSessionSummary();
-  });
-
-  dom.finishOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.finishOverlay) {
-      dom.finishOverlay.hidden = true;
+    if (e.key === "Enter" && dom.actionDialogInput.dataset.expect && document.activeElement === dom.actionDialogInput) {
+      e.preventDefault();
+      const btn = dom.actionDialogActions.querySelector(".btn-danger") || dom.actionDialogActions.querySelector(".btn-primary");
+      if (btn) btn.click();
+      return;
     }
+    trapDialogFocus(e);
+  });
+
+  dom.actionDialog.addEventListener("click", (e) => {
+    if (e.target === dom.actionDialog) closeActionDialog("cancel");
   });
 
   // keyboard shortcuts — a single Escape handler for the whole app.
   // Modals take priority over the game.
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!dom.finishOverlay.hidden) {
-      dom.finishOverlay.hidden = true;
-      dom.finishSessionBtn.focus();
-      return;
-    }
-    if (!dom.resetAllOverlay.hidden) {
-      dom.resetAllOverlay.hidden = true;
-      dom.resetAllBtn.focus();
-      return;
-    }
-    if (!dom.resetSessionOverlay.hidden) {
-      dom.resetSessionOverlay.hidden = true;
-      dom.resetSessionBtn.focus();
+    if (!dom.actionDialog.hidden) {
+      closeActionDialog("cancel");
       return;
     }
     if (!dom.summaryOverlay.hidden) {
@@ -1960,19 +2162,11 @@ function attachEventListeners() {
     });
   }
 
-  // close modals on backdrop click
+  // close the recap on backdrop click
   dom.summaryOverlay.addEventListener("click", (e) => {
     if (e.target === dom.summaryOverlay) {
       closeSummary();
     }
-  });
-  dom.resetAllOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.resetAllOverlay) {
-      dom.resetAllOverlay.hidden = true;
-    }
-  });
-  dom.resetSessionOverlay.addEventListener("click", (e) => {
-    if (e.target === dom.resetSessionOverlay) dom.resetSessionOverlay.hidden = true;
   });
 }
 
@@ -1981,6 +2175,8 @@ function attachEventListeners() {
 // ================================
 
 function init() {
+  migrateLegacyStorage();
+  saveLocal(LS_KEYS.schemaVersion, SCHEMA_VERSION);
   loadAllPersisted();
   applySettingsToForm();
   buildPool();
@@ -1991,15 +2187,7 @@ function init() {
   renderCustomWordsList();
   renderSrsStats();
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
-  // restore dark mode
-  if (state.darkMode) {
-    document.documentElement.setAttribute("data-theme", "dark");
-    dom.themeIcon.textContent = "☀️";
-    dom.themeLabel.textContent = "Dark mode on";
-  }
-  // restore volume — the slider only makes sense while sound is on
-  dom.volumeSlider.value = Math.round(state.soundVolume * 100);
-  dom.volumeField.hidden = !state.soundEnabled;
+  // restore dark mode + volume through the single settings renderer
   state.sessionRecordAtStart = state.highScore;
   // belt-and-braces in case of stale cached HTML: keep autofill and virtual
   // keyboard suggestions off the answer field (Chrome ignores autocomplete=off)

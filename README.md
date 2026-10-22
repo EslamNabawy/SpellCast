@@ -1,190 +1,115 @@
 # SpellCast — Spelling Trainer
 
-A polished, gamified spelling practice website. See a word, watch it disappear, and type it from memory. Build streaks, earn points, and let spaced repetition quietly resurface the words that trip you up until you've mastered them.
+A fast, gamified English spelling trainer that runs entirely in your browser. See a word, watch it disappear, type it from memory, and let spaced repetition resurface the words you keep missing until you've mastered them.
 
-Built with plain HTML, CSS, and JavaScript — no frameworks, no build step, no backend, no external dependencies. Everything runs entirely in your browser.
+**Live:** <https://eslamnabawy.github.io/SpellCast/>
 
-**Play it:** https://eslamnabawy.github.io/SpellCast/
-
----
-
-## Project purpose
-
-The goal is spelling improvement, not arcade gameplay. Gamification (streaks, points, milestones, a review deck) exists to keep practice sessions engaging without turning the app into a distraction from the actual learning.
+Built with plain HTML, CSS, and JavaScript — no frameworks, no build step, no backend, no runtime dependencies, no tracking. Your progress lives in your own browser's `localStorage`.
 
 ---
 
 ## How it works
 
-```
-SEE → MEMORIZE → HIDE → TYPE → CHECK → CORRECT / WRONG → STREAK / REVIEW DECK → REWARD / RETRAIN
-```
+1. Press **Show word** (or Enter). The word appears for the time you chose (1–4 s).
+2. The word disappears — type what you saw.
+3. Press **Check** (or Enter).
+4. Correct answers build your streak and score. Misses reset the streak and put the word in your **Bucket** for a short review, then a longer one later.
 
-1. Click **Show word** and a word appears for a set duration (adjustable in Settings).
-2. The word disappears and you type what you remember.
-3. Submit with the **Check** button or press **Enter**.
-4. Correct answers build your streak and score. Incorrect answers reset your streak and schedule the word for review.
-
----
+```
+SEE → MEMORIZE → HIDE → TYPE → CHECK → CORRECT / WRONG → STREAK / BUCKET → NEXT
+```
 
 ## Features
 
-- **Twelve word categories** — Nouns, Verbs, Adjectives, Adverbs, Commonly Misspelled, Advanced, Animals, Food, Science, Technology, Nature, and Sports — each with easy/medium/hard word lists (142 built-in words).
-- **Category & difficulty selectors**, independent of each other.
-- **Adjustable display time** (1–4 seconds).
-- **Spaced-repetition review deck** — every word you answer becomes an SRS card with its own schedule (Anki-style intervals). Missed words come back within minutes; mastered words go quiet for weeks.
-- **Review mode setting** — *Mixed* blends due reviews with fresh words; *Due only* turns SpellCast into a strict review-only session and tells you when you're all caught up.
-- **Score system** with streak-based bonuses and an all-time high score.
-- **Streak system** with a persistent best-streak record and milestone celebrations at 3, 5, 10, 15, 20, 30, and 50 in a row.
-- **Dynamic visual themes** — the interface shifts its accent color and energy as your streak grows (calm → warm → fire → electric → rocket → legendary), readable in both light and dark mode.
-- **Add your own words and categories** in Settings, complete with custom banks and a per-word difficulty.
-- **Import / export** — back up your custom words and review deck as JSON, and restore them on any device.
-- **Session dashboard** — score, streak, best streak, and accuracy at a glance.
-- **Category performance breakdown** — a compact expandable panel showing your accuracy per category this session.
-- **Session summary** — a "Finish session" button shows a recap: score, accuracy, best streak, high score, words practiced, and your strongest / most-in-need-of-practice categories. "Keep playing" closes the recap and continues the session; "New session" starts over.
-- **Optional sound effects** (Web Audio API, off by default, no autoplay).
-- **Keyboard support** — Enter submits an answer and advances to the next word; it never hijacks fields you're typing into or modals.
-- **Accessible by design** — semantic HTML, visible focus states, ARIA live regions for feedback, and full `prefers-reduced-motion` support (including disabling the confetti effect).
-- **Persistent progress** — high score, best streak, custom words, and the review deck survive refreshes and browser restarts via `localStorage` (`spellsprint.*` keys).
-- **Two separate reset options** — Reset Session (clears the current session only) and Reset All Data (wipes everything, including custom words and the review deck, with a confirmation step).
-
----
-
-## The streak system
-
-Every correct answer increases your streak by one; every incorrect answer resets it to zero — without penalty language. Wrong answers are framed as "streak ended, word scheduled for review," never "you failed."
-
-**Score bonuses scale with your streak:**
-
-| Streak      | Points per correct word |
-|-------------|--------------------------|
-| 1–4         | +10                      |
-| 5–9         | +15                      |
-| 10–19       | +20                      |
-| 20+         | +25                      |
-
-A word you previously got wrong always awards a flat **+15** recovery bonus, regardless of streak, to reward fixing a known weak spot. When such a word finally leaves the practice bucket, the headline says **Mastered**.
-
-**Milestones** (3, 5, 10, 15, 20, 30, 50) trigger a small celebration banner — never a blocking modal — and the biggest ones (10, 20, 30, 50) add a brief, lightweight confetti burst. Crossing your all-time high score mid-session triggers a single "New high score" toast, once per session.
-
-**Visual themes** shift automatically with your streak:
-
-| Streak | Theme        |
-|--------|--------------|
-| 0–2    | Calm/normal  |
-| 3–4    | Warming up   |
-| 5–9    | On fire      |
-| 10–19  | Unstoppable  |
-| 20–29  | Spelling machine |
-| 30+    | Legendary    |
-
-The theme only changes color, accents, and small animations — text stays readable, inputs stay obvious, and buttons stay accessible at every level, in both the light and dark palettes.
-
----
-
-## Review deck (spaced repetition + practice bucket)
-
-- Every word you type gets an SRS card recording its interval, ease, and review count. Correct answers push the card further into the future; a miss drops it back to a few minutes.
-- Any word you misspell is also added to the **practice bucket** visible in the side panel. The bucket clears the moment you spell the word correctly.
-- **Mixed mode** (default) serves due SRS reviews roughly 75% of the time, pulls bucket words ~60% of the time, and fills the rest with fresh words — weighted toward words you've missed most.
-- **Due only** mode serves nothing but due cards; when none are left you get an honest "nothing is due" state instead of being served new words.
-- A word needs an interval of 21+ days to be shown as *mature* in the deck stats.
-- Review progress (due today, deck size, mastered count) is summarized in the Review panel.
-
----
-
-## Persistence
-
-Stored in `localStorage` (nothing sensitive):
-
-- `spellsprint.highScore` — your all-time best session score
-- `spellsprint.bestStreak` — your all-time longest streak
-- `spellsprint.totalLifetimeWords` / `spellsprint.lifetimeCorrect` — lifetime practice counts
-- `spellsprint.bucket` — your current practice bucket, so it survives a refresh
-- `spellsprint.customWords` / `spellsprint.srsCards` — your added words and review deck
-- `spellsprint.reviewMode`, `spellsprint.darkMode`, `spellsprint.soundEnabled`, `spellsprint.soundVolume` — preferences
-- Your preferred category, difficulty, and display duration
-
-**Reset Session** clears your current score, streak, session stats, and bucket, but keeps your high score, best streak, custom words, and review deck intact.
-
-**Reset All Data** (in Settings) permanently deletes everything above and restores the built-in word list, removing custom categories. It requires an explicit confirmation step before deleting anything.
-
----
-
-## File structure
-
-```
-SpellCast/
-│
-├── index.html      — page structure and markup
-├── style.css       — all styling, including the streak-theme system and responsive layout
-├── script.js       — game logic, state, storage, SRS scheduler, rendering
-└── README.md       — this file
-```
-
----
+- **457 built-in words** across 12 categories (Nouns, Verbs, Adjectives, Adverbs, Commonly Misspelled, Advanced, Animals, Food, Science, Technology, Nature, Sports) × easy / medium / hard.
+- **Your own words and categories** — add them in Settings; they merge with the built-in lists and are scheduled like everything else.
+- **Spaced repetition** — every word you answer gets a card with its own interval and ease. A miss comes back in ~10 minutes; a word you know comes back in days. "Mastered" means it survived a 21-day interval.
+- **Review modes** — *Mixed* blends due reviews with fresh words (75 % / 60 % weights), *Due only* serves nothing but due cards and tells you when you are all caught up.
+- **Session recap** — score, accuracy, best streak, high score, words practised, bucket additions, and your strongest / weakest categories. "Keep playing" resumes; "New session" starts over.
+- **Category performance** — per-category accuracy bars for the current session.
+- **Streak themes** — the accent shifts as your streak grows (calm → warming up → on fire → unstoppable → spelling machine → legendary), with an AA-contrast dark mode for every band.
+- **Import / export** — back up your custom words and review deck as JSON and restore it anywhere.
+- **Optional sound** — Web Audio tones for correct / wrong / milestones, off by default.
+- **Anti-cheat** — pasting a word is blocked, and the field suppresses autofill and keyboard suggestions on every platform.
+- **Accessible by design** — AA contrast in light and dark, visible focus, `aria-live` feedback, full `prefers-reduced-motion` support.
 
 ## Running locally
 
-No installation or server required. Just open `index.html` directly in any modern browser (double-click it), or serve the folder with any static server, e.g.:
+No install needed for the app itself — open `index.html` in a browser. To serve it over HTTP instead (recommended: `localStorage` is per-origin, so `file://` and `http://` keep separate saves):
 
+```bash
+npx serve .            # Node
+python -m http.server 8000
 ```
-npx serve .                # Node
-python -m http.server 8000 # Python
-```
 
-The app works completely offline once loaded — there are no external API calls, fonts, or scripts. Note that opening via `file://` still works, but serving over HTTP keeps localStorage isolated per origin, which is safer if you also use the GitHub Pages version.
+## Deploying
 
----
+Push to `main`. A GitHub Actions workflow (`.github/workflows/pages.yml`) publishes **only** the files the page needs — `index.html`, `style.css`, `script.js`, `words.js` and the icons — so the docs, tools and baseline artifacts in this repo are never exposed on the live site.
 
-## Deploying to GitHub Pages
-
-1. Push this folder to a GitHub repository.
-2. In the repository, go to **Settings → Pages**.
-3. Under **Source**, choose the branch (e.g. `main`) and the root folder.
-4. Save. Your site will be live at `https://<your-username>.github.io/<repo-name>/` within a minute or two.
-
-No build step is needed — GitHub Pages will serve `index.html` as-is. When shipping a new version of `style.css` or `script.js`, bump the `?v=N` cache-busters in `index.html` so returning visitors get the fresh files.
-
----
+**Cache busting:** asset URLs carry `?v=N` (currently `?v=27`). Bump `N` in `index.html` for every shipped change, otherwise returning visitors keep the old CSS/JS.
 
 ## Adding your own words
 
-You can do this in the app itself — open **Settings → My words**, choose a category and difficulty, and add as many words as you like. They persist in `localStorage` and merge seamlessly with the built-in lists. You can also create brand-new categories (e.g. "Medical terms" or "French loanwords") and export them as JSON to move them between devices.
+**In the app (recommended):** Settings → *My words* → type a word, pick a category and difficulty, press **Add**. Use **New category** for a custom list. **Import** accepts the JSON produced by **Export**.
 
-If you'd rather edit the source: open `script.js` and find the `WORDS` object near the top. Each category has `easy`, `medium`, and `hard` arrays of lowercase words:
+**In the source:** edit `words.js` — it is the single source of truth for the built-in library:
 
 ```javascript
-const WORDS = {
-  nouns: {
-    easy: ["apple", "window", /* ... */],
-    medium: ["mountain", "computer", /* ... */],
-    hard: ["restaurant", "architecture", /* ... */]
-  },
-  // … other categories
+const WORD_LIBRARY = {
+  meta: { version: 2, updated: "2026-10" },
+  categories: {
+    nouns: {
+      label: "Nouns",                 // shown in the UI
+      e: ["apple", "window"],         // easy
+      m: ["mountain", "computer"],    // medium
+      h: ["restaurant", "phenomenon"] // hard
+    }
+    // … one entry per category
+  }
 };
 ```
 
-To add a word, just append it to the relevant category/difficulty array as a plain lowercase string. No other code changes are needed — the word selection, category display, and category-label mapping all read from this same object automatically.
+Rules the loader enforces for you (it validates, lowercases, dedupes per tier and drops malformed entries, logging what it skipped):
 
-If you want to add a brand-new category in source, you'll also need to:
-1. Add the category key to the `WORDS` object with `easy` / `medium` / `hard` arrays.
-2. Add a matching entry to `CATEGORY_LABELS` (the human-readable display name).
-3. Add an `<option>` for it in the category `<select>` in `index.html`.
+- words are lowercase, letters only (`a-z`), 2–30 characters;
+- no word repeated inside the same tier (the same word may appear in another tier or category);
+- categories are keyed by a slug (`nouns`) and labelled separately (`label`);
+- a new category is picked up automatically — the category dropdown is generated from this file, so you do **not** edit `index.html`.
 
----
+## Storage
 
-## Accessibility notes
+Everything is stored locally under the `spellcast.*` keys (`highScore`, `bestStreak`, `bucket`, `customWords`, `srsCards`, `reviewMode`, `darkMode`, `soundEnabled`, `soundVolume`, `preferredCategory`, `preferredDifficulty`, `preferredDuration`, `lifetimeCorrect`, `totalLifetimeWords`, `schemaVersion`). There is no account, no sync and no server call. Clearing site data in your browser clears your progress — use **Export** if you want a backup.
 
-- All interactive controls are real `<button>`, `<input>`, `<select>`, `<label>`, and `<form>` elements.
-- Focus states are visible throughout, and modals return focus to the control that opened them.
-- Feedback (correct/incorrect, milestones, high scores) is announced via an `aria-live` region for screen readers.
-- Text contrast meets WCAG AA in both light and dark mode, across all six streak themes.
-- Animations respect `prefers-reduced-motion: reduce` — motion is minimized and the confetti effect is disabled entirely.
-- Color is never the only signal: bucket-word priority, for example, pairs a colored dot with text ("3 mistakes"), not color alone.
+## Development
 
----
+```bash
+cd tools/qa
+npm install
+npm run all        # session → fixture → a11y → layout → screenshot matrix → Lighthouse
+```
+
+The QA harness (Playwright + axe-core + Lighthouse) lives in `tools/qa/` and is dev-only — the live page never loads it. It scripts a full session, round-trips a `localStorage` fixture, audits WCAG AA in both themes, and captures a screenshot matrix. See `tools/qa/README.md`.
+
+## Repository layout
+
+```
+SpellCast/
+├── index.html              # the app (only file with structure)
+├── style.css               # all styling: tokens, themes, layout, components
+├── script.js               # game logic, state, storage, SRS scheduler
+├── words.js                # the word library (457 built-in words)
+├── favicon.svg/.png/.ico   # icons
+├── apple-touch-icon.png
+├── .nojekyll
+├── .github/workflows/      # Pages deployment (publishes the served files only)
+├── docs/                   # handover, plans, audits, baseline evidence
+├── tools/qa/               # dev-only QA harness
+├── LICENSE
+└── README.md
+```
 
 ## Credits
 
-Built as a self-contained, dependency-free educational tool. No tracking, no ads, no external calls — your practice data stays in your own browser.
+Self-contained, dependency-free educational tool. No tracking, no ads, no external calls — your practice data stays in your browser.
+
+Licensed under the [MIT License](LICENSE).

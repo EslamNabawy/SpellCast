@@ -1,0 +1,156 @@
+{
+  "generatedAt": "2026-10-22T12:34:41.660Z",
+  "sizes": [
+    {
+      "size": "1280x720",
+      "theme": "light",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    },
+    {
+      "size": "1280x720",
+      "theme": "dark",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    },
+    {
+      "size": "1440x900",
+      "theme": "light",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    },
+    {
+      "size": "1440x900",
+      "theme": "dark",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    },
+    {
+      "size": "1920x1080",
+      "theme": "light",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    },
+    {
+      "size": "1920x1080",
+      "theme": "dark",
+      "pageScrollY": 0,
+      "pageScrollX": 0,
+      "bodyScrollX": 0,
+      "overflowing": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "1280x720/light page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1280x720/light page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1280x720/light no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1280x720/dark page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1280x720/dark page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1280x720/dark no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900/light page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1440x900/light page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1440x900/light no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1440x900/dark page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1440x900/dark page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1440x900/dark no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1920x1080/light page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1920x1080/light page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1920x1080/light no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1920x1080/dark page does not scroll vertically",
+      "ok": true,
+      "detail": "overflow 0px"
+    },
+    {
+      "name": "1920x1080/dark page does not scroll horizontally",
+      "ok": true,
+      "detail": "x 0/0"
+    },
+    {
+      "name": "1920x1080/dark no element scrolls horizontally",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "375px settings sheet is visible and inside the viewport",
+      "ok": true,
+      "detail": "{\"visible\":true,\"withinViewport\":true,\"scrollable\":false,\"listReachable\":true}"
+    },
+    {
+      "name": "375px My Words list is reachable",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "passed": true
+}

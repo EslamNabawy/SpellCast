@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-22T12:11:51.927Z",
+  "storage": {
+    "spellsprint.darkMode": "true",
+    "spellsprint.totalLifetimeWords": "2",
+    "spellsprint.bucket": "[{\"word\":\"establish\",\"category\":\"verbs\",\"mistakes\":1}]",
+    "spellsprint.preferredDifficulty": "\"hard\"",
+    "spellsprint.preferredCategory": "\"verbs\"",
+    "spellsprint.soundEnabled": "true",
+    "spellsprint.customWords": "[{\"word\":\"zephyrine\",\"category\":\"nouns\",\"difficulty\":\"hard\",\"addedAt\":1792671111653}]",
+    "spellsprint.preferredDuration": "3000",
+    "spellsprint.highScore": "10",
+    "spellsprint.lifetimeCorrect": "1",
+    "spellsprint.bestStreak": "1",
+    "spellsprint.srsCards": "{\"telescope\":{\"word\":\"telescope\",\"category\":\"nouns\",\"difficulty\":\"medium\",\"interval\":1,\"ease\":2.42,\"due\":1792757510530,\"reps\":1,\"lapses\":0,\"lastReviewed\":1792671110530},\"establish\":{\"word\":\"establish\",\"category\":\"verbs\",\"difficulty\":\"medium\",\"interval\":0,\"ease\":2.0999999999999996,\"due\":1792671711579,\"reps\":0,\"lapses\":1,\"lastReviewed\":1792671111579},\"zephyrine\":{\"word\":\"zephyrine\",\"category\":\"nouns\",\"difficulty\":\"hard\",\"interval\":0,\"ease\":2.3,\"due\":1792671111654,\"reps\":0,\"lapses\":0,\"lastReviewed\":0}}"
+  }
+}
