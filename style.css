@@ -70,7 +70,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .volume-slider{width:100%;accent-color:var(--accent)}
 .settings-actions{display:flex;gap:8px;margin-top:12px}
 .add-word-form{display:flex;flex-direction:column;gap:8px}
-.add-word-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.add-word-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px}
 .new-category-row{display:flex;gap:8px;margin-top:10px}
 .import-export-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .mini-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow:auto}
@@ -176,14 +176,20 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
   .deck-title{display:none}
   .deck .dashboard{display:none}
   .deck-left .settings-panel{margin-top:0}
-  .deck-left,.deck-right{flex:0 1 auto;min-height:0}
-  #settingsPanel{flex:0 0 auto;max-height:calc(100dvh - 150px);overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
-  #settingsPanel::-webkit-scrollbar{display:none}
-  .deck-right{max-height:36dvh;overflow-y:auto;scrollbar-width:none}
-  .deck-right::-webkit-scrollbar{display:none}
-  .center{flex:1 1 auto;min-height:0;display:flex}
-  .game-card{flex:1 1 auto;width:100%;min-height:0;overflow-y:auto;scrollbar-width:none}
-  .game-card::-webkit-scrollbar{display:none}
+  .deck-left,.deck-right{flex:0 1 auto;min-height:0;min-width:0}
+  #settingsPanel{flex:0 0 auto;max-height:calc(100dvh - 150px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  #settingsPanel::-webkit-scrollbar{width:6px}
+  #settingsPanel::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  #settingsPanel::-webkit-scrollbar-track{background:transparent}
+  .deck-right{max-height:36dvh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .deck-right::-webkit-scrollbar{width:6px}
+  .deck-right::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .deck-right::-webkit-scrollbar-track{background:transparent}
+  .center{flex:1 1 auto;min-height:0;min-width:0;display:flex}
+  .game-card{flex:1 1 auto;width:100%;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .game-card::-webkit-scrollbar{width:6px}
+  .game-card::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .game-card::-webkit-scrollbar-track{background:transparent}
   /* settings sheet: while the drawer is open the game card and stats deck
      step aside so the form usually fits without scrolling at all */
   body.settings-open .center,
@@ -201,12 +207,18 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
   .header-inner{padding:12px 16px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
   .status-group{justify-content:center}
   #settingsToggle{display:none}
-  .deck{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:16px 14px;height:100%;overflow:auto;margin:0}
-  .deck-left{grid-column:1;grid-row:2}
-  .deck-right{grid-column:3;grid-row:2}
+  /* no horizontal scrollbar in the decks: children may shrink, never push out */
+  .deck{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);padding:16px 14px;height:100%;overflow-y:auto;overflow-x:hidden;margin:0;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .deck::-webkit-scrollbar{width:6px}
+  .deck::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .deck::-webkit-scrollbar-track{background:transparent}
+  .deck-left{grid-column:1;grid-row:2;min-width:0}
+  .deck-right{grid-column:3;grid-row:2;min-width:0}
   .deck .settings-panel{display:block!important;margin:0;padding:0;background:none;border:none;box-shadow:none;animation:none}
   .deck .settings-panel[hidden]{display:block!important}
   .settings-form{grid-template-columns:1fr;gap:10px}
+  .settings-form .field{min-width:0;max-width:100%}
+  .field select,.field input{min-width:0}
   .center{grid-column:2;grid-row:2;min-width:0;min-height:0;display:flex;overflow:auto}
   .game-card{margin:0;min-height:0;width:100%;flex:1 1 auto}
   .expand-panel{margin:12px 0 0}
