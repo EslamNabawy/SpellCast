@@ -148,6 +148,7 @@ const state = {
   sessionBucketAdds: 0,
   sessionRecordAtStart: 0, // the all-time record this session is trying to beat
   recordCelebrated: false,  // ensures the "new high score" toast fires once
+  deckRevealed: 0, // words revealed from the current full-deck pass — drives the progress bar
 
   categoryStats: {}, // { nouns: { correct: n, total: n }, ... }
 
@@ -221,10 +222,9 @@ const dom = {
   statBest: document.getElementById("statBest"),
   statAccuracy: document.getElementById("statAccuracy"),
 
-  sessionWordCount: document.getElementById("sessionWordCount"),
   sessionCorrectCount: document.getElementById("sessionCorrectCount"),
   sessionIncorrectCount: document.getElementById("sessionIncorrectCount"),
-  phaseProgress: document.getElementById("phaseProgress"),
+  deckProgress: document.getElementById("deckProgress"),
 
   gameCard: document.getElementById("gameCard"),
   scoreFloat: document.getElementById("scoreFloat"),
@@ -348,6 +348,7 @@ function buildPool() {
   }
   state.wordPool = pool;
   state.poolIndex = 0;
+  state.deckRevealed = 0;
 }
 
 function pickCategory() {
@@ -573,8 +574,11 @@ function goToTypePhase() {
   setPhase("type");
   dom.answerInput.value = "";
   syncAnswerMirror();
-  if (state.currentWord) state.wordsSeen.push(state.currentWord.word);
-  if (dom.phaseProgress) dom.phaseProgress.textContent = `Word ${state.wordsSeen.length} of ${poolSize()}`;
+  if (state.currentWord) {
+    state.wordsSeen.push(state.currentWord.word);
+    state.deckRevealed += 1;
+  }
+  renderDeckProgress();
 }
 
 function poolSize() {
@@ -1167,6 +1171,40 @@ function launchConfetti() {
 
 // ---- rendering: dashboard + header ----
 
+// The single progress readout for the session: 12 segments represent one
+// full pass over the active deck (whatever its size — a full segment is
+// completed every poolSize/12 words, so a 163-word deck fills like a
+// 12-word one). `deckRevealed` resets every time the pool rebuilds.
+const PROGRESS_SEGMENTS = 12;
+
+function renderDeckProgress() {
+  if (!dom.deckProgress) return;
+  const total = poolSize();
+  const revealed = state.deckRevealed;
+  const fillFloat = total ? (revealed / total) * PROGRESS_SEGMENTS : 0;
+  const fullCount = Math.max(0, Math.min(PROGRESS_SEGMENTS, Math.floor(fillFloat)));
+  // the segment currently being worked on: partial fill of this pass
+  const currentIdx = fullCount < PROGRESS_SEGMENTS && revealed > 0 ? fullCount : -1;
+
+  // rebuild only when the visible pattern actually changes
+  const key = fullCount + ":" + (currentIdx !== -1 ? 1 : 0) + ":" + total;
+  if (dom.deckProgress.dataset.key === key) return;
+  dom.deckProgress.dataset.key = key;
+
+  dom.deckProgress.setAttribute("aria-valuemax", String(total));
+  dom.deckProgress.setAttribute("aria-valuenow", String(revealed));
+  dom.deckProgress.setAttribute("aria-valuetext", `${revealed} of ${total} words in this pass`);
+
+  const frag = [];
+  for (let i = 0; i < PROGRESS_SEGMENTS; i++) {
+    const cls = i < fullCount ? "filled" : (i === currentIdx ? "current" : "");
+    frag.push(`<span class="${cls}" aria-hidden="true"></span>`);
+  }
+  dom.deckProgress.innerHTML = frag.join("");
+  void dom.deckProgress.offsetWidth;
+  dom.deckProgress.classList.add("pulse-min");
+}
+
 function renderStats() {
   dom.headerStreak.textContent = state.streak;
 
@@ -1178,17 +1216,12 @@ function renderStats() {
   const accuracy = attempted === 0 ? null : Math.round((state.correct / attempted) * 100);
   dom.statAccuracy.textContent = accuracy === null ? "—" : accuracy + "%";
 
-  dom.sessionWordCount.textContent = `Word ${state.sessionWords}`;
   dom.sessionCorrectCount.textContent = `${state.correct} correct`;
   dom.sessionIncorrectCount.textContent = `${state.incorrect} incorrect`;
+  renderDeckProgress();
 
   dom.bucketCount.textContent = state.bucket.length;
   if (dom.bucketCount2) dom.bucketCount2.textContent = state.bucket.length;
-
-  // update phase progress if in type phase
-  if (state.phase === "type" && dom.phaseProgress) {
-    dom.phaseProgress.textContent = `Word ${state.wordsSeen.length} of ${poolSize()}`;
-  }
 }
 
 function renderBucketPanel() {

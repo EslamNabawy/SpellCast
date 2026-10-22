@@ -155,12 +155,12 @@
   <main class="game-card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
-      <div class="session-line" id="sessionLine">
-        <span class="session-chip" id="sessionWordCount">Word 0</span>
-        <span class="session-dot" aria-hidden="true">·</span>
-        <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
-        <span class="session-dot" aria-hidden="true">·</span>
-        <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+      <div class="progress-wrap">
+        <div class="deck-progress" id="deckProgress" role="progressbar" aria-label="Deck progress" aria-valuemin="0"></div>
+        <div class="progress-line">
+          <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
+          <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+        </div>
       </div>
       <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
     </div>
@@ -183,7 +183,6 @@
       <p class="your-turn">Your turn</p>
       <div class="mystery-mark" aria-hidden="true">?</div>
       <p class="type-instruction" id="typeInstruction">Type what you saw</p>
-      <div class="phase-progress" id="phaseProgress">Word 1 of 1</div>
       <form class="answer-form" id="answerForm" autocomplete="off">
         <label for="answerInput" class="sr-only">Your spelling</label>
         <div class="answer-mirror" id="answerMirror" aria-hidden="true"></div>
