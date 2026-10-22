@@ -245,7 +245,9 @@ const dom = {
 
   sessionCorrectCount: document.getElementById("sessionCorrectCount"),
   sessionIncorrectCount: document.getElementById("sessionIncorrectCount"),
-  deckProgress: document.getElementById("deckProgress"),
+  sessionProgress: document.getElementById("sessionProgress"),
+  sessionProgressFill: document.getElementById("sessionProgressFill"),
+  sessionCount: document.getElementById("sessionCount"),
 
   gameCard: document.getElementById("gameCard"),
   scoreFloat: document.getElementById("scoreFloat"),
@@ -602,7 +604,7 @@ function goToTypePhase() {
   if (state.currentWord) {
     state.deckRevealed += 1;
   }
-  renderDeckProgress();
+  renderSessionProgress();
 }
 
 function poolSize() {
@@ -1212,38 +1214,22 @@ function launchConfetti() {
 
 // ---- rendering: dashboard + header ----
 
-// The single progress readout for the session: 12 segments represent one
-// full pass over the active deck (whatever its size — a full segment is
-// completed every poolSize/12 words, so a 163-word deck fills like a
-// 12-word one). `deckRevealed` resets every time the pool rebuilds.
-const PROGRESS_SEGMENTS = 12;
+// The session strip shows how far this session has come: a thin track that
+// fills as words are answered, with the count beside it. Both come from the
+// same number, so they can never disagree.
+const SESSION_TARGET = 20; // a full session is ~20 words
 
-function renderDeckProgress() {
-  if (!dom.deckProgress) return;
-  const total = poolSize();
-  const revealed = state.deckRevealed;
-  const fillFloat = total ? (revealed / total) * PROGRESS_SEGMENTS : 0;
-  const fullCount = Math.max(0, Math.min(PROGRESS_SEGMENTS, Math.floor(fillFloat)));
-  // the segment currently being worked on: partial fill of this pass
-  const currentIdx = fullCount < PROGRESS_SEGMENTS && revealed > 0 ? fullCount : -1;
-
-  // rebuild only when the visible pattern actually changes
-  const key = fullCount + ":" + (currentIdx !== -1 ? 1 : 0) + ":" + total;
-  if (dom.deckProgress.dataset.key === key) return;
-  dom.deckProgress.dataset.key = key;
-
-  dom.deckProgress.setAttribute("aria-valuemax", String(total));
-  dom.deckProgress.setAttribute("aria-valuenow", String(revealed));
-  dom.deckProgress.setAttribute("aria-valuetext", `${revealed} of ${total} words in this pass`);
-
-  const frag = [];
-  for (let i = 0; i < PROGRESS_SEGMENTS; i++) {
-    const cls = i < fullCount ? "filled" : (i === currentIdx ? "current" : "");
-    frag.push(`<span class="${cls}" aria-hidden="true"></span>`);
+function renderSessionProgress() {
+  if (!dom.sessionProgress) return;
+  const answered = state.sessionWords;
+  const pct = Math.min(100, Math.round((answered / SESSION_TARGET) * 100));
+  if (dom.sessionProgressFill) dom.sessionProgressFill.style.width = pct + "%";
+  dom.sessionProgress.setAttribute("aria-valuemax", String(SESSION_TARGET));
+  dom.sessionProgress.setAttribute("aria-valuenow", String(answered));
+  dom.sessionProgress.setAttribute("aria-valuetext", `${answered} word${answered === 1 ? "" : "s"} answered this session`);
+  if (dom.sessionCount) {
+    dom.sessionCount.textContent = answered === 1 ? "1 word" : answered + " words";
   }
-  dom.deckProgress.innerHTML = frag.join("");
-  void dom.deckProgress.offsetWidth;
-  dom.deckProgress.classList.add("pulse-min");
 }
 
 function renderStats() {
@@ -1257,9 +1243,11 @@ function renderStats() {
   const accuracy = attempted === 0 ? null : Math.round((state.correct / attempted) * 100);
   dom.statAccuracy.textContent = accuracy === null ? "—" : accuracy + "%";
 
-  dom.sessionCorrectCount.textContent = `${state.correct} correct`;
-  dom.sessionIncorrectCount.textContent = `${state.incorrect} incorrect`;
-  renderDeckProgress();
+  // the strip shows bare numbers next to a ✓/✗ mark; the words live in the
+  // screen-reader-only spans
+  dom.sessionCorrectCount.textContent = String(state.correct);
+  dom.sessionIncorrectCount.textContent = String(state.incorrect);
+  renderSessionProgress();
 
   dom.bucketCount.textContent = state.bucket.length;
   if (dom.bucketCount2) dom.bucketCount2.textContent = state.bucket.length;

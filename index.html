@@ -23,7 +23,7 @@
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2D6A4F">
-<link rel="stylesheet" href="style.css?v=27">
+<link rel="stylesheet" href="style.css?v=28">
 </head>
 <body class="theme-normal">
 
@@ -171,14 +171,24 @@
   <main class="game-card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
-      <div class="progress-wrap">
-        <div class="deck-progress" id="deckProgress" role="progressbar" aria-label="Deck progress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
-        <div class="progress-line">
-          <span class="session-chip session-chip-correct" id="sessionCorrectCount">0 correct</span>
-          <span class="session-chip session-chip-incorrect" id="sessionIncorrectCount">0 incorrect</span>
+      <div class="session-strip">
+        <div class="session-identity">
+          <span class="session-accent-dot" aria-hidden="true"></span>
+          <span class="session-category" id="categoryTag" aria-live="polite">Animals</span>
+        </div>
+        <div class="session-metrics">
+          <div class="session-progress">
+            <div class="session-track" id="sessionProgress" role="progressbar" aria-label="Words answered this session" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
+              <div class="session-track-fill" id="sessionProgressFill"></div>
+            </div>
+            <span class="session-word-count" id="sessionCount">0 words</span>
+          </div>
+          <div class="session-tally">
+            <span class="tally-item"><span class="tally-icon tally-correct" aria-hidden="true">✓</span><span class="tally-value" id="sessionCorrectCount">0</span><span class="sr-only">correct</span></span>
+            <span class="tally-item"><span class="tally-icon tally-incorrect" aria-hidden="true">✗</span><span class="tally-value" id="sessionIncorrectCount">0</span><span class="sr-only">incorrect</span></span>
+          </div>
         </div>
       </div>
-      <div class="category-tag" id="categoryTag" aria-live="polite">Nouns</div>
     </div>
 
     <div class="phase phase-ready" id="phaseReady">
@@ -324,7 +334,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=27"></script>
-<script src="script.js?v=27"></script>
+<script src="words.js?v=28"></script>
+<script src="script.js?v=28"></script>
 </body>
 </html>

@@ -20,10 +20,10 @@ const CONTRAST_RULES = [
   { selector: ".field label", min: 4.5, label: "field label" },
   { selector: ".type-instruction", min: 4.5, label: "type instruction" },
   { selector: ".result-headline", min: 4.5, label: "result headline" },
-  { selector: ".category-tag", min: 4.5, label: "category tag" },
+  { selector: ".session-category", min: 4.5, label: "session category" },
   { selector: ".bucket-count", min: 4.5, label: "bucket count badge" },
   { selector: ".summary-badge", min: 4.5, label: "summary badge" },
-  { selector: ".session-chip", min: 4.5, label: "session chip" },
+  { selector: ".tally-value", min: 4.5, label: "tally value" },
   { selector: ".result-sub", min: 4.5, label: "result sub" },
   { selector: ".modal-body-text", min: 4.5, label: "modal body" },
   { selector: ".danger-zone-note", min: 4.5, label: "danger zone note" },
@@ -36,9 +36,10 @@ const CONTRAST_RULES = [
 // their adjacent background. These are the pieces a colour-only reading of
 // the UI depends on (progress segments, toggles, bars).
 const NONTEXT_RULES = [
-  { selector: ".deck-progress span", min: 3, label: "empty progress segment" },
-  { selector: ".deck-progress span.filled", min: 3, label: "filled progress segment" },
-  { selector: ".deck-progress span.current", min: 3, label: "current progress segment" },
+  // the track is only the background of the indicator — what matters is the
+  // filled part against the track it sits on
+  { selector: ".session-track-fill", against: ".session-track", min: 3, label: "session track fill vs track" },
+  { selector: ".session-accent-dot", min: 3, label: "accent dot" },
   { selector: ".toggle-track", min: 3, label: "toggle track" },
   { selector: ".category-stat-bar-track", min: 3, label: "category bar track" },
   { selector: ".category-stat-bar-fill", min: 3, label: "category bar fill" }
@@ -112,6 +113,9 @@ async function run() {
 
       // axe on the type phase (input, buttons, live region)
       await playOneWord(page, "correct");
+      // let transient animations (the floating score popup) finish before the
+      // scan, otherwise axe measures a half-faded colour
+      await page.waitForTimeout(1200);
       const results2 = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
         .analyze();
@@ -202,12 +206,21 @@ async function run() {
           const m = own.match(/rgba?\(([^)]+)\)/);
           const opaque = m && (m[1].split(",").length < 4 || parseFloat(m[1].split(",")[3]) > 0);
           if (!opaque) continue; // nothing to measure (transparent graphic)
+          // an explicit "against" element wins; otherwise use the nearest
+          // opaque ancestor surface
+          let bg;
+          if (rule.against) {
+            const other = document.querySelector(rule.against);
+            bg = other ? getComputedStyle(other).backgroundColor : effectiveBg(el);
+          } else {
+            bg = effectiveBg(el);
+          }
           out.push({
             selector: rule.selector,
             label: rule.label,
             min: rule.min,
             color: own,
-            background: effectiveBg(el),
+            background: bg,
             fontSize: cs.fontSize,
             fontWeight: cs.fontWeight
           });
