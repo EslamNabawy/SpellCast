@@ -90,7 +90,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .session-chip-correct{color:var(--correct);background:var(--correct-tint);border-color:rgba(45,106,79,.1)}
 .session-chip-incorrect{color:var(--incorrect);background:var(--incorrect-tint);border-color:rgba(180,83,42,.1)}
 #sessionWordCount{background:var(--accent-tint);border-color:var(--accent-glow);color:var(--accent-strong)}
-.session-dot{color:var(--line);font-weight:700}
+.session-dot{color:var(--ink-faint);font-weight:700}
 .session-timer{font-variant-numeric:tabular-nums;min-width:32px}
 #sessionTimer.is-running{color:var(--accent-strong)}
 .category-tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);background:var(--accent-tint);padding:5px 10px;border-radius:999px;flex-shrink:0}
@@ -107,7 +107,7 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 .timer-fill{height:100%;width:100%;background:var(--accent);border-radius:999px;transform-origin:left}
 .timer-caption{font-size:11px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
 .your-turn{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-strong);background:var(--accent-tint);padding:5px 10px;border-radius:999px;margin:0}
-.mystery-mark{font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--line);width:60px;height:60px;display:grid;place-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:50%}
+.mystery-mark{font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--ink-faint);width:60px;height:60px;display:grid;place-items:center;background:var(--paper);border:1px dashed var(--line);border-radius:50%}
 .type-instruction{font-size:13px;color:var(--ink-soft);font-weight:600;margin:0}
 .phase-progress{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--accent-strong);background:var(--accent-tint);padding:4px 10px;border-radius:999px}
 .answer-form{display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;align-items:stretch}
