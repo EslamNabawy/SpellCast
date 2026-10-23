@@ -257,6 +257,7 @@ const dom = {
   importCategory: document.getElementById("importCategory"),
   practiceMineBtn: document.getElementById("practiceMineBtn"),
   importExample: document.getElementById("importExample"),
+  importCopyBtn: document.getElementById("importCopyBtn"),
   drawerWordsHint: document.getElementById("drawerWordsHint"),
 
   statScore: document.getElementById("statScore"),
@@ -1473,6 +1474,42 @@ function setImportExample(fmt) {
   document.querySelectorAll(".import-fmt-chip").forEach(chip => {
     chip.setAttribute("aria-pressed", chip.dataset.fmt === fmt ? "true" : "false");
   });
+  if (dom.importCopyBtn) dom.importCopyBtn.setAttribute("aria-label", `Copy ${fmt.toUpperCase()} example`);
+}
+
+function copyFallbackText(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;left:-10000px;top:0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  ta.remove();
+  return ok;
+}
+
+function pulseCopyButton() {
+  if (!dom.importCopyBtn) return;
+  const btn = dom.importCopyBtn;
+  const orig = btn.textContent;
+  btn.textContent = "Copied ✓";
+  btn.classList.add("import-copy-ok");
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.classList.remove("import-copy-ok");
+  }, 1500);
+}
+
+async function copyExample() {
+  if (!dom.importExample) return;
+  const active = [...document.querySelectorAll(".import-fmt-chip")].find(c => c.getAttribute("aria-pressed") === "true");
+  const label = `${((active && active.dataset.fmt) || "CSV").toUpperCase()} example`;
+  const text = dom.importExample.textContent;
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { ok = copyFallbackText(text); }
+  if (ok) { announce(`${label} copied`); pulseCopyButton(); }
+  else announce("Copy failed — select the example text and copy it manually");
 }
 
 function runImportPipeline(text) {
@@ -2539,6 +2576,7 @@ function attachEventListeners() {
   document.querySelectorAll(".import-fmt-chip").forEach(chip => {
     chip.addEventListener("click", () => setImportExample(chip.dataset.fmt));
   });
+  if (dom.importCopyBtn) dom.importCopyBtn.addEventListener("click", copyExample);
   if (dom.practiceMineBtn) {
     dom.practiceMineBtn.addEventListener("click", () => {
       dom.categorySelect.value = MINE_KEY;

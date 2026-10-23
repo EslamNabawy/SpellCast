@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=37">
+<link rel="stylesheet" href="style.css?v=38">
 </head>
 <body class="theme-normal">
 
@@ -374,9 +374,12 @@
           <button type="button" class="btn btn-quiet btn-sm import-fmt-chip" data-fmt="txt" aria-pressed="false">TXT list</button>
           <span class="data-cat-meta">Example of the chosen format</span>
         </div>
-        <pre class="import-example" id="importExample" tabindex="0">word,category,difficulty
+        <div class="import-example-wrap">
+          <button type="button" class="btn btn-quiet btn-sm import-copy-btn" id="importCopyBtn" aria-label="Copy CSV example">Copy</button>
+          <pre class="import-example" id="importExample" tabindex="0">word,category,difficulty
 serendipity,nouns,medium
 turbulent,adjectives,hard</pre>
+        </div>
         <button type="button" class="btn btn-quiet btn-sm" id="importPickBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Choose CSV / JSON / TXT</button>
         <input type="file" id="importPick" accept=".csv,.json,.txt" hidden>
         <textarea id="importPaste" class="input import-paste" rows="3" placeholder="...or paste a list here, then press Parse" aria-label="Paste a word list"></textarea>
@@ -447,7 +450,7 @@ turbulent,adjectives,hard</pre>
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=37"></script>
-<script src="script.js?v=37"></script>
+<script src="words.js?v=38"></script>
+<script src="script.js?v=38"></script>
 </body>
 </html>

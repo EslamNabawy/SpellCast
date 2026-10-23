@@ -370,6 +370,27 @@ details[open] > .section-head{background:var(--paper)}
 .data-card .mini-list{margin:0}
 .data-card .import-export-row{margin-top:auto}
 
+/* v=38: example block gets a Copy affordance; dark theme uprates the surfaces */
+.import-example-wrap{position:relative}
+.import-example{padding-top:30px;padding-right:76px}
+.import-example::-webkit-scrollbar{display:none}
+.import-copy-btn{position:absolute;top:8px;right:8px;z-index:1;padding:2px 10px;font-size:11px;font-weight:700;border-radius:999px;background:var(--paper-soft);border:1px solid var(--line);color:var(--ink-soft)}
+.import-copy-btn:hover,.import-copy-btn:focus-visible{border-color:var(--accent-strong);color:var(--accent-strong)}
+.import-copy-ok{color:var(--accent-strong)!important;border-color:var(--accent-strong)!important}
+html[data-theme="dark"] body::before{
+  /* dark: same pools with raised alpha so the aurora stays visible on dark paper */
+  background-image:
+    radial-gradient(58% 46% at 18% 22%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 68%),
+    radial-gradient(50% 44% at 84% 12%, color-mix(in srgb, var(--accent-strong) 12%, transparent), transparent 64%),
+    radial-gradient(56% 48% at 70% 88%, color-mix(in srgb, var(--accent) 21%, transparent), transparent 70%);
+}
+html[data-theme="dark"] body::after{opacity:.075}
+html[data-theme="dark"] .import-example{color:var(--ink-soft);background:var(--paper-raised)}
+html[data-theme="dark"] .import-copy-btn{background:var(--paper-raised)}
+html[data-theme="dark"] .import-fmt-row .data-cat-meta{color:var(--ink-soft)}
+/* non-dark themes: gently dim the grain so it reads as texture, not smoke */
+html:not([data-theme="dark"]) body::after{opacity:.05}
+
 /* ============ Ambient background (v=37 redesign — aurora + grain) ============ */
 /* ONE soft light pool drifts very slowly; a static film-grain texture sits on
    top so the motion reads as light, not smudge (and banding disappears).
