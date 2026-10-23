@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=37 shipped — practice "My words" only + background redesign (v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `1725180`, serving `v=37`)
+**Current phase:** v=39 shipped — mobile keyboard fix that works even when the app card can't scroll + no password-style autofill on the answer input (v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `1542e72`, serving `v=39`)
 
 ---
 
@@ -359,3 +359,39 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 20 checks, matrix 66 screenshots, Lighthouse desktop perf 1 (LCP 0.2 s) / mobile 0.96 (LCP 2.5 s, TBT 0, CLS 0).
 
 **Rollout:** `?v=37` bumped (3 refs: style/words/script); code commit `1725180` on `main`; docs commit follows; Pages verified after push.
+
+---
+
+## Release v=38 — dark-theme background uprates + Copy buttons for import examples ✅
+
+**User request:** better light/dark theme handling for the v=37 background, and Copy buttons on the import-format examples.
+
+**Dark-theme uprates (style.css, after the v=37 aurora/grain block):** inside `html[data-theme="dark"]` the aurora pools rise to 16%/12%/21% alpha (light keeps 7–11%), grain rises to `.075`, and pane tokens get the matching uprate. The one-moving-layer + static-grain design is unchanged; only the dark values lift so the background registers on the user's OLED screen without becoming noise.
+
+**Copy buttons (index.html + script.js + style.css):** every import format example in the Data Management page gets an "Example · Copy" button (`.import-copy-btn`) next to `#importExample`. Implementation:
+- `copyExample()` → `navigator.clipboard.writeText`, falling back to `copyFallbackText()` (hidden textarea + `execCommand("copy")`) when clipboard API is unavailable (plain-HTTP contexts).
+- `pulseCopyButton()` flashes "Copied ✓" for 1.5 s; aria-label stays synced by `setImportExample` (e.g. "Copy JSON example"). Listener wired after the `.import-fmt-chip` loop.
+
+**QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 20 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.96 (LCP 2.6 s, TBT 30 ms).
+
+**Rollout:** `?v=38` bumped (3 refs); code commit `4c4f9b1` on `main` (`e19fe22..4c4f9b1`); live verified (`v=38` ×3 / 0 stale refs, `#importCopyBtn` in HTML, dark tokens + `.import-copy-btn` in CSS, `copyExample` + fallback in JS). Docs commit follows with the v=39 note.
+
+---
+
+## Release v=39 — keyboard fix that works on the unscrollable card + no password-style autofill ✅
+
+**User report (mobile):** the keyboard still hides the words and the Check button, and the answer field shows a "hidden password" autofill suggestion on the phone.
+
+**Root causes:**
+1. The v=34 anchor scrolled the *document* — but `.app` is `height:100dvh` + `overflow:hidden`, so on phones where the document never exceeds the viewport there is nothing to scroll and the content stays behind the keyboard. `interactive-widget=resizes-content` shrinks `100dvh` to the visible band, but the clipped card then just clips the CTA.
+2. `autocomplete="new-password"` on `#answerInput` makes Chrome on Android treat the field as credential entry and surface the password manager UI.
+
+**Fixes (script.js + index.html):**
+- `keepAnswerInputVisible()` is now two-path: when the document can scroll it still uses the native `scrollBy` rescue (unchanged behavior, `probe-keyboard` 4/4 still green); when `document.scrollHeight <= innerHeight` (the 100dvh card) it applies a **one-shot translateY shift** to the type phase instead: `s = (vvBottom − 12) − lowestUnshiftedBottom`, where the baseline rects (`#checkBtn` bottom as the lowest element, `#wordDisplay` top) are captured **before any transform** and never re-measured — repeated viewport events converge to one stable value instead of accumulating. One formula covers both the pull-up case (negative s, keyboard) and the push-down/URL-bar case (positive s). `resetKbShift()` clears transform + `__kbShift` + `__kbBase` on blur and whenever the anchor ticks outside the type phase, so phase changes never leave a stale shift.
+- `#answerInput`: `autocomplete="new-password"` → `"off"` (anti-autofill attributes kept), killing the password-form suggestion.
+
+**Evidence:** new `scratch/probe-v39.mjs` (kept out of the tracked gate, like the other probes) reproduces the unscrollable-card scenario at 800×400: arranged (maxScroll 0, input focused), fake band 301px leaves input below it, anchor applies `translateY(-142.25px)` landing check bottom 289 ≤ band 301 and the word at top 179 ≥ 0, repeated resize events stable (no oscillation, no document scroll), shift resets outside the type phase. 5/5 pass.
+
+**QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 20 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.95 (LCP 2.6 s, TBT 20 ms).
+
+**Rollout:** `?v=39` bumped (3 refs); code commit `1542e72` on `main` (`4c4f9b1..1542e72`); Pages verified after push.
