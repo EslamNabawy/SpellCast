@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=36 shipped — ambient drifting background pattern (v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `7785e1f`, serving `v=36`)
+**Current phase:** v=37 shipped — practice "My words" only + background redesign (v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `1725180`, serving `v=37`)
 
 ---
 
@@ -338,3 +338,24 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **QA:** probe `tools/qa/scratch/probe-motion.mjs` **5/5** (both layers animating + pointer-inert, app paints above, reduced-motion → both animations gone). Full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 (LCP 0.2 s) / mobile 0.96 (LCP 2.5 s, TBT 50 ms).
 
 **Rollout:** `?v=36` bumped (3 refs: style/words/script); code commit `7785e1f` on `main`; docs commit follows; Pages verified after push.
+
+---
+
+## v=37 — "My words" practice mode + background redesign ✅ · commit `1725180` · 2026-10-23
+
+**User feedback (two items):** (1) "make me choose from category that i use only my words" — a practice option that serves exclusively the words they added/imported; (2) the v=36 moving pattern was "sooo bad" — full redesign to a tasteful ambient layer.
+
+**Practice "My words" only:**
+- Pinned **"My words"** option in the Practice category select (value `__mine__`, double underscore = can never collide with an imported category slug — no migration needed).
+- `buildCustomPool()` + a `buildPool()` branch: the pool is built purely from `state.customWords` (difficulty filter applies); `getDueCards` filters by custom-word membership under this mode; zero-words state falls through to the existing `READY_HINT_NO_WORDS` hint.
+- The `SETTING_DEFS.category` values gate now includes `MINE_KEY` (first fix attempt silently missed line 2029 — the probe's diag caught it, second edit grep-proofed).
+- Verified with `tools/qa/scratch/probe-mine.mjs` **3/3**: commits at idle with no dialog, pool of exactly the custom words, a served round picks a custom word.
+
+**Background redesign (Option A — aurora + grain):**
+- **One** moving layer only: `body::before` with three large accent-tint radial light pools (`color-mix` 7–11%) + `blur(48px)`, drifting on a 52 s alternate `bg-breathe` path (translate-only, no scale → no shimmer).
+- **Static** `body::after`: SVG `feTurbulence` film-grain tile at 5% — kills banding and makes the soft motion read as light, not smudge; nothing crisp ever moves.
+- `prefers-reduced-motion` kills only the mover; grain stays. Colors follow each theme's `--accent`; `.app` paints above via `z-index:1`; modal + data page still stack above. Verified by `probe-motion` 5/5.
+
+**QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 20 checks, matrix 66 screenshots, Lighthouse desktop perf 1 (LCP 0.2 s) / mobile 0.96 (LCP 2.5 s, TBT 0, CLS 0).
+
+**Rollout:** `?v=37` bumped (3 refs: style/words/script); code commit `1725180` on `main`; docs commit follows; Pages verified after push.
