@@ -577,22 +577,60 @@ function setPhase(phase) {
 // The `interactive-widget=resizes-content` meta fixes most modern browsers;
 // this anchor is the fallback: whenever the keyboard squeezes the visual
 // viewport while typing, bring the answer field back into the visible band.
+let kbShiftEl = null;
+function resetKbShift() {
+  if (kbShiftEl) {
+    kbShiftEl.style.transform = "";
+    kbShiftEl.__kbShift = 0;
+    kbShiftEl.__kbBase = null;
+    kbShiftEl = null;
+  }
+}
+
 function keepAnswerInputVisible() {
-  if (state.phase !== "type") return;
-  if (document.activeElement !== dom.answerInput) return;
+  if (state.phase !== "type" || document.activeElement !== dom.answerInput) { resetKbShift(); return; }
   const vv = window.visualViewport;
   if (!vv) return;
-  const rect = dom.answerInput.getBoundingClientRect();
   const vvTop = (vv.offsetTop || 0) + (vv.pageTop || 0);
   const vvBottom = vvTop + vv.height;
-  const margin = 46;
-  if (rect.top >= vvBottom - 8) {
-    // behind the keyboard — pull it back up into the visible band
-    window.scrollBy({ top: rect.bottom - vvBottom + margin, left: 0, behavior: "auto" });
-  } else if (rect.bottom <= vvTop + 8) {
-    // hidden under the URL-bar edge — push it down into the band
-    window.scrollBy({ top: rect.top - vvTop - margin, left: 0, behavior: "auto" });
+  const rect = dom.answerInput.getBoundingClientRect();
+  // already inside the visible band — nothing to do
+  if (rect.top < vvBottom - 8 && rect.bottom > vvTop + 8) return;
+
+  // 1) If the document can scroll, scroll it (native, cheap)
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  if (maxScroll > 2) {
+    const margin = 46;
+    const need = rect.top >= vvBottom - 8
+      ? rect.bottom - vvBottom + margin
+      : rect.top - vvTop - margin;
+    window.scrollBy({ top: need, left: 0, behavior: "auto" });
+    return;
   }
+
+  // 2) The page cannot scroll (app card is 100dvh + overflow:hidden) — give the
+  //    phase content a one-shot translateY shift. Baselines (unshifted rects)
+  //    are captured before any transform and never re-measured, so repeated
+  //    events converge to one stable value instead of accumulating.
+  const phase = dom.answerInput.closest(".phase");
+  if (!phase) return;
+  const checkEl = dom.checkBtn || document.getElementById("checkBtn");
+  const wordEl = document.getElementById("wordDisplay");
+  if (!phase.__kbBase) {
+    const checkBottom = checkEl ? checkEl.getBoundingClientRect().bottom : (rect.bottom + 60);
+    phase.__kbBase = {
+      lowest: Math.max(checkBottom, rect.bottom),
+      wordTop: wordEl ? wordEl.getBoundingClientRect().top : rect.top
+    };
+  }
+  // shift that parks the LOWEST element's (Check row) unshifted bottom 12px
+  // above the keyboard top; covers both pull-up (negative) and push-down
+  // (positive, URL-bar case) with one formula
+  const s = (vvBottom - 12) - phase.__kbBase.lowest;
+  if (Math.abs((phase.__kbShift || 0) - s) < 1) return;
+  kbShiftEl = phase;
+  phase.__kbShift = s;
+  phase.style.transform = `translateY(${s}px)`;
 }
 
 let answerVisibilityTick = false;
@@ -611,6 +649,7 @@ if (window.visualViewport) {
 }
 try {
   dom.answerInput.addEventListener("focus", scheduleAnswerVisibilityCheck);
+  dom.answerInput.addEventListener("blur", resetKbShift);
 } catch (e) { /* ignore */ }
 
 // ---- syllable chunking: long words render as chunk chips so the spelling can
