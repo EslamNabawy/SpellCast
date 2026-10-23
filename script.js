@@ -587,15 +587,43 @@ function resetKbShift() {
   }
 }
 
+function ensureTypePhaseFits(phase, band) {
+  // when the keyboard squeezes the visual band, the 100dvh card shrinks with it
+  // (interactive-widget=resizes-content) and the full phase clips at both ends;
+  // switch to the compact layout, and back off once the band is tall again
+  const fits = phase.scrollHeight <= band - 20;
+  const compact = phase.classList.contains("kb-compact");
+  if (!fits && !compact) {
+    phase.classList.add("kb-compact");
+    delete phase.__kbBase; // re-measure the shift baseline under the new layout
+  } else if (fits && compact) {
+    phase.classList.remove("kb-compact");
+    delete phase.__kbBase;
+  }
+}
+
 function keepAnswerInputVisible() {
   if (state.phase !== "type" || document.activeElement !== dom.answerInput) { resetKbShift(); return; }
   const vv = window.visualViewport;
   if (!vv) return;
   const vvTop = (vv.offsetTop || 0) + (vv.pageTop || 0);
   const vvBottom = vvTop + vv.height;
+  const phase = dom.answerInput.closest(".phase");
+  if (!phase) return;
+  ensureTypePhaseFits(phase, vvBottom - vvTop);
   const rect = dom.answerInput.getBoundingClientRect();
   // already inside the visible band — nothing to do
-  if (rect.top < vvBottom - 8 && rect.bottom > vvTop + 8) return;
+  if (rect.top < vvBottom - 8 && rect.bottom > vvTop + 8) {
+    // ...but if the band grew back (keyboard closed) and the unshifted layout
+    // also fits, retire a shift that is no longer needed
+    if (phase.__kbShift) {
+      const s = phase.__kbShift;
+      const unshiftedTop = rect.top - s;
+      const unshiftedBottom = rect.bottom - s;
+      if (unshiftedTop >= vvTop + 8 && unshiftedBottom <= vvBottom - 8) resetKbShift();
+    }
+    return;
+  }
 
   // 1) If the document can scroll, scroll it (native, cheap)
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -612,8 +640,6 @@ function keepAnswerInputVisible() {
   //    phase content a one-shot translateY shift. Baselines (unshifted rects)
   //    are captured before any transform and never re-measured, so repeated
   //    events converge to one stable value instead of accumulating.
-  const phase = dom.answerInput.closest(".phase");
-  if (!phase) return;
   const checkEl = dom.checkBtn || document.getElementById("checkBtn");
   const wordEl = document.getElementById("wordDisplay");
   if (!phase.__kbBase) {

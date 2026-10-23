@@ -429,3 +429,15 @@ body::after{
 .import-fmt-chip[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent-strong);border-color:var(--accent-strong);font-weight:700}
 .import-example{margin:0;padding:10px 12px;background:var(--paper-soft);border:1px dashed var(--line);border-radius:var(--radius-lg);font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--ink-soft);white-space:pre-wrap;overflow-x:auto;scrollbar-width:none}
 .import-example::-webkit-scrollbar{display:none}
+
+/* v40: compact type phase when the on-screen keyboard squeezes the app —
+   the card is 100dvh + overflow:hidden, and with interactive-widget=resizes-content
+   it shrinks to the visible band, so the full phase clips at both ends unless
+   it slims down. Content pins to the card bottom, just above the keyboard top. */
+.phase-type.kb-compact{justify-content:flex-end;gap:6px;padding:10px 16px 14px}
+.phase-type.kb-compact .your-turn{display:none}
+.phase-type.kb-compact .mystery-mark{width:36px;height:36px;font-size:22px}
+.phase-type.kb-compact .type-instruction{font-size:12px}
+.phase-type.kb-compact .answer-form{gap:6px}
+.phase-type.kb-compact .input-large{padding:10px 12px;font-size:16px}
+.phase-type.kb-compact .type-hint{display:none}
