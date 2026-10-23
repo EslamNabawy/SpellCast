@@ -255,6 +255,7 @@ const dom = {
   importParseBtn: document.getElementById("importParseBtn"),
   importResult: document.getElementById("importResult"),
   importCategory: document.getElementById("importCategory"),
+  practiceMineBtn: document.getElementById("practiceMineBtn"),
   importExample: document.getElementById("importExample"),
   drawerWordsHint: document.getElementById("drawerWordsHint"),
 
@@ -367,7 +368,21 @@ function shuffleArray(arr) {
 // 3) No deck mutation tricks: the built pool is immutable; getNextFreshWord
 //    walks it with an index and the recent-queue guarantees nothing repeats
 //    within a window even after decks are reshuffled.
+const MINE_KEY = "__mine__";
+CATEGORY_LABELS[MINE_KEY] = "My words";
+
+function buildCustomPool() {
+  state.wordPool = state.customWords
+    .filter(w => state.difficulty === "all" || w.difficulty === state.difficulty)
+    .map(w => ({ word: w.word, category: w.category, difficulty: w.difficulty }));
+  state.poolIndex = 0;
+}
+
 function buildPool() {
+  if (state.category === MINE_KEY) {
+    buildCustomPool();
+    return;
+  }
   const cats = state.category === "all" ? CATEGORY_KEYS.slice() : [state.category];
   const decks = [];
   cats.forEach((cat) => {
@@ -508,7 +523,8 @@ function refreshReadyState() {
     return;
   }
   if (state.reviewMode === "dueOnly") {
-    const due = getDueCards().filter(c => state.category === "all" || c.category === state.category);
+    const mine = state.category === MINE_KEY ? new Set(state.customWords.map(w => w.word)) : null;
+    const due = getDueCards().filter(c => state.category === "all" || (state.category === MINE_KEY ? mine.has(c.word) : c.category === state.category));
     if (!due.length) {
       setReadyHint(
         state.category === "all"
@@ -2010,7 +2026,7 @@ function handleIncorrectAnswer(word, category, rawInput, isSrs) {
 // rebuilds what depends on the value and re-renders every place the setting
 // is shown. On load the controls are rendered FROM the stored state.
 const SETTING_DEFS = {
-  category: { label: "Category", storageKey: "preferredCategory", affectsSession: true, values: () => ["all"].concat(CATEGORY_KEYS) },
+  category: { label: "Category", storageKey: "preferredCategory", affectsSession: true, values: () => ["all", MINE_KEY].concat(CATEGORY_KEYS) },
   difficulty: { label: "Difficulty", storageKey: "preferredDifficulty", affectsSession: true, values: () => ["easy", "medium", "hard"] },
   duration: { label: "Show for", storageKey: "preferredDuration", affectsSession: true, values: () => [1000, 1500, 2000, 3000, 4000] },
   reviewMode: { label: "Review mode", storageKey: "reviewMode", affectsSession: true, values: () => ["mixed", "dueOnly"] },
@@ -2523,6 +2539,14 @@ function attachEventListeners() {
   document.querySelectorAll(".import-fmt-chip").forEach(chip => {
     chip.addEventListener("click", () => setImportExample(chip.dataset.fmt));
   });
+  if (dom.practiceMineBtn) {
+    dom.practiceMineBtn.addEventListener("click", () => {
+      dom.categorySelect.value = MINE_KEY;
+      dom.categorySelect.dispatchEvent(new Event("change"));
+      closeDataPage();
+      announce("Now practising only your own words");
+    });
+  }
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
     dom.reviewModeSelect.addEventListener("change", () => {
