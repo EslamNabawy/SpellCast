@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=35 shipped — import categories in Practice + import format examples (v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `2f90870`, serving `v=35`)
+**Current phase:** v=36 shipped — ambient drifting background pattern (v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `7785e1f`, serving `v=36`)
 
 ---
 
@@ -322,3 +322,19 @@ Scope (user): "add that people can add there words using csv or jason file … o
 **QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.96.
 
 **Rollout:** `?v=35` bumped (3 refs: style/words/script); code commit `2f90870` on `main`; docs commit follows; Pages verified after push.
+
+---
+
+## v=36 — Ambient drifting background ✅ · commit `7785e1f` · 2026-10-23
+
+**Request:** the moving-pattern background "unnoticeable" — make the ambient layer actually visible.
+
+**Change (CSS-only):** two decorative fixed layers sit behind the app (`.app` gained `position:relative;z-index:1` to paint above them):
+- `body::before` — large accent-tint radial glow blobs (`color-mix` on each theme's accent) drifting + scale-breathing, 26 s alternate ease-in-out;
+- `body::after` — the 24 px dot texture panning the opposite way, 38 s alternate-reverse, for a parallax feel.
+
+Both layers are compositor-only (`translate3d`, `will-change:transform`), `pointer-events:none`, ignore input entirely, and are removed under `prefers-reduced-motion`. Colors derive from the theme `--accent`, so the drift re-tints itself per theme; modal (z-100) and data page (z-40) still stack above. Glow alpha tuned up until the layers read alongside the grid.
+
+**QA:** probe `tools/qa/scratch/probe-motion.mjs` **5/5** (both layers animating + pointer-inert, app paints above, reduced-motion → both animations gone). Full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 (LCP 0.2 s) / mobile 0.96 (LCP 2.5 s, TBT 50 ms).
+
+**Rollout:** `?v=36` bumped (3 refs: style/words/script); code commit `7785e1f` on `main`; docs commit follows; Pages verified after push.
