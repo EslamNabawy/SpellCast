@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=32 shipped — keyboard stays open at check + Word chunks switch (v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `e5803ff`, serving `v=32`)
+**Current phase:** v=34 shipped — mobile keyboard viewport fix (v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `546ac51`, serving `v=34`)
 
 ---
 
@@ -264,3 +264,45 @@ Scope (user review of v=31): the keyboard still closed when the answer was check
 **Harness / QA** (evidence probes `probe-v32.mjs` — focus across type→check→reveal→type + chunks 0/4 chips with stable textContent — plus `probe-toggle.mjs` and `probe-cascade.mjs`)
 - Full run 6/6 PASS — session 29/29, fixture 8/8, a11y 12 axe runs 0 violations + 150 probes 0 failures + reduced-motion neutralised, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile 0.96 / a11y 1 (LCP 2.5 s).
 - **Rollout:** code commit `e5803ff` on `main` (6 files, +220/−17, incl. three probes); docs commit follows; Pages verified after push (see header line).
+
+## v=33 — Data Management page + bulk word import ✅ · commit `e651776` · 2026-10-23
+
+Scope (user): "add that people can add there words using csv or jason file … or can add there words manualy in the webiste" + "and make a dedictaed page for this data mangment".
+
+**New in-app page** (`#data`, hash-routed full-screen section `#dataPage` — not a second .html file, so state/scope are untouched):
+- **My words** card: search box (`#wordSearch`, filters by word + category label), the manual add form (word/category/difficulty, moved verbatim from the drawer with all ids kept), category creator, searchable word list with delete (confirm'd).
+- **Import words** card: file picker (`#importPick`, `.csv/.json/.txt`) or paste textarea → `Parse & preview`.
+- **Categories** card: per-category word counts, built-in vs custom marking (create stays in My words).
+- **Backup** card: Export data + the former "Import" relabeled **"Restore backup"** (full-backup `.json` restore, unchanged `importJSONFile`).
+- **Danger zone**: Reset session + Delete all data moved here from the drawer.
+- Drawer shrinks: `Manage data` button + `Add & import words` entry; `customCountBadge` stays as the live count. Esc / Back clear `#data`; deep-linking `/#data` lands on the page.
+
+**Import pipeline** (`parseImportText` → preview `confirmAction` → `applyImport`):
+- JSON: array of strings or `{words:[…]}`; object keys aliased (`word/text/term/title`, `category/cat/list/topic`, `difficulty/diff/level/tier`); difficulty aliases 1/low→easy, 2/normal→medium, 3/high→hard (default: current difficulty).
+- CSV/TXT: delimiter sniffing (`;`/`,`/tab + quoted-cell state machine with `""` escapes), header-row detection (word/category/difficulty columns, skipped), bare word-per-line lists; `-/-v`-bare lists honour the current category; rows with no category fall back to the selected category (`custom` under All).
+- Validation: 2–30 chars, letters/hyphen/apostrophe (`isValidWord`), 5000-row / 2 MB caps; BOM/quote/whitespace normalisation.
+- Dedupe case-insensitively, three tiers (this list → library via `wordExistsAnywhere` → My words), each with its reason shown in the result line.
+- Preview dialog: counts + new categories + first 12 words + first problem; cancel-first, never an accidental add.
+- Apply: new categories created via `ensureCategory` **before** any word lands; then per-row `addCustomWord` (so SRS cards/pool/save behave exactly like a manual add); paste + result line + screen-reader announcement reflect `Imported N · skipped · rejected`.
+- A `{customWords|srsCards|version}`-shaped `.json` file picked here is routed to the restore path automatically.
+
+**Harness / QA** (new probe `tools/qa/scratch/probe-import.mjs` — 13/13: hash routing + deep-link + Esc, CSV header/alias parsing, JSON aliases, three-tier dedupe, 5000-row cap, preview dialog, apply side-effects, Restore-backup relabel + picker accepts, progress-key containment, dark-mode open):
+- `fixture.mjs` updated for the moved manager (opens `#data` via `#dataOpen2` instead of the old details toggle); full run **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures + reduced-motion neutralised, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / a11y 1 (LCP 0.1 s), mobile 0.96 / a11y 1 (LCP 2.5 s, TBT ≈ 40 ms).
+- One contrast regression caught and fixed during QA: the new `.data-count-pill` was initially styled as `.count-pill`, which out-spec'd `.bucket-count`'s accent badge (4.34:1) — renamed; badges back at full accent contrast.
+- **Rollout:** code commit `e651776` on `main` (5 files, +635/−57, incl. the probe); docs commit follows; Pages verified after push: live index serves `v=33` with 0 stale refs, `script.js?v=33` contains pipeline + page logic, `style.css?v=33` contains the data page styles.
+
+**Deferred to a future release:** category rename/delete (counts-only card for now; `deleteCustomCategory` was dropped from scope).
+
+---
+
+## v=34 — Mobile keyboard viewport fix ✅ · commit `546ac51` · 2026-10-23
+
+**Problem (user-reported on a vivo Android):** with the keyboard open during the type phase the card kept its full height — the word row, answer box and Check/Skip stayed hidden behind the keyboard. The layout viewport never shrank and the browser never scrolled to the focused input.
+
+**Fix (two layers):**
+- `index.html` viewport meta now reads `width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content` — Android Chrome (108+) shrinks the layout viewport when the keyboard opens, so the page reflows and scrolls to the input automatically.
+- `script.js` fallback for browsers that ignore that meta (older Chrome, Samsung/vivo browsers): `keepAnswerInputVisible()` + rAF-throttled `scheduleAnswerVisibilityCheck()` — on `visualViewport` resize/scroll and on answer-input focus, while `state.phase === "type"` and the input is the active element, `window.scrollBy` moves the input into the visible band between the keyboard top and the URL-bar bottom. Inert outside the typing phase, so desktop/harness behavior is untouched.
+
+**QA:** full gate **6/6 PASS** (session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.96). New probe `tools/qa/scratch/probe-keyboard.mjs` **4/4**: synthetic 311px visual band with the input at top 331 → rescue scroll lands it in the band (scrollY 123), repeated resizes don't oscillate, anchor neutral outside the type phase.
+
+**Rollout:** `?v=34` bumped (3 refs: style/words/script); code commit `546ac51` on `main`; docs commit follows; Pages verified after push.
