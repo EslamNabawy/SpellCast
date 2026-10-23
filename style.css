@@ -369,3 +369,10 @@ details[open] > .section-head{background:var(--paper)}
 .data-cat-meta{font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
 .data-card .mini-list{margin:0}
 .data-card .import-export-row{margin-top:auto}
+.import-target-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.import-target-row label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.import-target-row .input{flex:1 1 180px;min-width:150px}
+.import-fmt-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.import-fmt-chip[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent-strong);border-color:var(--accent-strong);font-weight:700}
+.import-example{margin:0;padding:10px 12px;background:var(--paper-soft);border:1px dashed var(--line);border-radius:var(--radius-lg);font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--ink-soft);white-space:pre-wrap;overflow-x:auto;scrollbar-width:none}
+.import-example::-webkit-scrollbar{display:none}

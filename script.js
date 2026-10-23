@@ -254,6 +254,8 @@ const dom = {
   importPaste: document.getElementById("importPaste"),
   importParseBtn: document.getElementById("importParseBtn"),
   importResult: document.getElementById("importResult"),
+  importCategory: document.getElementById("importCategory"),
+  importExample: document.getElementById("importExample"),
   drawerWordsHint: document.getElementById("drawerWordsHint"),
 
   statScore: document.getElementById("statScore"),
@@ -1335,7 +1337,7 @@ function csvImportRows(lines) {
   });
 }
 
-function parseImportText(rawText) {
+function parseImportText(rawText, forcedCategory) {
   const report = { valid: [], duplicates: [], invalid: [], newCategories: new Set(), source: "" };
   const text = String(rawText == null ? "" : rawText.trim());
   if (!text) { report.source = "empty"; return report; }
@@ -1375,7 +1377,9 @@ function parseImportText(rawText) {
       report.duplicates.push({ raw: word, reason: "already in my words" });
       return;
     }
-    const category = normalizeImportCategory(r.category) || (state.category !== "all" ? state.category : "custom");
+    const category = normalizeImportCategory(r.category)
+      || normalizeImportCategory(forcedCategory)
+      || (state.category !== "all" ? state.category : "custom");
     if (!WORDS[category]) report.newCategories.add(category);
     report.valid.push({ word, category, difficulty: importDifficulty(r.difficulty) });
   });
@@ -1441,8 +1445,23 @@ function applyImport(report) {
   announce(`Imported ${added} words${tail}`);
 }
 
+const IMPORT_EXAMPLES = {
+  csv: "word,category,difficulty\nserendipity,nouns,medium\nturbulent,adjectives,hard",
+  json: "[\n  { \"word\": \"serendipity\", \"category\": \"nouns\", \"difficulty\": \"medium\" },\n  \"turbulent\"\n]",
+  txt: "serendipity\nturbulent\nviscous"
+};
+
+function setImportExample(fmt) {
+  if (!dom.importExample || !IMPORT_EXAMPLES[fmt]) return;
+  dom.importExample.textContent = IMPORT_EXAMPLES[fmt];
+  document.querySelectorAll(".import-fmt-chip").forEach(chip => {
+    chip.setAttribute("aria-pressed", chip.dataset.fmt === fmt ? "true" : "false");
+  });
+}
+
 function runImportPipeline(text) {
-  const report = parseImportText(text);
+  const forced = dom.importCategory ? dom.importCategory.value : "";
+  const report = parseImportText(text, forced);
   renderImportResult(report);
   openImportPreview(report).then(choice => {
     if (choice === "import") applyImport(report);
@@ -2501,6 +2520,9 @@ function attachEventListeners() {
   if (dom.importParseBtn) {
     dom.importParseBtn.addEventListener("click", () => { if (dom.importPaste) runImportPipeline(dom.importPaste.value); });
   }
+  document.querySelectorAll(".import-fmt-chip").forEach(chip => {
+    chip.addEventListener("click", () => setImportExample(chip.dataset.fmt));
+  });
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
     dom.reviewModeSelect.addEventListener("change", () => {

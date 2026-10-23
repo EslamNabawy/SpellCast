@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=34">
+<link rel="stylesheet" href="style.css?v=35">
 </head>
 <body class="theme-normal">
 
@@ -96,7 +96,6 @@
     <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-sliders"></use></svg>Controls</h2>
   <section class="settings-panel" id="settingsPanel" hidden>
     <div class="deck-section settings-group">
-      <div class="section-head settings-heading static"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg>Practice</span></div>
       <form class="settings-form" id="settingsForm">
         <div class="field">
           <label for="categorySelect">Category</label>
@@ -362,6 +361,20 @@
       <section class="data-card" aria-labelledby="dataImportHead">
         <h2 class="settings-heading" id="dataImportHead"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Import words</h2>
         <p class="panel-hint">CSV or TXT — one word per line, or &laquo;word, category, difficulty&raquo; rows. JSON — a list of words or objects with <code>word</code>/<code>category</code>/<code>difficulty</code>. A header row is detected and skipped automatically.</p>
+        <div class="import-target-row">
+          <label for="importCategory">New category for rows without one</label>
+          <input type="text" id="importCategory" class="input input-sm" placeholder="Optional — e.g. personal" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <span class="data-cat-meta">Words you import keep their category when the file has one.</span>
+        </div>
+        <div class="import-fmt-row" aria-label="Pick an example format">
+          <button type="button" class="btn btn-quiet btn-sm import-fmt-chip" data-fmt="csv" aria-pressed="true">CSV</button>
+          <button type="button" class="btn btn-quiet btn-sm import-fmt-chip" data-fmt="json" aria-pressed="false">JSON</button>
+          <button type="button" class="btn btn-quiet btn-sm import-fmt-chip" data-fmt="txt" aria-pressed="false">TXT list</button>
+          <span class="data-cat-meta">Example of the chosen format</span>
+        </div>
+        <pre class="import-example" id="importExample" tabindex="0">word,category,difficulty
+serendipity,nouns,medium
+turbulent,adjectives,hard</pre>
         <button type="button" class="btn btn-quiet btn-sm" id="importPickBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Choose CSV / JSON / TXT</button>
         <input type="file" id="importPick" accept=".csv,.json,.txt" hidden>
         <textarea id="importPaste" class="input import-paste" rows="3" placeholder="...or paste a list here, then press Parse" aria-label="Paste a word list"></textarea>
@@ -432,7 +445,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=34"></script>
-<script src="script.js?v=34"></script>
+<script src="words.js?v=35"></script>
+<script src="script.js?v=35"></script>
 </body>
 </html>
