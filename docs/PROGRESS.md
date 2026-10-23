@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=34 shipped — mobile keyboard viewport fix (v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `546ac51`, serving `v=34`)
+**Current phase:** v=35 shipped — import categories in Practice + import format examples (v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `2f90870`, serving `v=35`)
 
 ---
 
@@ -305,4 +305,20 @@ Scope (user): "add that people can add there words using csv or jason file … o
 
 **QA:** full gate **6/6 PASS** (session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.96). New probe `tools/qa/scratch/probe-keyboard.mjs` **4/4**: synthetic 311px visual band with the input at top 331 → rescue scroll lands it in the band (scrollY 123), repeated resizes don't oscillate, anchor neutral outside the type phase.
 
-**Rollout:** `?v=34` bumped (3 refs: style/words/script); code commit `546ac51` on `main`; docs commit follows; Pages verified after push.
+**Rollout:** `?v=34` bumped (3 refs: style/words/script); code commit `546ac51` on `main` pushed with the v=33/34 docs record (`c40abc0`); Pages verified after push: index serves `v=34`, 0 stale refs, meta + `visualViewport` anchor live.
+
+---
+
+## v=35 — Import categories in Practice + format examples ✅ · commit `2f90870` · 2026-10-23
+
+**User-reported gaps:** (1) a category that arrives through bulk import had to be picked blind — it wasn't obvious it shows up in the Practice select; (2) there was no sample of what a parsable CSV/JSON/TXT looks like; (3) the redundant "Practice" banner cluttered the controls drawer.
+
+**Changes:**
+- Import card: an optional **category claim** input (`.import-target-row`) — words in a parsed batch that carry no category of their own go to whatever is typed here (falls back to the current Practice category). `parseImportText(rawText, forcedCategory)` fallback chain: row category → forced category → state category → `custom`.
+- Format chips **CSV / JSON / TXT** (aria-pressed toggles) drive an example block (`pre#importExample`) right above the import controls so users see exactly what to provide: CSV `word,category,difficulty`, JSON array of strings/objects, TXT one word per line.
+- Removed the static "Practice" heading banner from the settings drawer (labels on each field remain; a11y unaffected).
+- Verified end-to-end with `tools/qa/scratch/probe-category.mjs` **6/6**: imported "Galaxy" category appears in both selects immediately after import (no reload), commits without a dialog at idle, word served from the imported set, JSON chip swap works, forced category lands a category-less row in `galaxy`.
+
+**QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 21 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.96.
+
+**Rollout:** `?v=35` bumped (3 refs: style/words/script); code commit `2f90870` on `main`; docs commit follows; Pages verified after push.
