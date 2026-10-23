@@ -369,6 +369,40 @@ details[open] > .section-head{background:var(--paper)}
 .data-cat-meta{font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
 .data-card .mini-list{margin:0}
 .data-card .import-export-row{margin-top:auto}
+
+/* ============ Ambient drifting background (v=36) ============ */
+/* two fixed layers behind the app: soft accent glow blobs on an alternate
+   ease, and a dot texture panning on its own slower rhythm for parallax.
+   Both are compositor-only (transform) and die under prefers-reduced-motion */
+body::before,
+body::after{content:"";position:fixed;left:-15%;top:-15%;width:130%;height:130%;z-index:0;pointer-events:none;will-change:transform}
+body::before{
+  background-image:
+    radial-gradient(42% 38% at 14% 16%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%),
+    radial-gradient(36% 32% at 84% 14%, color-mix(in srgb, var(--accent-strong) 14%, transparent), transparent 62%),
+    radial-gradient(44% 40% at 72% 88%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 66%);
+  animation:bg-drift 26s ease-in-out infinite alternate;
+}
+body::after{
+  background-image:radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink-soft) 30%, transparent) 1px, transparent 0);
+  background-size:24px 24px;
+  opacity:.45;
+  animation:bg-drift-slow 38s linear infinite alternate-reverse;
+}
+@keyframes bg-drift{
+  from{transform:translate3d(-2.6%,-2%,0) scale(1)}
+  to{transform:translate3d(2.6%,2.2%,0) scale(1.05)}
+}
+@keyframes bg-drift-slow{
+  from{transform:translate3d(0,0,0)}
+  to{transform:translate3d(-26px,-18px,0)}
+}
+@media (prefers-reduced-motion: reduce){
+  body::before,
+  body::after{animation:none}
+}
+/* app content and every overlay must paint above the two drift layers */
+.app{position:relative;z-index:1}
 .import-target-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .import-target-row label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
 .import-target-row .input{flex:1 1 180px;min-width:150px}
