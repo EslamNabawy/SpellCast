@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=41">
+<link rel="stylesheet" href="style.css?v=42">
 </head>
 <body class="theme-normal">
 
@@ -39,7 +39,8 @@
 <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
 <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.91 5.83a2 2 0 0 1-1.27 1.27L3 12l5.83 1.91a2 2 0 0 1 1.27 1.27L12 21l1.91-5.83a2 2 0 0 1 1.27-1.27L21 12l-5.83-1.91a2 2 0 0 1-1.27-1.27L12 3Z"/><path d="M19 3v4M17 5h4"/></symbol>
 <symbol id="i-play" viewBox="0 0 24 24"><path d="M6 3l14 9-14 9V3z"/></symbol>
-<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-speak" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+<symbol id="i-letters" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
 <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
@@ -148,6 +149,13 @@
             <span class="toggle-state">Off</span>
           </button>
         </div>
+        <div class="field field-toggle">
+          <label for="ttsToggle">Spoken words</label>
+          <button type="button" class="toggle" id="ttsToggle" role="switch" aria-checked="true" title="Say each word aloud when it appears">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-state">On</span>
+          </button>
+        </div>
         <div class="field" id="volumeField" hidden>
           <label for="volumeSlider">Volume</label>
           <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
@@ -196,6 +204,8 @@
     <div class="phase phase-see" id="phaseSee" hidden>
       <div class="phase-top-row">
         <span class="see-label" id="seeHint"><svg class="ico" aria-hidden="true"><use href="#i-eye"></use></svg>Memorize it</span>
+        <button class="icon-btn" id="sayBtn" type="button" aria-label="Say the word aloud" title="Say the word aloud"><svg class="ico" aria-hidden="true"><use href="#i-speak"></use></svg></button>
+        <button class="icon-btn" id="spellBtn" type="button" aria-label="Spell the word letter by letter" title="Spell it out"><svg class="ico" aria-hidden="true"><use href="#i-letters"></use></svg></button>
         <button class="btn btn-quiet btn-sm" id="seeAdvanceBtn" type="button">Skip ahead</button>
       </div>
       <div class="word-display" id="wordDisplay">apple</div>
@@ -450,7 +460,7 @@ turbulent,adjectives,hard</pre>
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=41"></script>
-<script src="script.js?v=41"></script>
+<script src="words.js?v=42"></script>
+<script src="script.js?v=42"></script>
 </body>
 </html>

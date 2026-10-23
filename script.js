@@ -109,6 +109,7 @@ const LS_KEYS = {
   preferredDuration: "spellcast.preferredDuration",
   soundEnabled: "spellcast.soundEnabled",
   soundVolume: "spellcast.soundVolume",
+  ttsAuto: "spellcast.ttsAuto",
   bucket: "spellcast.bucket",
   customWords: "spellcast.customWords",
   srsCards: "spellcast.srsCards",
@@ -171,6 +172,7 @@ const state = {
   difficulty: "medium",
   duration: 2000,
   soundEnabled: false,
+  ttsAuto: true, // say each word aloud on reveal (user can turn this off)
   chunkWords: true, // render long words as syllable chips (user option)
 
   sessionWords: 0,
@@ -220,6 +222,9 @@ const dom = {
   difficultySelect: document.getElementById("difficultySelect"),
   durationSelect: document.getElementById("durationSelect"),
   soundToggle: document.getElementById("soundToggle"),
+  ttsToggle: document.getElementById("ttsToggle"),
+  sayBtn: document.getElementById("sayBtn"),
+  spellBtn: document.getElementById("spellBtn"),
   chunkToggle: document.getElementById("chunkToggle"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   resetAllBtn: document.getElementById("resetAllBtn"),
@@ -546,6 +551,7 @@ function refreshReadyState() {
 
 function setPhase(phase) {
   state.phase = phase;
+  cancelSpeech(); // no audio bleeding across phases
   dom.phaseReady.hidden = phase !== "ready";
   dom.phaseSee.hidden = phase !== "see";
   // The answer input is parked off-canvas between words instead of hidden:
@@ -731,6 +737,7 @@ function beginRound() {
   startSessionTimer();
   setPhase("see");
   runSeeTimer(state.duration);
+  if (state.ttsAuto) speakWord(picked.word); // v=42: spoken words, on reveal
 }
 
 function runSeeTimer(durationMs) {
@@ -1143,6 +1150,7 @@ function loadAllPersisted() {
   state.difficulty = loadChoiceSafe(loadLocal(LS_KEYS.preferredDifficulty, "medium"), "medium", VALID_DIFFICULTIES);
   state.duration = loadNumberSafe(loadLocal(LS_KEYS.preferredDuration, 2000), 2000, 500, 10000);
   state.soundEnabled = loadBoolSafe(loadLocal(LS_KEYS.soundEnabled, false), false);
+  state.ttsAuto = loadBoolSafe(loadLocal(LS_KEYS.ttsAuto, true), true);
   state.soundVolume = loadNumberSafe(loadLocal(LS_KEYS.soundVolume, 0.5), 0.5, 0, 1);
   state.reviewMode = loadTextSafe(loadLocal(LS_KEYS.reviewMode, "mixed"), "mixed");
   state.chunkWords = loadBoolSafe(loadLocal(LS_KEYS.chunkWords, true), true);
@@ -1320,6 +1328,7 @@ function openDataPage(opener) {
   renderDataCategories();
   renderDataStats();
   try { dom.dataClose.focus(); } catch (e) { /* ignore */ }
+  cancelSpeech(); // the data page covers the card — stop speaking
   announce("Data management open");
 }
 
@@ -1334,6 +1343,7 @@ function closeDataPage() {
   const backTo = dataOpener && document.contains(dataOpener) ? dataOpener : (dom.dataOpen || dom.dataOpen2);
   try { backTo.focus(); } catch (e) { /* ignore */ }
   dataOpener = null;
+  cancelSpeech(); // speech was cancelled when the data page opened
   announce("Back to the game");
 }
 
@@ -1968,6 +1978,59 @@ function recordCategoryStat(category, wasCorrect) {
 // SOUND (Web Audio API, optional, off by default)
 // ================================
 
+// ================================
+// SPOKEN WORDS (v=42) — voice via the Web Speech API, no assets
+// ================================
+
+let spellSteps = null; // letter-by-letter runner (cancelled by cancelSpeech)
+
+function speechSupported() {
+  return typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance === "function";
+}
+
+// Hard-stop any current speech: called on phase changes and dialog opens so
+// audio never bleeds across screens.
+function cancelSpeech() {
+  if (spellSteps) { clearTimeout(spellSteps.timer); spellSteps = null; }
+  if (speechSupported() && speechSynthesis.speaking) speechSynthesis.cancel();
+}
+
+function currentSpeechVolume() {
+  return Math.min(1, Math.max(0.05, state.soundVolume || 0.5));
+}
+
+// Pronounce the whole word, gently slowed.
+function speakWord(word) {
+  if (!speechSupported() || !word) return false;
+  cancelSpeech();
+  const utter = new SpeechSynthesisUtterance(String(word));
+  utter.rate = 0.9;
+  utter.volume = currentSpeechVolume();
+  utter.lang = document.documentElement.lang || "en";
+  speechSynthesis.speak(utter);
+  return true;
+}
+
+// Speak the word letter-by-letter ("C… A… T…") for listen-and-spell recall.
+// Each letter is its own utterance; a short gap keeps letters distinct. The
+// runner is restarted atomically by a new call or cancelled on phase change.
+function spellWordOut(word) {
+  if (!speechSupported() || !word) return false;
+  cancelSpeech();
+  const letters = String(word).split("");
+  const step = { i: 0, timer: null };
+  spellSteps = step;
+  const next = () => {
+    if (spellSteps !== step) return; // superseded or cancelled
+    speechSynthesis.speak(new SpeechSynthesisUtterance(letters[step.i]));
+    step.i += 1;
+    if (step.i < letters.length) step.timer = setTimeout(next, 280);
+    else spellSteps = null;
+  };
+  next();
+  return true;
+}
+
 let audioCtx = null;
 
 function getAudioCtx() {
@@ -2207,6 +2270,7 @@ const SETTING_DEFS = {
   duration: { label: "Show for", storageKey: "preferredDuration", affectsSession: true, values: () => [1000, 1500, 2000, 3000, 4000] },
   reviewMode: { label: "Review mode", storageKey: "reviewMode", affectsSession: true, values: () => ["mixed", "dueOnly"] },
   soundEnabled: { label: "Sound", storageKey: "soundEnabled", affectsSession: false, values: () => [true, false] },
+  ttsAuto: { label: "Spoken words", storageKey: "ttsAuto", affectsSession: false, values: () => [true, false] },
   soundVolume: { label: "Volume", storageKey: "soundVolume", affectsSession: false, values: () => [0, 0.25, 0.5, 0.75, 1] },
   chunkWords: { label: "Word chunks", storageKey: "chunkWords", affectsSession: false, values: () => [true, false] },
   darkMode: { label: "Dark mode", storageKey: "darkMode", affectsSession: false, values: () => [true, false] }
@@ -2233,6 +2297,10 @@ function setSetting(key, value, options) {
   if (key === "soundEnabled") {
     setSoundToggleUI(value);
     if (value) { getAudioCtx(); playTone("correct"); }
+  }
+  if (key === "ttsAuto") {
+    setTtsToggleUI(value);
+    if (!value) cancelSpeech();
   }
   if (key === "darkMode") applyTheme();
   if (key === "chunkWords" && state.currentWord && (state.phase === "see" || state.phase === "type")) {
@@ -2262,6 +2330,7 @@ async function requestSettingChange(key, value) {
     setSetting(key, value);
     return;
   }
+  cancelSpeech(); // the confirm dialog comes over the card — stop speaking
   const choice = await confirmAction({
     title: `Change ${def.label.toLowerCase()} to ${settingLabel(key, value)}?`,
     body: `This ends your current session (${state.sessionWords} answered, ${sessionAccuracyText()}). Every answer you have given is already saved in the review deck — only the session score and streak start over.`,
@@ -2300,6 +2369,7 @@ function applySettingsToForm() {
   dom.durationSelect.value = String(state.duration);
   if (dom.reviewModeSelect) dom.reviewModeSelect.value = state.reviewMode;
   setSoundToggleUI(state.soundEnabled);
+  setTtsToggleUI(state.ttsAuto);
   setChunkToggleUI(state.chunkWords);
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
   if (dom.volumeField) dom.volumeField.hidden = !state.soundEnabled;
@@ -2317,6 +2387,11 @@ function setSoundToggleUI(enabled) {
 function setChunkToggleUI(enabled) {
   dom.chunkToggle.setAttribute("aria-checked", String(enabled));
   dom.chunkToggle.querySelector(".toggle-state").textContent = enabled ? "On" : "Off";
+}
+
+function setTtsToggleUI(enabled) {
+  dom.ttsToggle.setAttribute("aria-checked", String(enabled));
+  dom.ttsToggle.querySelector(".toggle-state").textContent = enabled ? "On" : "Off";
 }
 
 // Virtual keyboards refuse the suggestion strip (and the clipboard chip) for
@@ -2426,6 +2501,7 @@ function resetAllData() {
   state.difficulty = "medium";
   state.duration = 2000;
   state.soundEnabled = false;
+  state.ttsAuto = true;
   state.soundVolume = 0.5;
   state.darkMode = false;
 
@@ -2648,6 +2724,18 @@ function attachEventListeners() {
 
   dom.chunkToggle.addEventListener("click", () => {
     setSetting("chunkWords", !state.chunkWords);
+  });
+
+  dom.ttsToggle.addEventListener("click", () => {
+    setSetting("ttsAuto", !state.ttsAuto);
+  });
+
+  dom.sayBtn.addEventListener("click", () => {
+    speakWord(state.currentWord ? state.currentWord.word : "");
+  });
+
+  dom.spellBtn.addEventListener("click", () => {
+    spellWordOut(state.currentWord ? state.currentWord.word : "");
   });
 
   dom.volumeSlider.addEventListener("input", () => {
