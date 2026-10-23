@@ -25,7 +25,7 @@
 <meta name="theme-color" content="#2D6A4F">
 <link rel="preload" href="fonts/plus-jakarta-sans-var-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/outfit-var-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=32">
+<link rel="stylesheet" href="style.css?v=33">
 </head>
 <body class="theme-normal">
 
@@ -55,6 +55,7 @@
 <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
 <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></symbol>
 <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
 </defs></svg>
 
 <div class="app">
@@ -153,53 +154,14 @@
         </div>
       </form>
       <div class="settings-actions">
-        <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg>Reset session</button>
-      </div>
-      <div class="danger-zone">
-        <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"></use></svg>Delete all data</button>
-        <p class="danger-zone-note">Removes progress, custom words and settings.</p>
+        <button type="button" class="btn btn-quiet btn-sm" id="dataOpen" data-open-data><svg class="ico" aria-hidden="true"><use href="#i-layers"></use></svg>Manage data</button>
       </div>
     </div>
 
     <details class="deck-section settings-group custom-words-group">
       <summary class="section-head settings-heading"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</span> <span class="summary-badge" id="customCountBadge">0</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
-      <p class="panel-hint">Missed words come back in 10 minutes. Words you know come back in days.</p>
-      <form class="add-word-form" id="addWordForm" autocomplete="off">
-        <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
-        <div class="add-word-row">
-          <select id="customWordCategory" aria-label="Category">
-            <option value="nouns">Nouns</option>
-            <option value="verbs">Verbs</option>
-            <option value="adjectives">Adjectives</option>
-            <option value="adverbs">Adverbs</option>
-            <option value="commonlyMisspelled">Commonly misspelled</option>
-            <option value="advanced">Advanced</option>
-            <option value="animals">Animals</option>
-            <option value="food">Food</option>
-            <option value="science">Science</option>
-            <option value="technology">Technology</option>
-            <option value="nature">Nature</option>
-            <option value="sports">Sports</option>
-          </select>
-          <select id="customWordDifficulty" aria-label="Difficulty">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Med</option>
-            <option value="hard">Hard</option>
-          </select>
-          <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn"><svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>Add</button>
-        </div>
-      </form>
-      <p class="field-error" id="customWordError" hidden></p>
-      <div class="new-category-row">
-        <input type="text" id="newCategoryInput" class="input input-sm" placeholder="New category">
-        <button type="button" class="btn btn-quiet btn-sm" id="createCategoryBtn">Create</button>
-      </div>
-      <ul class="mini-list" id="customWordsList"></ul>
-      <div class="import-export-row">
-        <button type="button" class="btn btn-quiet btn-sm" id="exportBtn"><svg class="ico" aria-hidden="true"><use href="#i-download"></use></svg>Export</button>
-        <button type="button" class="btn btn-quiet btn-sm" id="importBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Import</button>
-        <input type="file" id="importFile" accept=".json" hidden>
-      </div>
+      <p class="panel-hint" id="drawerWordsHint">Add by hand, import a file, or paste a list.</p>
+      <button type="button" class="btn btn-primary btn-sm" id="dataOpen2" data-open-data><svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>Add &amp; import words</button>
     </details>
   </section>
   </aside>
@@ -349,6 +311,94 @@
 
 </div>
 
+<section class="data-page" id="dataPage" role="region" aria-label="Data management" hidden>
+  <div class="data-page-inner">
+    <header class="data-header">
+      <button type="button" class="btn btn-quiet btn-sm" id="dataClose"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"></use></svg>Back</button>
+      <h1 class="data-title" id="dataTitle" tabindex="-1">Data management</h1>
+      <span class="data-stats" id="dataStats"></span>
+    </header>
+
+    <div class="data-grid">
+      <section class="data-card" aria-labelledby="dataWordsHead">
+        <h2 class="settings-heading" id="dataWordsHead"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</h2>
+        <div class="data-toolbar">
+          <input type="text" id="wordSearch" class="input input-sm" placeholder="Search your words" aria-label="Search your words">
+          <span class="data-count-pill" id="dataWordCount">0</span>
+        </div>
+        <form class="add-word-form" id="addWordForm" autocomplete="off">
+          <input type="text" id="customWordInput" class="input" placeholder="e.g. serendipity" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <div class="add-word-row">
+            <select id="customWordCategory" aria-label="Category">
+              <option value="nouns">Nouns</option>
+              <option value="verbs">Verbs</option>
+              <option value="adjectives">Adjectives</option>
+              <option value="adverbs">Adverbs</option>
+              <option value="commonlyMisspelled">Commonly misspelled</option>
+              <option value="advanced">Advanced</option>
+              <option value="animals">Animals</option>
+              <option value="food">Food</option>
+              <option value="science">Science</option>
+              <option value="technology">Technology</option>
+              <option value="nature">Nature</option>
+              <option value="sports">Sports</option>
+            </select>
+            <select id="customWordDifficulty" aria-label="Difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Med</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm" id="addWordBtn"><svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>Add</button>
+          </div>
+        </form>
+        <p class="field-error" id="customWordError" hidden></p>
+        <div class="new-category-row">
+          <input type="text" id="newCategoryInput" class="input input-sm" placeholder="New category">
+          <button type="button" class="btn btn-quiet btn-sm" id="createCategoryBtn">Create</button>
+        </div>
+        <ul class="mini-list" id="customWordsList"></ul>
+      </section>
+
+      <section class="data-card" aria-labelledby="dataImportHead">
+        <h2 class="settings-heading" id="dataImportHead"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Import words</h2>
+        <p class="panel-hint">CSV or TXT — one word per line, or &laquo;word, category, difficulty&raquo; rows. JSON — a list of words or objects with <code>word</code>/<code>category</code>/<code>difficulty</code>. A header row is detected and skipped automatically.</p>
+        <button type="button" class="btn btn-quiet btn-sm" id="importPickBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Choose CSV / JSON / TXT</button>
+        <input type="file" id="importPick" accept=".csv,.json,.txt" hidden>
+        <textarea id="importPaste" class="input import-paste" rows="3" placeholder="...or paste a list here, then press Parse" aria-label="Paste a word list"></textarea>
+        <button type="button" class="btn btn-primary btn-sm" id="importParseBtn">Parse &amp; preview</button>
+        <p class="panel-hint" id="importResult" aria-live="polite"></p>
+      </section>
+
+      <section class="data-card" aria-labelledby="dataCategoryHead">
+        <h2 class="settings-heading" id="dataCategoryHead"><svg class="ico" aria-hidden="true"><use href="#i-bars"></use></svg>Categories</h2>
+        <p class="panel-hint">Create categories in the My words card above. Locked categories are built in.</p>
+        <ul class="mini-list" id="dataCategoryList"></ul>
+      </section>
+
+      <section class="data-card" aria-labelledby="dataBackupHead">
+        <h2 class="settings-heading" id="dataBackupHead"><svg class="ico" aria-hidden="true"><use href="#i-download"></use></svg>Backup</h2>
+        <p class="panel-hint">Export your words, categories and SRS progress as JSON. Restoring a backup replaces those three, nothing else.</p>
+        <div class="import-export-row">
+          <button type="button" class="btn btn-quiet btn-sm" id="exportBtn"><svg class="ico" aria-hidden="true"><use href="#i-download"></use></svg>Export data</button>
+          <button type="button" class="btn btn-quiet btn-sm" id="importBtn"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Restore backup</button>
+          <input type="file" id="importFile" accept=".json" hidden>
+        </div>
+      </section>
+
+      <section class="data-card data-danger" aria-labelledby="dataDangerHead">
+        <h2 class="settings-heading" id="dataDangerHead"><svg class="ico" aria-hidden="true"><use href="#i-trash"></use></svg>Danger zone</h2>
+        <div class="settings-actions">
+          <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg>Reset session</button>
+        </div>
+        <div class="danger-zone">
+          <button type="button" class="btn btn-danger-quiet btn-sm" id="resetAllBtn"><svg class="ico" aria-hidden="true"><use href="#i-trash"></use></svg>Delete all data</button>
+          <p class="danger-zone-note">Removes progress, custom words and settings.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+
 <div class="modal-overlay" id="actionDialog" hidden>
   <div class="modal modal-action" role="dialog" aria-modal="true" aria-labelledby="actionDialogTitle" aria-describedby="actionDialogBody">
     <h2 id="actionDialogTitle">Are you sure?</h2>
@@ -382,7 +432,7 @@
 
 <div class="sr-only" aria-live="polite" id="srAnnouncer"></div>
 <div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
-<script src="words.js?v=32"></script>
-<script src="script.js?v=32"></script>
+<script src="words.js?v=33"></script>
+<script src="script.js?v=33"></script>
 </body>
 </html>

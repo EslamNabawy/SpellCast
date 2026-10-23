@@ -241,6 +241,20 @@ const dom = {
   importFile: document.getElementById("importFile"),
   reviewModeSelect: document.getElementById("reviewModeSelect"),
   srsStats: document.getElementById("srsStats"),
+  dataPage: document.getElementById("dataPage"),
+  dataClose: document.getElementById("dataClose"),
+  dataOpen: document.getElementById("dataOpen"),
+  dataOpen2: document.getElementById("dataOpen2"),
+  dataStats: document.getElementById("dataStats"),
+  wordSearch: document.getElementById("wordSearch"),
+  dataWordCount: document.getElementById("dataWordCount"),
+  dataCategoryList: document.getElementById("dataCategoryList"),
+  importPick: document.getElementById("importPick"),
+  importPickBtn: document.getElementById("importPickBtn"),
+  importPaste: document.getElementById("importPaste"),
+  importParseBtn: document.getElementById("importParseBtn"),
+  importResult: document.getElementById("importResult"),
+  drawerWordsHint: document.getElementById("drawerWordsHint"),
 
   statScore: document.getElementById("statScore"),
   statStreak: document.getElementById("statStreak"),
@@ -1043,23 +1057,32 @@ function srsStats() {
 }
 
 function renderCustomWordsList() {
-  if (!dom.customWordsList) return;
   if (dom.customCountBadge) dom.customCountBadge.textContent = state.customWords.length;
-  dom.customWordsList.innerHTML = "";
-  if (!state.customWords.length) {
+  if (dom.dataWordCount) dom.dataWordCount.textContent = state.customWords.length;
+  const list = dom.customWordsList;
+  if (!list) return;
+  const q = (dom.wordSearch && dom.wordSearch.value || "").trim().toLowerCase();
+  const entries = state.customWords
+    .filter(e => {
+      if (!q) return true;
+      const label = String(CATEGORY_LABELS[e.category] || e.category || "").toLowerCase();
+      return e.word.includes(q) || label.includes(q);
+    })
+    .sort((a, b) => a.word.localeCompare(b.word));
+  list.innerHTML = "";
+  if (!entries.length) {
     const li = document.createElement("li");
     li.style.cssText = "justify-content:center;color:var(--ink-soft);font-size:12px;border-style:dashed";
-    li.textContent = "No custom words yet";
-    dom.customWordsList.appendChild(li);
+    li.textContent = q ? "Nothing matches that search" : "No custom words yet";
+    list.appendChild(li);
     return;
   }
-  const sorted = [...state.customWords].sort((a,b) => a.word.localeCompare(b.word));
-  sorted.forEach(entry => {
+  entries.forEach(entry => {
     const li = document.createElement("li");
     li.innerHTML = `<span style="font-weight:700;font-family:var(--font-display)">${escapeHtml(entry.word)}</span><span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-faint)">${escapeHtml(CATEGORY_LABELS[entry.category]||entry.category)} · ${entry.difficulty} <button data-del="${escapeHtml(entry.word)}" class="btn btn-quiet" style="padding:4px 8px;font-size:11px">✕</button></span>`;
-    dom.customWordsList.appendChild(li);
+    list.appendChild(li);
   });
-  dom.customWordsList.querySelectorAll("[data-del]").forEach(btn => {
+  list.querySelectorAll("[data-del]").forEach(btn => {
     btn.addEventListener("click", () => {
       const w = btn.getAttribute("data-del");
       if (confirm(`Delete "${w}"?`)) deleteCustomWord(w);
@@ -1088,6 +1111,323 @@ function sanitizeCategoryKey(name) {
     .replace(/[^a-z0-9]+/g, "")
     .replace(/^[0-9]+/, "")
     .slice(0, 24);
+}
+
+// ================================
+// DATA MANAGEMENT PAGE + BULK IMPORT
+// ================================
+
+const IMPORT_MAX_ROWS = 5000;
+const DIFFICULTY_ALIASES = {
+  easy: "easy", "1": "easy", low: "easy",
+  medium: "medium", normal: "medium", "2": "medium",
+  hard: "hard", "3": "hard", high: "hard"
+};
+
+let dataOpener = null;
+let dataHashSuppress = false;
+
+function openDataPage(opener) {
+  if (!dom.dataPage || !dom.dataPage.hidden) return;
+  dataOpener = opener instanceof Element ? opener : null;
+  dom.dataPage.hidden = false;
+  if (location.hash !== "#data") {
+    dataHashSuppress = true;
+    location.hash = "data";
+    dataHashSuppress = false;
+  }
+  renderCustomWordsList();
+  renderDataCategories();
+  renderDataStats();
+  try { dom.dataClose.focus(); } catch (e) { /* ignore */ }
+  announce("Data management open");
+}
+
+function closeDataPage() {
+  if (!dom.dataPage || dom.dataPage.hidden) return;
+  dom.dataPage.hidden = true;
+  if (location.hash === "#data") {
+    dataHashSuppress = true;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { location.hash = ""; }
+    dataHashSuppress = false;
+  }
+  const backTo = dataOpener && document.contains(dataOpener) ? dataOpener : (dom.dataOpen || dom.dataOpen2);
+  try { backTo.focus(); } catch (e) { /* ignore */ }
+  dataOpener = null;
+  announce("Back to the game");
+}
+
+function renderDataStats() {
+  if (!dom.dataStats) return;
+  const s = srsStats();
+  dom.dataStats.textContent = `${state.customWords.length} custom · ${CATEGORY_KEYS.length} categories · ${s.due} due`;
+}
+
+function renderDataCategories() {
+  const list = dom.dataCategoryList;
+  if (!list) return;
+  list.innerHTML = "";
+  CATEGORY_KEYS.forEach(key => {
+    const d = WORDS[key];
+    if (!d) return;
+    const count = VALID_DIFFICULTIES.reduce((n, level) => n + (d[level] ? d[level].length : 0), 0);
+    const custom = !BUILTIN_CATEGORY_KEYS.includes(key);
+    const li = document.createElement("li");
+    li.className = "data-cat-row";
+    li.innerHTML = `<span class="data-cat-name">${escapeHtml(CATEGORY_LABELS[key] || key)}</span>` +
+      `<span class="data-cat-meta">${count} words${custom ? " · custom" : ""}${state.category === key || state.category === "all" ? "" : ""}</span>`;
+    list.appendChild(li);
+  });
+}
+
+// ---- bulk import: parse -> validate -> dedupe -> preview -> apply ----
+
+function cleanImportCell(s) {
+  return String(s == null ? "" : s)
+    .replace(/\uFEFF/g, "")
+    .replace(/^['"]+|['"]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeImportWord(word) {
+  const cleaned = cleanImportCell(word);
+  // strip edge punctuation that is not part of a word (keep ' and - inside)
+  return cleaned.replace(/^[^A-Za-z0-9'-]+|[^A-Za-z0-9'-]+$/g, "");
+}
+
+function normalizeImportCategory(raw) {
+  const key = sanitizeCategoryKey(raw || "");
+  return key || "";
+}
+
+function importDifficulty(raw) {
+  const k = cleanImportCell(raw).toLowerCase();
+  if (DIFFICULTY_ALIASES[k]) return DIFFICULTY_ALIASES[k];
+  return VALID_DIFFICULTIES.includes(state.difficulty) ? state.difficulty : "medium";
+}
+
+function splitCsvLine(line, delim) {
+  const out = [];
+  let cur = "";
+  let inQuotes = false;
+  const d = delim || ",";
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuotes = false;
+      } else cur += ch;
+    } else if (ch === '"') inQuotes = true;
+    else if (ch === d) { out.push(cur.trim()); cur = ""; }
+    else cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+function sniffDelimiter(lines) {
+  const sample = lines.slice(0, Math.min(10, lines.length)).join("\n");
+  const counts = [
+    ["\t", (sample.match(/\t/g) || []).length],
+    [";", (sample.match(/;/g) || []).length],
+    [",", (sample.match(/,/g) || []).length]
+  ].sort((a, b) => b[1] - a[1]);
+  return counts[0][1] > 0 ? counts[0][0] : null;
+}
+
+const IMPORT_WORD_ALIASES = ["word", "text", "term", "title"];
+const IMPORT_CATEGORY_ALIASES = ["category", "cat", "list", "topic"];
+const IMPORT_DIFFICULTY_ALIASES = ["difficulty", "diff", "level", "tier"];
+
+function importPickKey(obj, aliases) {
+  for (const k of Object.keys(obj)) {
+    const lk = k.toLowerCase().trim();
+    if (aliases.includes(lk) && obj[k] != null && String(obj[k]).trim()) return obj[k];
+  }
+  return "";
+}
+
+function jsonImportRows(text) {
+  const data = JSON.parse(text);
+  const list = Array.isArray(data) ? data : (data && Array.isArray(data.words)) ? data.words : null;
+  if (!list) throw new Error("JSON must be an array of words or {words: [...]}");
+  return list.map(item => {
+    if (typeof item === "string") return { word: item, category: "", difficulty: "" };
+    if (item && typeof item === "object") {
+      return {
+        word: importPickKey(item, IMPORT_WORD_ALIASES),
+        category: importPickKey(item, IMPORT_CATEGORY_ALIASES),
+        difficulty: importPickKey(item, IMPORT_DIFFICULTY_ALIASES)
+      };
+    }
+    return { word: "", category: "", difficulty: "", note: "not a word or object" };
+  });
+}
+
+function csvImportRows(lines) {
+  const delim = sniffDelimiter(lines);
+  let colWord = 0, colCat = -1, colDiff = -1;
+  let body = lines;
+  if (delim) {
+    const headCells = splitCsvLine(lines[0], delim).map(c => c.toLowerCase().replace(/[^a-z]/g, ""));
+    if (IMPORT_WORD_ALIASES.includes(headCells[0])) {
+      headCells.forEach((c, i) => {
+        if (IMPORT_CATEGORY_ALIASES.includes(c)) colCat = i;
+        if (IMPORT_DIFFICULTY_ALIASES.includes(c)) colDiff = i;
+      });
+      body = lines.slice(1);
+    }
+  }
+  return body.map(line => {
+    if (!delim) return { word: line, category: "", difficulty: "" };
+    const cells = splitCsvLine(line, delim);
+    if (colWord >= cells.length) return { word: "", category: "", difficulty: "", note: "empty row" };
+    return {
+      word: cells[colWord],
+      category: colCat >= 0 ? (cells[colCat] || "") : (cells.length >= 2 ? cells[1] : ""),
+      difficulty: colDiff >= 0 ? (cells[colDiff] || "") : (cells.length >= 3 ? cells[2] : "")
+    };
+  });
+}
+
+function parseImportText(rawText) {
+  const report = { valid: [], duplicates: [], invalid: [], newCategories: new Set(), source: "" };
+  const text = String(rawText == null ? "" : rawText.trim());
+  if (!text) { report.source = "empty"; return report; }
+
+  let rows;
+  if (text.startsWith("[") || text.startsWith("{")) {
+    try {
+      rows = jsonImportRows(text);
+      report.source = "json";
+    } catch (err) {
+      report.invalid.push({ raw: text.slice(0, 40), reason: err.message || "invalid JSON" });
+      report.source = "json-broken";
+      return report;
+    }
+  } else {
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith("#") && !l.startsWith("//"));
+    if (!lines.length) { report.source = "empty"; return report; }
+    if (lines.length > IMPORT_MAX_ROWS) {
+      report.invalid.push({ raw: "(file)", reason: `too many rows (${lines.length} > ${IMPORT_MAX_ROWS})` });
+      report.source = "too-large";
+      return report;
+    }
+    rows = csvImportRows(lines);
+    report.source = "csv";
+  }
+
+  // words may share letters but not casing — dedupe case-insensitively
+  const seenInBatch = new Set();
+  rows.forEach(r => {
+    const word = normalizeImportWord(r.word).toLowerCase();
+    if (!word) { report.invalid.push({ raw: r.note ? "(row)" : "(row)", reason: "no word found" }); return; }
+    if (!isValidWord(word)) { report.invalid.push({ raw: word, reason: "2-30 chars, letters with hyphen/apostrophe" }); return; }
+    if (seenInBatch.has(word)) { report.duplicates.push({ raw: word, reason: "duplicate in this list" }); return; }
+    seenInBatch.add(word);
+    if (wordExistsAnywhere(word)) { report.duplicates.push({ raw: word, reason: "already in the library" }); return; }
+    if (state.customWords.some(e => e.word === word)) {
+      report.duplicates.push({ raw: word, reason: "already in my words" });
+      return;
+    }
+    const category = normalizeImportCategory(r.category) || (state.category !== "all" ? state.category : "custom");
+    if (!WORDS[category]) report.newCategories.add(category);
+    report.valid.push({ word, category, difficulty: importDifficulty(r.difficulty) });
+  });
+  return report;
+}
+
+function renderImportResult(report) {
+  const el = dom.importResult;
+  if (!el) return;
+  if (report.source === "empty") { el.textContent = "Nothing to import yet."; return; }
+  if (report.source === "too-large" || report.source === "json-broken") {
+    el.textContent = report.invalid[0] ? `Problem: ${report.invalid[0].reason}` : "Could not read that.";
+    return;
+  }
+  const bits = [`${report.valid.length} ready to add`, `${report.duplicates.length} skipped`, `${report.invalid.length} invalid`];
+  el.textContent = bits.join(" · ");
+}
+
+function openImportPreview(report) {
+  const lines = [];
+  lines.push(`${report.valid.length} valid · ${report.duplicates.length} duplicates skipped · ${report.invalid.length} invalid.`);
+  if (report.newCategories.size) lines.push(`New categories: ${[...report.newCategories].join(", ")}`);
+  if (report.valid.length) {
+    const sample = report.valid.slice(0, 12).map(r => {
+      const cat = r.category !== state.category ? ` (${CATEGORY_LABELS[r.category] || r.category})` : "";
+      return r.word + cat;
+    }).join(", ");
+    lines.push(`Preview: ${sample}`);
+    if (report.valid.length > 12) lines.push(`and ${report.valid.length - 12} more`);
+  }
+  if (report.invalid.length) lines.push(`First problem: "${report.invalid[0].raw}" — ${report.invalid[0].reason}`);
+  if (!report.valid.length) {
+    return confirmAction({
+      title: "Nothing to import",
+      body: lines.join("\n"),
+      actions: [{ id: "ok", label: "OK", variant: "primary" }]
+    });
+  }
+  return confirmAction({
+    title: "Import words",
+    body: lines.join("\n"),
+    actions: [
+      { id: "cancel", label: "Cancel", variant: "quiet" },
+      { id: "import", label: `Add ${report.valid.length} words`, variant: "primary" }
+    ]
+  });
+}
+
+function applyImport(report) {
+  if (!report || !report.valid.length) return;
+  // create new categories first so words never land in a broken state
+  report.newCategories.forEach(key => ensureCategory(key, key));
+  let added = 0, failed = 0;
+  report.valid.forEach(r => {
+    const res = addCustomWord(r.word, r.category, r.difficulty);
+    if (res.ok) added += 1; else failed += 1;
+  });
+  refreshReadyState();
+  const tail = report.duplicates.length ? `, ${report.duplicates.length} skipped` : "";
+  if (dom.importPaste) dom.importPaste.value = "";
+  if (dom.importResult) dom.importResult.textContent = `Imported ${added} words${failed ? ` (${failed} rejected)` : ""}${tail}`;
+  if (dom.drawerWordsHint) dom.drawerWordsHint.textContent = `${state.customWords.length} custom words ready to practise.`;
+  announce(`Imported ${added} words${tail}`);
+}
+
+function runImportPipeline(text) {
+  const report = parseImportText(text);
+  renderImportResult(report);
+  openImportPreview(report).then(choice => {
+    if (choice === "import") applyImport(report);
+  });
+}
+
+function importPickFile(file) {
+  if (!file || !dom.importResult) return;
+  if (file.size > 2 * 1024 * 1024) {
+    dom.importResult.textContent = `${file.name} is over the 2 MB limit — use a smaller file.`;
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => { if (dom.importResult) dom.importResult.textContent = `Could not read ${file.name}.`; };
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    // a trimmed  JSON object with customWords/srsCards is a full backup — restore instead
+    if (/\.json$/i.test(file.name) && text.trim().startsWith("{")) {
+      let probe = null;
+      try { probe = JSON.parse(text); } catch (e) { probe = null; }
+      if (probe && !Array.isArray(probe) && (probe.customWords || probe.srsCards || probe.version)) {
+        importJSONFile(file);
+        return;
+      }
+    }
+    runImportPipeline(text);
+  };
+  reader.readAsText(file);
 }
 
 function exportJSON() {
@@ -2095,6 +2435,28 @@ function attachEventListeners() {
   if (dom.importBtn && dom.importFile) {
     dom.importBtn.addEventListener("click", () => dom.importFile.click());
     dom.importFile.addEventListener("change", () => { const f = dom.importFile.files[0]; if (f) importJSONFile(f); dom.importFile.value = ""; });
+  }
+  // Data management page + bulk import
+  document.querySelectorAll("[data-open-data]").forEach(btn => {
+    btn.addEventListener("click", () => openDataPage(btn));
+  });
+  if (dom.dataClose) dom.dataClose.addEventListener("click", () => closeDataPage());
+  window.addEventListener("hashchange", () => {
+    if (dataHashSuppress) return;
+    if (location.hash === "#data") openDataPage(document.activeElement);
+    else closeDataPage();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dom.dataPage && !dom.dataPage.hidden && dom.actionDialog.hidden) closeDataPage();
+  });
+  if (location.hash === "#data") openDataPage(null);
+  if (dom.wordSearch) dom.wordSearch.addEventListener("input", () => renderCustomWordsList());
+  if (dom.importPickBtn && dom.importPick) {
+    dom.importPickBtn.addEventListener("click", () => dom.importPick.click());
+    dom.importPick.addEventListener("change", () => { const f = dom.importPick.files[0]; if (f) importPickFile(f); dom.importPick.value = ""; });
+  }
+  if (dom.importParseBtn) {
+    dom.importParseBtn.addEventListener("click", () => { if (dom.importPaste) runImportPipeline(dom.importPaste.value); });
   }
   if (dom.reviewModeSelect) {
     dom.reviewModeSelect.value = state.reviewMode;
