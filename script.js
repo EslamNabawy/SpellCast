@@ -551,6 +551,49 @@ function setPhase(phase) {
   // moment you check the word (Enter advances via the global handler)
 }
 
+// ---- mobile keyboard sanity (v=34) ------------------------------------
+// On several Android browsers (older Chrome, Samsung Internet, vivo browser)
+// the layout viewport does NOT shrink when the keyboard opens, so the focused
+// answer field can end up behind the keyboard and never scroll into reach.
+// The `interactive-widget=resizes-content` meta fixes most modern browsers;
+// this anchor is the fallback: whenever the keyboard squeezes the visual
+// viewport while typing, bring the answer field back into the visible band.
+function keepAnswerInputVisible() {
+  if (state.phase !== "type") return;
+  if (document.activeElement !== dom.answerInput) return;
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const rect = dom.answerInput.getBoundingClientRect();
+  const vvTop = (vv.offsetTop || 0) + (vv.pageTop || 0);
+  const vvBottom = vvTop + vv.height;
+  const margin = 46;
+  if (rect.top >= vvBottom - 8) {
+    // behind the keyboard — pull it back up into the visible band
+    window.scrollBy({ top: rect.bottom - vvBottom + margin, left: 0, behavior: "auto" });
+  } else if (rect.bottom <= vvTop + 8) {
+    // hidden under the URL-bar edge — push it down into the band
+    window.scrollBy({ top: rect.top - vvTop - margin, left: 0, behavior: "auto" });
+  }
+}
+
+let answerVisibilityTick = false;
+function scheduleAnswerVisibilityCheck() {
+  if (answerVisibilityTick) return;
+  answerVisibilityTick = true;
+  requestAnimationFrame(() => {
+    answerVisibilityTick = false;
+    keepAnswerInputVisible();
+  });
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", scheduleAnswerVisibilityCheck);
+  window.visualViewport.addEventListener("scroll", scheduleAnswerVisibilityCheck);
+}
+try {
+  dom.answerInput.addEventListener("focus", scheduleAnswerVisibilityCheck);
+} catch (e) { /* ignore */ }
+
 // ---- syllable chunking: long words render as chunk chips so the spelling can
 // be memorised in pieces (the mockup's chunk chips — switchable via "Word
 // chunks" in Practice). The spans hold
