@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=41 shipped — audit fixes: corrupt-storage boot guard (poisoned saved values fall back to defaults instead of killing boot), Esc closes the data page first, imports batched + capped, custom-word ghost cleanup, reveal-timer overlay hold; QA gate expanded to 10 steps incl. a boot-guard probe (v=40: kb-compact compact type phase when the keyboard shrinks the band; v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `30a5b3c`, serving `v=41`)
+**Current phase:** v=42 shipped — spoken words: Say + Spell buttons on the reveal card (say the word aloud / spell it letter by letter, Web Speech API) with a "Spoken words" Settings toggle and auto-speak on by default; QA gate expanded to 11 steps incl. the spoken-words probe (v=41: audit fixes — corrupt-storage boot guard, Esc closes the data page, batched+bounded imports, bucket ghost cleanup, reveal-timer hold; v=40: kb-compact compact type phase when the keyboard shrinks the band; v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `e2fe4d8`, serving `v=42`)
 
 ---
 
@@ -427,3 +427,18 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **Gate:** 10/10 — session 29/29, fixture byte-for-byte, a11y 0 axe violations / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.95 (LCP 2.6s, TBT 30ms), boot-guard 9/9, keyboard probes 4/4 + 5/5 + 3/3. Two flakes were quarantined en route: a transient desktop `errors-in-console` in gate #5's Lighthouse load (best-practices re-verified 1.0 standalone and in the final gate) and a pageerror raised by the poison init-script itself on the provisional about:blank document (fixed inside the probe with a protocol guard + try/catch).
 
 **Rollout:** `?v=41` bumped (3 refs — lines 28/453/454 via EDIT tool; an early pass dropped the `?` from the refs and the gate's asset-load failures exposed it before commit); code commit `30a5b3c` on `main` (`13ac56b..30a5b3c`); live verified: index serves `v=41` ×3 / 0 stale, script.js?v=41 contains loadBucketSafe / overlayOpen / resetKbShift / "Too many rows", style.css?v=41 serves the merged `.import-example` (30px 76px padding).
+
+## v42 — spoken words: Say + Spell buttons on reveal + auto-speak toggle (2026-10-23)
+
+**Report:** owner picked "both buttons + toggle" from the spoken-words plan options: every revealed word can be said aloud, or spelled letter by letter; auto-speak runs by default and can be turned off in Settings. Web Speech API only, no new dependencies.
+
+**Feature (v=42):**
+- **Reveal buttons:** `#sayBtn` (says the whole word once, rate 0.9) and `#spellBtn` (per-letter utterances chained every 280 ms via the `spellSteps` runner — restart-safe, cancels the previous run first) join the reveal row before `#seeAdvanceBtn`; both are `.icon-btn`s fed from two new SVG sprite symbols (`i-speak`, `i-letters`).
+- **Auto-speak:** the reveal function calls `speakWord(picked.word)` when `state.ttsAuto` is on (default `true`, persisted as `spellcast.ttsAuto` via `loadBoolSafe` — only ever written when the user toggles, so fixture captures stay byte-consistent).
+- **Settings toggle:** "Spoken words" `#ttsToggle` switch right after Sound (affectsSession:false); turning it off also cancels any current speech; reset-all restores it to on.
+- **Speech hygiene:** `setPhase()` calls `cancelSpeech()` first; `requestSettingChange` / openDataPage / closeDataPage cancel too — speech never leaks across phases or dialogs. Volume follows the existing sound slider (clamped to 0.05–1); `lang` comes from `document.documentElement.lang`.
+- **QA:** gate grew to 11 steps with the new `spoken-words` probe (probe-v42: stubbed speechSynthesis with a protocol guard, `__spoken` utterance log + `{cancelled:true}` markers, 8 assertions — auto-speak fires on reveal, Say speaks once, Spell yields the letter sequence, toggle persists, auto-off silences reveals while Say still works, phase change cancels).
+
+**Gate:** 11/11 — session 29/29, fixture byte-for-byte, a11y 0 axe violations / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.9 (LCP 2.6s, TBT 0ms, CLS 0.144), boot-guard 9/9, spoken-words 8/8, keyboard probes 4/4 + 5/5 + 3/3. No flakes en route.
+
+**Rollout:** `?v=41` → `?v=42` bumped during the gate run (3 refs — lines 28/463/464 via EDIT tool, verify via grep); code commit `e2fe4d8` on `main` (`36b6c66..e2fe4d8`, 4 files: index.html, script.js, run-all.mjs, probe-v42.mjs). Docs commit follows.
