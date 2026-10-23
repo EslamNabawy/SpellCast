@@ -3,6 +3,8 @@ node_modules/
 tools/qa/test-results/
 tools/qa/screenshots/
 tools/qa/.playwright/
+tools/qa/scratch/debug-*.mjs
+tools/qa/scratch/*.png
 playwright-report/
 lighthouse-report/
 coverage/

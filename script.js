@@ -289,6 +289,7 @@ const dom = {
   answerForm: document.getElementById("answerForm"),
   answerInput: document.getElementById("answerInput"),
   answerMirror: document.getElementById("answerMirror"),
+  checkBtn: document.getElementById("checkBtn"),
   skipBtn: document.getElementById("skipBtn"),
 
   phaseCorrect: document.getElementById("phaseCorrect"),
@@ -746,20 +747,37 @@ function runSeeTimer(durationMs) {
     dom.timerFill.style.width = "0%";
   }
 
+  // the reveal clock only advances while no full-screen overlay (data page,
+  // summary, confirm dialog) covers the card — the deadline is computed from
+  // non-covered time, so words never time out behind an overlay. The width
+  // bar may drift while covered, but it is not visible there.
   seeTimerStart = performance.now();
+  let lastTick = seeTimerStart;
   const tickCaption = () => {
-    const elapsed = performance.now() - seeTimerStart;
+    const now = performance.now();
+    if (overlayOpen()) seeTimerStart += now - lastTick; // freeze the countdown
+    lastTick = now;
+    const elapsed = now - seeTimerStart;
     const remaining = Math.max(0, durationMs - elapsed);
     dom.timerCaption.textContent = (remaining / 1000).toFixed(1) + " seconds";
-    if (remaining > 0 && state.phase === "see") {
+    if (remaining <= 0 && state.phase === "see") {
+      goToTypePhase();
+      return;
+    }
+    if (state.phase === "see") {
       seeTimerRaf = requestAnimationFrame(tickCaption);
     }
   };
   seeTimerRaf = requestAnimationFrame(tickCaption);
+}
 
-  seeTimerHandle = setTimeout(() => {
-    goToTypePhase();
-  }, durationMs);
+// a full-screen overlay is up — the game is momentarily not on stage
+function overlayOpen() {
+  return Boolean(
+    (dom.actionDialog && !dom.actionDialog.hidden) ||
+    (dom.summaryOverlay && !dom.summaryOverlay.hidden) ||
+    (dom.dataPage && !dom.dataPage.hidden)
+  );
 }
 
 function clearSeeTimer() {
@@ -1066,6 +1084,10 @@ function deleteCustomWord(word) {
     }
   }
   delete state.srsCards[w];
+  // the practice bucket must not keep serving a word the user just deleted
+  const before = state.bucket.length;
+  state.bucket = state.bucket.filter(e => e.word !== w);
+  if (state.bucket.length !== before) { saveBucket(); renderBucketPanel(); }
   saveCustomWords();
   saveSrsCards();
   renderCustomWordsList();
@@ -1073,37 +1095,68 @@ function deleteCustomWord(word) {
   resetWordPool();
 }
 
+// corrupted/drifted localStorage must never reach the game loop — each value
+// is type-guarded and falls back to the default when it does not fit
+function loadNumberSafe(raw, fallback, min = 0, max = 100000000) {
+  return typeof raw === "number" && isFinite(raw) && raw >= min && raw <= max ? raw : fallback;
+}
+function loadBoolSafe(raw, fallback) {
+  return typeof raw === "boolean" ? raw : fallback;
+}
+function loadTextSafe(raw, fallback) {
+  return typeof raw === "string" && raw.length > 0 && raw.length <= 40 ? raw : fallback;
+}
+function loadBucketSafe(raw) {
+  return Array.isArray(raw) && raw.every(e => e && typeof e === "object" && typeof e.word === "string") ? raw : [];
+}
+function loadCustomSafe(raw) {
+  return Array.isArray(raw) && raw.every(e => e && typeof e === "object" && typeof e.word === "string" && e.category && e.difficulty) ? raw : [];
+}
+function loadSrsSafe(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const clean = {};
+  Object.entries(raw).forEach(([word, card]) => {
+    if (word && card && typeof card === "object" && typeof card.word === "string") clean[word] = card;
+  });
+  return clean;
+}
+
 function loadAllPersisted() {
-  state.highScore = loadLocal(LS_KEYS.highScore, 0);
-  state.bestStreak = loadLocal(LS_KEYS.bestStreak, 0);
-  state.bucket = loadLocal(LS_KEYS.bucket, []);
-  state.customWords = loadLocal(LS_KEYS.customWords, []);
-  state.srsCards = loadLocal(LS_KEYS.srsCards, {});
+  state.highScore = loadNumberSafe(loadLocal(LS_KEYS.highScore, 0), 0);
+  state.bestStreak = loadNumberSafe(loadLocal(LS_KEYS.bestStreak, 0), 0);
+  state.bucket = loadBucketSafe(loadLocal(LS_KEYS.bucket, []));
+  state.customWords = loadCustomSafe(loadLocal(LS_KEYS.customWords, []));
+  state.srsCards = loadSrsSafe(loadLocal(LS_KEYS.srsCards, {}));
   // migrate bucket -> SRS if srs empty but bucket has data
   if (Object.keys(state.srsCards).length === 0 && state.bucket.length) {
     state.bucket.forEach(e => {
+      const lapses = Math.max(0, Math.floor(Number(e.mistakes) || 0));
       state.srsCards[e.word] = makeSrsCard(e.word, e.category, "medium", {
-        ease: SRS_EASE_START - Math.min(0.5, e.mistakes * 0.1),
+        ease: SRS_EASE_START - Math.min(0.5, lapses * 0.1),
         due: Date.now(),
-        lapses: e.mistakes
+        lapses
       });
     });
     saveSrsCards();
   }
-  state.category = loadLocal(LS_KEYS.preferredCategory, "all");
-  state.difficulty = loadLocal(LS_KEYS.preferredDifficulty, "medium");
-  state.duration = loadLocal(LS_KEYS.preferredDuration, 2000);
-  state.soundEnabled = loadLocal(LS_KEYS.soundEnabled, false);
-  state.soundVolume = loadLocal(LS_KEYS.soundVolume, 0.5);
-  state.reviewMode = loadLocal(LS_KEYS.reviewMode, "mixed");
-  state.chunkWords = loadLocal(LS_KEYS.chunkWords, true);
-  state.darkMode = loadLocal(LS_KEYS.darkMode, false);
+  state.category = loadTextSafe(loadLocal(LS_KEYS.preferredCategory, "all"), "all");
+  state.difficulty = loadChoiceSafe(loadLocal(LS_KEYS.preferredDifficulty, "medium"), "medium", VALID_DIFFICULTIES);
+  state.duration = loadNumberSafe(loadLocal(LS_KEYS.preferredDuration, 2000), 2000, 500, 10000);
+  state.soundEnabled = loadBoolSafe(loadLocal(LS_KEYS.soundEnabled, false), false);
+  state.soundVolume = loadNumberSafe(loadLocal(LS_KEYS.soundVolume, 0.5), 0.5, 0, 1);
+  state.reviewMode = loadTextSafe(loadLocal(LS_KEYS.reviewMode, "mixed"), "mixed");
+  state.chunkWords = loadBoolSafe(loadLocal(LS_KEYS.chunkWords, true), true);
+  state.darkMode = loadBoolSafe(loadLocal(LS_KEYS.darkMode, false), false);
   // inject customs into WORDS
   rebuildCustomWordsIntoWORDS();
   // ensure SRS cards for all customs
   state.customWords.forEach(({word, category, difficulty}) => {
     if (!state.srsCards[word]) initSrsCard(word, category, difficulty);
   });
+}
+
+function loadChoiceSafe(raw, fallback, allowed) {
+  return typeof raw === "string" && Array.isArray(allowed) && allowed.includes(raw) ? raw : fallback;
 }
 
 function recordLifetimeWord(wasCorrect) {
@@ -1380,6 +1433,9 @@ function jsonImportRows(text) {
   const data = JSON.parse(text);
   const list = Array.isArray(data) ? data : (data && Array.isArray(data.words)) ? data.words : null;
   if (!list) throw new Error("JSON must be an array of words or {words: [...]}");
+  if (list.length > IMPORT_MAX_ROWS) {
+    throw new Error(`Too many rows: ${list.length} (max ${IMPORT_MAX_ROWS})`);
+  }
   return list.map(item => {
     if (typeof item === "string") return { word: item, category: "", difficulty: "" };
     if (item && typeof item === "object") {
@@ -1423,6 +1479,11 @@ function parseImportText(rawText, forcedCategory) {
   const report = { valid: [], duplicates: [], invalid: [], newCategories: new Set(), source: "" };
   const text = String(rawText == null ? "" : rawText.trim());
   if (!text) { report.source = "empty"; return report; }
+  if (text.length > 2000000) {
+    report.invalid.push({ raw: text.slice(0, 40), reason: "pasted text is too large (2 MB max)" });
+    report.source = "too-large";
+    return report;
+  }
 
   let rows;
   if (text.startsWith("[") || text.startsWith("{")) {
@@ -1514,15 +1575,28 @@ function applyImport(report) {
   if (!report || !report.valid.length) return;
   // create new categories first so words never land in a broken state
   report.newCategories.forEach(key => ensureCategory(key, key));
-  let added = 0, failed = 0;
+  // batch: add everything first, then ONE save + ONE render at the end — the
+  // per-row addCustomWord path re-rendered the list and re-saved per word,
+  // which froze the page on multi-thousand-word imports
+  let added = 0;
   report.valid.forEach(r => {
-    const res = addCustomWord(r.word, r.category, r.difficulty);
-    if (res.ok) added += 1; else failed += 1;
+    const word = normalizeWordRaw(r.word);
+    if (!isValidWord(word) || wordExistsAnywhere(word) || state.customWords.some(e => e.word === word)) return;
+    ensureCategory(r.category, CATEGORY_LABELS[r.category] || r.category);
+    state.customWords.push({ word, category: r.category, difficulty: r.difficulty, addedAt: Date.now() });
+    WORDS[r.category][r.difficulty].push(word);
+    initSrsCard(word, r.category, r.difficulty);
+    added += 1;
   });
+  saveCustomWords();
+  saveSrsCards();
+  renderCustomWordsList();
+  renderSrsStats();
+  resetWordPool();
   refreshReadyState();
   const tail = report.duplicates.length ? `, ${report.duplicates.length} skipped` : "";
   if (dom.importPaste) dom.importPaste.value = "";
-  if (dom.importResult) dom.importResult.textContent = `Imported ${added} words${failed ? ` (${failed} rejected)` : ""}${tail}`;
+  if (dom.importResult) dom.importResult.textContent = `Imported ${added} words${tail}`;
   if (dom.drawerWordsHint) dom.drawerWordsHint.textContent = `${state.customWords.length} custom words ready to practise.`;
   announce(`Imported ${added} words${tail}`);
 }
@@ -2783,6 +2857,8 @@ function attachEventListeners() {
       closeSummary();
       return;
     }
+    // the data page closes itself — do not also skip the word behind it
+    if (dom.dataPage && !dom.dataPage.hidden) return;
     if (state.phase === "type") {
       e.preventDefault();
       dom.skipBtn.click();

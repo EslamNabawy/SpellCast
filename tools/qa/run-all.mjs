@@ -10,7 +10,11 @@ const steps = [
   ["a11y", "a11y.mjs"],
   ["layout", "layout.mjs"],
   ["matrix", "capture-matrix.mjs"],
-  ["lighthouse", "lighthouse.mjs"]
+  ["lighthouse", "lighthouse.mjs"],
+  ["boot-guard", "scratch/probe-v41.mjs"],
+  ["keyboard-scroll", "scratch/probe-keyboard.mjs"],
+  ["keyboard-anchor", "scratch/probe-v39.mjs"],
+  ["keyboard-compact", "scratch/probe-v40.mjs"]
 ];
 
 const only = process.argv.slice(2);
