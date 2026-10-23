@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=40 shipped — real-device keyboard fix: the type phase slims down (`kb-compact`) when the keyboard shrinks the visual band, so the word, answer field and Check button always stay visible (v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `3e4147b`, serving `v=40`)
+**Current phase:** v=41 shipped — audit fixes: corrupt-storage boot guard (poisoned saved values fall back to defaults instead of killing boot), Esc closes the data page first, imports batched + capped, custom-word ghost cleanup, reveal-timer overlay hold; QA gate expanded to 10 steps incl. a boot-guard probe (v=40: kb-compact compact type phase when the keyboard shrinks the band; v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `30a5b3c`, serving `v=41`)
 
 ---
 
@@ -410,3 +410,20 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **Gate:** 6/6 — session 29/29, fixture byte-for-byte, a11y 0 axe / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.95 (LCP 2.6s, TBT 50ms).
 
 **Rollout:** `?v=40` bumped (3 refs — lines 28/453/454 via PowerShell `-replace`, diff re-checked to touch only the refs); code commit `3e4147b` on `main` (`24140c3..3e4147b`).
+
+## v41 — audit fixes: corrupt-storage boot guard + Esc/import caps + batched import + ghost cleanup (2026-10-23)
+
+**Report:** owner command "FIX" ×3 after the full-repo audit — the final report's findings were fixed to the letter (the audit's #5 "missing icons" finding was disproven and dropped: favicon.png / apple-touch-icon.png / og-image.png / .nojekyll exist and are tracked). Full report: docs/AUDIT-2026-10.md.
+
+**Fixes (v=41):**
+- **Corrupt-storage boot guard (#1):** loadAllPersisted type-guards every saved value — loadNumberSafe / loadBoolSafe / loadTextSafe / loadBucketSafe / loadCustomSafe / loadSrsSafe / loadChoiceSafe; loadChoiceSafe is called with `VALID_DIFFICULTIES` (an early draft without the allowed-list crashed every boot with "Cannot read properties of undefined (reading 'includes')" — the gate's own pageerrors exposed it and the fix landed before release); bucket→SRS migration lapses guarded to an integer. A poisoned preference now falls back to defaults instead of killing boot.
+- **Global Esc guard (#2):** when the data page is open, Esc closes it and returns before the game-phase skip can fire.
+- **Batched import (#3):** applyImport validates + collects rows (normalizeWordRaw / isValidWord / wordExistsAnywhere / ensureCategory), pushes into WORDS[cat][diff] and inits SRS cards, then saves + renders exactly once — no more per-row save/render sweeps.
+- **Import caps (#4):** JSON lists above IMPORT_MAX_ROWS now throw ("Too many rows"); pasted text is capped at 2 MB (source 'too-large').
+- **Bucket ghost (#5):** deleteCustomWord also filters the word out of state.bucket (+ saveBucket + renderBucketPanel).
+- **#8 dom.checkBtn ref; #9 .import-example merged** (v=38 duplicate rules deleted; base rule padding 30px 76px 10px 12px); **#10 reveal-timer hold**: runSeeTimer is rAF-driven and only advances the see-phase deadline while no dialog / summary / data page covers the card (overlayOpen()).
+- **QA hardening (#6/#7):** the gate grew to 10 steps — session, fixture, a11y, layout, matrix, lighthouse, boot-guard, keyboard-scroll, keyboard-anchor, keyboard-compact — with a new boot-guard probe (probe-v41: poisons localStorage with wrong-typed values, asserts the default fallbacks, a playable round and a clean console); the 8 tracked scratch/debug one-off scripts + drawer-390.png were untracked and deleted from disk; .gitignore now pins `tools/qa/scratch/debug-*.mjs` + `tools/qa/scratch/*.png`.
+
+**Gate:** 10/10 — session 29/29, fixture byte-for-byte, a11y 0 axe violations / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.95 (LCP 2.6s, TBT 30ms), boot-guard 9/9, keyboard probes 4/4 + 5/5 + 3/3. Two flakes were quarantined en route: a transient desktop `errors-in-console` in gate #5's Lighthouse load (best-practices re-verified 1.0 standalone and in the final gate) and a pageerror raised by the poison init-script itself on the provisional about:blank document (fixed inside the probe with a protocol guard + try/catch).
+
+**Rollout:** `?v=41` bumped (3 refs — lines 28/453/454 via EDIT tool; an early pass dropped the `?` from the refs and the gate's asset-load failures exposed it before commit); code commit `30a5b3c` on `main` (`13ac56b..30a5b3c`); live verified: index serves `v=41` ×3 / 0 stale, script.js?v=41 contains loadBucketSafe / overlayOpen / resetKbShift / "Too many rows", style.css?v=41 serves the merged `.import-example` (30px 76px padding).
