@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=39 shipped — mobile keyboard fix that works even when the app card can't scroll + no password-style autofill on the answer input (v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `1542e72`, serving `v=39`)
+**Current phase:** v=40 shipped — real-device keyboard fix: the type phase slims down (`kb-compact`) when the keyboard shrinks the visual band, so the word, answer field and Check button always stay visible (v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `3e4147b`, serving `v=40`)
 
 ---
 
@@ -395,3 +395,18 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **QA:** full gate **6/6 PASS** — session 29/29, fixture byte-for-byte, a11y 12 axe runs 0 violations + 150 contrast probes 0 failures, layout 20 checks, matrix 66 screenshots, Lighthouse desktop perf 1 / mobile 0.95 (LCP 2.6 s, TBT 20 ms).
 
 **Rollout:** `?v=39` bumped (3 refs); code commit `1542e72` on `main` (`4c4f9b1..1542e72`); Pages verified after push.
+
+## v40 — real-device keyboard fix: compact type phase (`kb-compact`) (2026-10-23)
+
+**Report:** user on Android Chrome (hard reload done) still had the word + answer + Check clipped behind the keyboard after v=39.
+
+**Root cause:** `.app` is `height:100dvh; overflow:hidden`, and the `interactive-widget=resizes-content` meta (v=34) shrinks the layout viewport to the visible band when the keyboard opens — the card itself becomes band-height, so the full type phase (~313px: your-turn pill + 60px mystery mark + instruction + input + actions + hint, `gap:12px; padding:22px 20px`) clips at **both** ends no matter how the content is translated. v=39's desktop probe passed because the faked `visualViewport.height` did not actually resize the layout/card.
+
+**Fix (v=40):**
+- `style.css`: new `.phase-type.kb-compact` mode — slim paddings (`10px 16px 14px`), `gap:6px`, hide `.your-turn` + `.type-hint`, shrink `.mystery-mark` (36px), `.type-instruction` (12px), `.input-large` (16px font), `justify-content:flex-end` so content pins just above the keyboard top.
+- `script.js`: `ensureTypePhaseFits(phase, band)` toggles `kb-compact` for the type phase when `phase.scrollHeight` exceeds `band - 20` (called from the anchor tick **before** the in-band early return, so it also switches back when the band grows). Toggling deletes `__kbBase` so the v=39 shift baseline re-measures under the new layout. Added a retire rule: when the input is in-band and the **unshifted** position would also fit (keyboard closed), `resetKbShift()` clears a stale transform.
+- Verified: new `probe-v40` (emulates the shrunken card by setting `.app` inline height + fake vv band) 3/3 — nothing clipped, Check inside the card and band, compact removed + transform reset on restore; regression `probe-v39` 5/5, `probe-keyboard` 4/4.
+
+**Gate:** 6/6 — session 29/29, fixture byte-for-byte, a11y 0 axe / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.95 (LCP 2.6s, TBT 50ms).
+
+**Rollout:** `?v=40` bumped (3 refs — lines 28/453/454 via PowerShell `-replace`, diff re-checked to touch only the refs); code commit `3e4147b` on `main` (`24140c3..3e4147b`).
