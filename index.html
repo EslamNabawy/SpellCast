@@ -205,6 +205,16 @@
   <div class="center">
   <main class="game-card card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
+    <svg class="card-art" viewBox="0 0 800 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs><linearGradient id="cw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="var(--mint)" stop-opacity=".5"/></linearGradient>
+      <linearGradient id="cb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--lime)"/><stop offset="1" stop-color="var(--teal)"/></linearGradient></defs>
+      <path d="M0 190C160 110 300 290 480 210S700 110 800 160V330H0z" fill="url(#cw)" opacity=".6"/>
+      <path d="M0 250C180 190 320 320 520 250S720 200 800 230V330H0z" fill="url(#cw)" opacity=".7"/>
+      <path d="M0 190C160 110 300 290 480 210S700 110 800 160" fill="none" stroke="var(--wa)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+      <circle cx="80" cy="340" r="100" fill="url(#cb)" opacity=".85"/>
+    </svg>
+    <i class="dots" style="left:20%;bottom:18%;--c:6;--r:3" aria-hidden="true"></i>
+    <i class="orb" style="left:4%;bottom:14%;--s:30px" aria-hidden="true"></i><i class="orb" style="right:14%;bottom:24%;--s:18px" aria-hidden="true"></i><i class="orb" style="left:46%;bottom:30%;--s:9px" aria-hidden="true"></i>
     <div class="game-top-bar">
       <div class="seg-row" id="segmentRow" role="img" aria-label="No answers yet this session">
         <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
@@ -222,7 +232,7 @@
     </div>
 
     <div class="phase phase-ready" id="phaseReady">
-      <div class="phase-tile phase-tile-ready" aria-hidden="true"><svg class="ico ico-xl"><use href="#i-sparkles"></use></svg></div>
+      <div class="hero-art" aria-hidden="true"><span class="hero-ring"></span><span class="hero-core"><svg class="ico ico-xl"><use href="#i-sparkles"></use></svg></span><b class="hero-sp hero-sp1"></b><b class="hero-sp hero-sp2"></b><b class="hero-sp hero-sp3"></b><span class="hero-star"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10z"/></svg></span></div>
       <p class="ready-copy">Ready to cast?</p>
       <p class="ready-hint" id="readyHint">Memorize, then type from memory.</p>
       <button class="btn btn-primary btn-large" id="startBtn" type="button"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg>Show word</button>
