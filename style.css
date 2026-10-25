@@ -95,6 +95,37 @@ body{
   background-size:26px 26px;
   color:var(--ink);font-family:var(--font-ui);font-size:16px;line-height:1.5;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
 html[data-theme="dark"] body{background-image:radial-gradient(circle at 1px 1px,rgba(148,163,184,.10) 1px,transparent 0)}
+
+/* ---- ui/merge: ambient background layer (reference: spellcast-dashboard.html) ----
+   Covers the paper bg with the reference's mint gradient + blob/wave/dot/orb mesh.
+   Pointer-events:none + z-index:-1 keep it purely decorative; motion is transform/opacity
+   only and gated behind prefers-reduced-motion. */
+.page-bg{position:fixed;inset:0;z-index:-1;overflow:clip;pointer-events:none;contain:strict;background:radial-gradient(70% 60% at 50% 35%,var(--bg2),transparent 70%),linear-gradient(135deg,var(--bg1),var(--bg2))}
+.page-bg .blob{position:absolute;display:block;aspect-ratio:1;width:clamp(220px,28vw,460px);border-radius:58% 42% 61% 39%/47% 55% 45% 53%;background:radial-gradient(circle at 70% 30%,var(--mint),var(--teal) 85%);opacity:.9}
+.page-bg .b1{top:-16%;left:-8%;rotate:-18deg;opacity:.3}.page-bg .b2{bottom:-26%;left:-10%;rotate:24deg;width:clamp(260px,34vw,560px);background:radial-gradient(circle at 60% 25%,var(--lime),var(--teal) 80%)}
+.page-bg .b3{top:-20%;right:-6%;rotate:40deg;width:clamp(160px,15vw,260px)}.page-bg .b4{bottom:-24%;right:-8%;rotate:-30deg;opacity:.5}.page-bg .b5{top:44%;right:-4%;width:clamp(70px,6vw,120px);rotate:20deg;opacity:.7}
+.page-bg .waves{position:absolute;inset:0;width:100%;height:100%}.page-bg .waves path{vector-effect:non-scaling-stroke}
+.page-bg .dots{position:absolute;--g:20px;width:calc(var(--c)*var(--g));height:calc(var(--r)*var(--g));background:radial-gradient(circle,var(--dot) 1.5px,transparent 2px) 0 0/var(--g) var(--g)}
+.page-bg .orb{position:absolute;width:var(--s);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e3f6cf,var(--teal) 78%);box-shadow:0 0 20px rgba(63,168,134,.35)}
+@media(max-width:1100px){.page-bg .waves,.page-bg .dots{display:none}}
+@media(prefers-reduced-motion:no-preference){
+  .page-bg .b1{--dx:36px;--dy:28px;--dur:24s}.page-bg .b2{--dx:-30px;--dy:-34px;--dur:30s}.page-bg .b3{--dx:-26px;--dy:30px;--dur:22s}.page-bg .b4{--dx:-34px;--dy:-24px;--dur:28s}.page-bg .b5{--dx:-18px;--dy:40px;--dur:18s}
+  .page-bg .blob{animation:pg-drift var(--dur,26s) ease-in-out infinite alternate}
+  .page-bg .waves path{animation:pg-wave 16s ease-in-out infinite alternate}
+  .page-bg .waves path:nth-child(2){animation-duration:20s;animation-delay:-4s}
+  .page-bg .waves path:nth-child(3){animation-duration:13s;animation-direction:alternate-reverse}
+  .page-bg .dots{animation:pg-twinkle 7s ease-in-out infinite alternate}
+  .page-bg .dots~.dots{animation-duration:9s;animation-delay:-3s}
+  .page-bg .dots~.dots~.dots{animation-duration:11s;animation-delay:-6s}
+  .page-bg .orb{animation:pg-float 7s ease-in-out infinite}
+  .page-bg .orb~.orb{animation-duration:9s;animation-delay:-2s}
+  .page-bg .orb~.orb~.orb{animation-duration:11s;animation-delay:-5s}
+  .page-bg .orb~.orb~.orb~.orb{animation-duration:8s;animation-delay:-4s}
+}
+@keyframes pg-drift{to{translate:var(--dx,14px) var(--dy,-18px);scale:1.07}}
+@keyframes pg-wave{to{transform:translate(-70px,16px)}}
+@keyframes pg-twinkle{from{opacity:.4}to{opacity:1;translate:8px -10px}}
+@keyframes pg-float{50%{translate:8px -16px}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 button,input,select{font:inherit;color:inherit}button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
