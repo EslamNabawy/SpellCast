@@ -27,6 +27,21 @@
   --radius-sm:12px; --radius-md:18px; --radius-lg:24px;
   --shadow-sm:0 1px 2px rgba(45,55,72,.06); --shadow-md:0 10px 30px -12px rgba(45,55,72,.18);
   --max:640px; --dur-fast:140ms; --dur-med:280ms; --ease:cubic-bezier(.22,1,.36,1);
+  /* ---- ui/merge tokens (reference: spellcast-dashboard.html, verbatim values) ---- */
+  color-scheme:light;
+  --bg1:#e6f0e8; --bg2:#f8f5ea;
+  --mint:#a9dcc3; --teal:#1f8a72; --deep:#14574a; --lime:#dbe8a0;
+  --muted:#5f7a72;
+  --surf:rgba(255,255,255,.66); --edge:rgba(255,255,255,.8); --fld:rgba(255,255,255,.6);
+  --ok:rgba(31,138,114,.14); --bad:rgba(214,69,53,.13);
+  --wa:rgba(31,138,114,.4); --dot:rgba(31,110,90,.3);
+  --err:var(--incorrect); /* error signals reuse the AA-tuned original danger pair */
+  --r-md:16px; --r-lg:28px; --r-pill:99px;
+  --h:48px; --hs:38px;
+  --sh:0 24px 50px -24px rgba(20,70,55,.28);
+  --sh-sm:inset 0 1px 0 var(--edge), 0 6px 14px -10px rgba(20,70,55,.32);
+  /* shared-name re-values: the restyle recolors global text ink and hairlines */
+  --ink:#0f4a3c; --line:rgba(20,87,74,.12);
 }
 .theme-normal{--accent:#2D6A4F;--accent-strong:#1B4332;--accent-tint:#E7F0EA;--accent-glow:rgba(45,106,79,.14);--accent-btn:#2D6A4F;--progress-fill:var(--accent)}
 .theme-warm{--accent:#C08A2E;--accent-strong:#8F6414;--accent-tint:#FBF0DC;--accent-glow:rgba(192,138,46,.18);--accent-btn:#8F6414;--progress-fill:var(--accent)}
@@ -53,6 +68,16 @@ html[data-theme="dark"]{
   --seg-empty:#1D2740; --kbd-bg:#131C2E; --kbd-line:#26344C;
   --control-track:#6B757D; --accent-on:var(--accent-strong);
   --score-float:#86D6AE; --brand-tile-ink:#0B1220;
+  /* ---- ui/merge tokens (dark mirror) ---- */
+  --bg1:#0e1512; --bg2:#131c18;
+  --mint:#2c6f5c; --teal:#3aa388; --deep:#1f7a63; --lime:#4d6b3a;
+  --muted:#8fb0a4;
+  --surf:rgba(24,34,30,.68); --edge:rgba(255,255,255,.08); --fld:rgba(255,255,255,.06);
+  --ok:rgba(58,163,136,.16); --bad:rgba(248,113,113,.16);
+  --wa:rgba(120,220,180,.28); --dot:rgba(160,235,205,.22);
+  --sh:0 24px 50px -24px rgba(0,0,0,.55);
+  --sh-sm:inset 0 1px 0 var(--edge), 0 6px 14px -10px rgba(0,0,0,.5);
+  --ink:#d9f2e6; --line:rgba(255,255,255,.1);
 }
 /* dark-mode streak themes: tints blend into the dark surface, strong becomes a light ink */
 html[data-theme="dark"] .theme-normal{--accent-tint:#1E2B2A;--accent-strong:#86D6AE;--accent-glow:rgba(45,106,79,.32);--progress-fill:var(--accent-strong)}
