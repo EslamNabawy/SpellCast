@@ -42,6 +42,22 @@ export async function newContext(browser, { width, height }, options = {}) {
     deviceScaleFactor: 1,
     reducedMotion: options.reducedMotion || "no-preference"
   });
+  // Kill switch for the app's spoken words: --mute-audio does not silence
+  // speechSynthesis (system TTS bypasses Chrome's audio pipeline), so every
+  // probe context replaces the speech engine with silent no-ops before any
+  // app script runs.
+  await context.addInitScript(() => {
+    try {
+      const no = () => {};
+      const stub = Object.defineProperties({}, {
+        speak: { value: no }, cancel: { value: no }, pause: { value: no }, resume: { value: no },
+        getVoices: { value: () => [] },
+        addEventListener: { value: no }, removeEventListener: { value: no },
+        speaking: { get: () => false }, pending: { get: () => false }, paused: { get: () => false }
+      });
+      Object.defineProperty(window, "speechSynthesis", { value: stub, configurable: false });
+    } catch (e) {}
+  });
   const problems = [];
   context.on("console", (msg) => {
     if (msg.type() === "error" || msg.type() === "warning") {

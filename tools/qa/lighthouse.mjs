@@ -14,7 +14,7 @@ async function run() {
   const results = [];
   for (const preset of ["desktop", "mobile"]) {
     const chrome = await launchChrome({
-      chromeFlags: ["--headless=new", "--disable-gpu", "--no-sandbox"]
+      chromeFlags: ["--headless=new", "--disable-gpu", "--no-sandbox", "--mute-audio"]
     });
     const config = {
       extends: "lighthouse:default",
