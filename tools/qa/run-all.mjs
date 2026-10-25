@@ -13,6 +13,7 @@ const steps = [
   ["lighthouse", "lighthouse.mjs"],
   ["boot-guard", "scratch/probe-v41.mjs"],
   ["spoken-words", "scratch/probe-v42.mjs"],
+  ["spell-tray", "scratch/probe-v43.mjs"],
   ["keyboard-scroll", "scratch/probe-keyboard.mjs"],
   ["keyboard-anchor", "scratch/probe-v39.mjs"],
   ["keyboard-compact", "scratch/probe-v40.mjs"]

@@ -92,6 +92,7 @@ async function run() {
   check("bucket panel lists the missed words", bucketItems >= 1, `${bucketItems} items`);
   await page.evaluate(() => document.getElementById("categoryStatsToggle").click());
   await page.waitForSelector("#categoryStatsPanel[open]");
+  await page.waitForTimeout(150); // rows render on the panel's toggle event
   const catRows = await page.locator("#categoryStatsList li").count();
   check("category stats panel renders rows", catRows >= 1, `${catRows} rows`);
 

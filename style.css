@@ -196,6 +196,13 @@ kbd{display:inline-block;padding:1px 6px;border:1px solid var(--kbd-line);border
 .word-display{font-family:var(--font-display);font-size:clamp(30px,6.5vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1;padding:14px 20px;background:var(--paper);border:1px solid var(--line-soft);border-radius:16px;min-width:180px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;animation:wordIn var(--dur-med) var(--ease)}
 .word-display .chunk{display:inline-block}
 .word-display .chunk + .chunk::before{content:"•";font-size:.42em;color:var(--accent-strong);margin:0 .5em;vertical-align:.5em}
+
+/* v=43: spell tray — letters echo the Spell button one-by-one under the word.
+   The row always reserves its height (the tray is an empty div when idle) so
+   the card never shifts when the letters start landing. */
+.spell-tray{min-height:34px;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:.3em;margin-top:12px;font-family:var(--font-display);font-size:clamp(20px,3.4vw,26px);font-weight:700;letter-spacing:.08em}
+.spell-tray span{min-width:.85ch;text-align:center;border-bottom:3px solid transparent}
+.spell-tray span.cur{border-bottom-color:var(--accent-strong)}
 @keyframes wordIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .timer-track{width:100%;max-width:300px;height:6px;border-radius:999px;background:var(--line-soft);overflow:hidden;margin-top:6px}
 .timer-fill{height:100%;width:100%;background:var(--accent);border-radius:999px;transform-origin:left}

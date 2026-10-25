@@ -225,6 +225,7 @@ const dom = {
   ttsToggle: document.getElementById("ttsToggle"),
   sayBtn: document.getElementById("sayBtn"),
   spellBtn: document.getElementById("spellBtn"),
+  spellTray: document.getElementById("spellTray"),
   chunkToggle: document.getElementById("chunkToggle"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   resetAllBtn: document.getElementById("resetAllBtn"),
@@ -737,6 +738,7 @@ function beginRound() {
   startSessionTimer();
   setPhase("see");
   runSeeTimer(state.duration);
+  resetSpellTray();
   if (state.ttsAuto) speakWord(picked.word); // v=42: spoken words, on reveal
 }
 
@@ -2011,17 +2013,41 @@ function speakWord(word) {
   return true;
 }
 
+// v=43: the visual tray echoes each letter as it is spoken — empty spans are
+// pre-rendered and receive their text one letter at a time, so the visual run
+// stays in lockstep with the audio and pending slots never render dim text
+// (which would fail contrast). The `.cur` marker rides the current letter.
+function setSpellTray(word) {
+  if (!dom.spellTray) return;
+  dom.spellTray.replaceChildren(...String(word).split("").map(() => document.createElement("span")));
+}
+
+function revealSpellLetter(i, ch) {
+  if (!dom.spellTray) return;
+  const span = dom.spellTray.children[i];
+  if (!span) return;
+  span.textContent = ch;
+  for (const el of dom.spellTray.children) el.classList.remove("cur");
+  span.classList.add("cur");
+}
+
+function resetSpellTray() {
+  if (dom.spellTray) dom.spellTray.replaceChildren();
+}
+
 // Speak the word letter-by-letter ("C… A… T…") for listen-and-spell recall.
 // Each letter is its own utterance; a short gap keeps letters distinct. The
 // runner is restarted atomically by a new call or cancelled on phase change.
 function spellWordOut(word) {
   if (!speechSupported() || !word) return false;
   cancelSpeech();
+  setSpellTray(word);
   const letters = String(word).split("");
   const step = { i: 0, timer: null };
   spellSteps = step;
   const next = () => {
     if (spellSteps !== step) return; // superseded or cancelled
+    revealSpellLetter(step.i, letters[step.i]);
     speechSynthesis.speak(new SpeechSynthesisUtterance(letters[step.i]));
     step.i += 1;
     if (step.i < letters.length) step.timer = setTimeout(next, 280);
