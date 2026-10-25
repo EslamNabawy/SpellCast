@@ -32,7 +32,8 @@ export function ensureDirs() {
 // Set PLAYWRIGHT_CHANNEL=chromium to use Playwright's pinned build instead.
 export async function launchBrowser() {
   const channel = process.env.PLAYWRIGHT_CHANNEL || "chrome";
-  return chromium.launch({ channel });
+  // --mute-audio keeps the app's beeps/TTS silent during probes
+  return chromium.launch({ channel, args: ["--mute-audio"] });
 }
 
 export async function newContext(browser, { width, height }, options = {}) {
