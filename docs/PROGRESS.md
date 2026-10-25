@@ -3,8 +3,8 @@
 Master plan: `docs/SPELLCAST-MASTER-PROMPT.md` · Feature plan: `docs/SPELLCAST-LEVELUP-PLAN.md` · Handover: `DESIGN-HANDOVER.md`
 Branch policy: work on `levelup`, merge to `main` only at release boundaries after QA.
 
-**Current phase:** v=42 shipped — spoken words: Say + Spell buttons on the reveal card (say the word aloud / spell it letter by letter, Web Speech API) with a "Spoken words" Settings toggle and auto-speak on by default; QA gate expanded to 11 steps incl. the spoken-words probe (v=41: audit fixes — corrupt-storage boot guard, Esc closes the data page, batched+bounded imports, bucket ghost cleanup, reveal-timer hold; v=40: kb-compact compact type phase when the keyboard shrinks the band; v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
-**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `e2fe4d8`, serving `v=42`)
+**Current phase:** v=43 shipped — spell tray: while the Spell button speaks the word letter by letter, the letters also light up visually one by one under the word (`.spell-tray`, `.cur` accent marker), resetting on every reveal; QA gate expanded to 12 steps incl. the spell-tray probe (v=42: spoken words — Say/Spell buttons with a "Spoken words" toggle, auto-speak on by default; v=41: audit fixes — corrupt-storage boot guard, Esc closes the data page, batched+bounded imports, bucket ghost cleanup, reveal-timer hold; v=40: kb-compact compact type phase when the keyboard shrinks the band; v=39: keyboard anchor works when the card can't scroll + no password-style autofill; v=38: dark-theme background uprates + Copy buttons for import examples; v=37: practice "My words" only + background redesign; v=36: ambient drifting background; v=35: import categories in Practice + import format examples; v=34: mobile keyboard viewport fix; v=33: Data Management page + bulk word import (CSV/JSON/paste); v=32: keyboard stays open at check + Word chunks switch; v=31: hidden scrollbars; v=30: accordion right deck; v=29: mockup visual redesign)
+**Live site:** https://eslamnabawy.github.io/SpellCast/ (currently `main` @ `bd3b424`, serving `v=43`)
 
 ---
 
@@ -442,3 +442,17 @@ Both layers are compositor-only (`translate3d`, `will-change:transform`), `point
 **Gate:** 11/11 — session 29/29, fixture byte-for-byte, a11y 0 axe violations / 150 contrast probes 0 failures, layout 20 checks, matrix 66 shots, Lighthouse desktop 1 / mobile 0.9 (LCP 2.6s, TBT 0ms, CLS 0.144), boot-guard 9/9, spoken-words 8/8, keyboard probes 4/4 + 5/5 + 3/3. No flakes en route.
 
 **Rollout:** `?v=41` → `?v=42` bumped during the gate run (3 refs — lines 28/463/464 via EDIT tool, verify via grep); code commit `e2fe4d8` on `main` (`36b6c66..e2fe4d8`, 4 files: index.html, script.js, run-all.mjs, probe-v42.mjs). Docs commit follows.
+
+## v43 — spell tray: visual letters echo the Spell button one-by-one (2026-10-25)
+
+**Report:** owner said "ok do it" to the offered follow-up — while Spell speaks the word letter by letter, the letters also light up visually, one by one, in lockstep with the audio, and reset on each new reveal.
+
+**Feature (v=43):**
+- **Tray markup:** `<div class="spell-tray" id="spellTray" aria-hidden="true">` sits right after `#wordDisplay` in the see phase. The empty div always reserves its 34px row, so nothing shifts when letters land (CLS-safe).
+- **Runner integration:** `spellWordOut` now renders one empty `<span>` per letter up front (`setSpellTray`), then reveals each span's text at the moment its utterance is queued (`revealSpellLetter`), moving the `.cur` underline-accent marker along. Pending slots never render dim text — empty spans only, so contrast probes stay clean.
+- **Reset:** `resetSpellTray()` runs on every word reveal, so a fresh word starts with an empty tray; a second spell run re-renders cleanly for the new word. Speech-cancel paths leave the partial letters in place until the next reveal.
+- **CSS:** `.spell-tray` (flex, centered, display-font, clamp(20px,3.4vw,26px), 700, letter-spacing .08em), `.spell-tray span` (min-width .85ch, transparent 3px bottom border), `.spell-tray span.cur` (`border-bottom-color: var(--accent-strong)`).
+
+**Gate:** 12/11→12/12 steps — all prior suites green plus the new spell-tray probe 6/6 (tray empty on reveal; progressive mid-run reveal; full sequence in order; `.cur` on the last letter; reset on next reveal; second spell re-renders). One deterministic fix in the harness en route: the long-standing category-stats flake ("0 rows" once in the session probe) — session.mjs now waits 150ms after `#categoryStatsPanel[open]` before counting rows; two independent full gates passed afterwards (Lighthouse desktop 1 / mobile 0.95, CLS 0/0.007).
+
+**Rollout:** `?v=42` → `?v=43` bumped (3 refs — style L28, words/script L464-465 via EDIT tool, verify via grep); code commit `bd3b424` on `main` (`effe383..bd3b424`, 6 files: index.html, script.js, style.css, run-all.mjs, session.mjs + probe-v43.mjs). Docs commit follows.
