@@ -341,6 +341,7 @@ const dom = {
   summaryAccuracy: document.getElementById("summaryAccuracy"),
   summaryBestStreak: document.getElementById("summaryBestStreak"),
   summaryHighScore: document.getElementById("summaryHighScore"),
+  summaryNewBest: document.getElementById("summaryNewBest"),
   summaryWordsPracticed: document.getElementById("summaryWordsPracticed"),
   summaryBucketAdds: document.getElementById("summaryBucketAdds"),
   summaryStrongest: document.getElementById("summaryStrongest"),
@@ -2155,6 +2156,8 @@ function showSessionSummary() {
   dom.summaryBucketAdds.textContent = summary.bucketAdds;
   dom.summaryStrongest.textContent = summary.strongest;
   dom.summaryWeakest.textContent = summary.weakest;
+  // "+ New best" binds to the real record beat (fires once per session, state L929)
+  if (dom.summaryNewBest) dom.summaryNewBest.hidden = !state.recordCelebrated;
   summaryOpener = document.activeElement;
   // closing the keyboard on purpose: the overlay takes over and the parked
   // answer input must not keep a software keyboard up underneath it
