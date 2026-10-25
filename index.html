@@ -125,6 +125,7 @@
       <form class="settings-form" id="settingsForm">
         <div class="field">
           <label for="categorySelect">Category</label>
+          <span class="fld-wrap"><svg class="ico fld-ico" aria-hidden="true"><use href="#i-book"></use></svg>
           <select id="categorySelect" name="category">
             <option value="all">All categories</option>
             <option value="__mine__">My words</option>
@@ -140,25 +141,27 @@
             <option value="technology">Technology</option>
             <option value="nature">Nature</option>
             <option value="sports">Sports</option>
-          </select>
+          </select></span>
         </div>
         <div class="field">
           <label for="difficultySelect">Difficulty</label>
+          <span class="fld-wrap"><svg class="ico fld-ico" aria-hidden="true"><use href="#i-gear"></use></svg>
           <select id="difficultySelect" name="difficulty">
             <option value="easy">Easy</option>
             <option value="medium" selected>Medium</option>
             <option value="hard">Hard</option>
-          </select>
+          </select></span>
         </div>
         <div class="field">
           <label for="durationSelect">Show for</label>
+          <span class="fld-wrap"><svg class="ico fld-ico" aria-hidden="true"><use href="#i-timer"></use></svg>
           <select id="durationSelect" name="duration">
             <option value="1000">1s</option>
             <option value="1500">1.5s</option>
             <option value="2000" selected>2s</option>
             <option value="3000">3s</option>
             <option value="4000">4s</option>
-          </select>
+          </select></span>
         </div>
         <div class="field field-toggle">
           <label for="chunkToggle">Word chunks</label>
@@ -183,7 +186,7 @@
         </div>
         <div class="field" id="volumeField" hidden>
           <label for="volumeSlider">Volume</label>
-          <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+          <div class="vol-row"><input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider"><span class="vol-readout" id="volReadout" aria-hidden="true">50%</span></div>
         </div>
       </form>
       <div class="settings-actions">
@@ -320,10 +323,10 @@
       <div class="section-body">
         <div class="field">
           <label for="reviewModeSelect">Review</label>
-          <select id="reviewModeSelect">
+          <span class="fld-wrap"><svg class="ico fld-ico" aria-hidden="true"><use href="#i-brain"></use></svg><select id="reviewModeSelect">
             <option value="mixed">Mixed</option>
             <option value="dueOnly">Due only</option>
-          </select>
+          </select></span>
         </div>
         <div class="srs-stats" id="srsStats"></div>
       </div>

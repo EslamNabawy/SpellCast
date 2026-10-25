@@ -352,7 +352,8 @@ const dom = {
   confettiLayer: document.getElementById("confettiLayer"),
 
   volumeField: document.getElementById("volumeField"),
-  volumeSlider: document.getElementById("volumeSlider")
+  volumeSlider: document.getElementById("volumeSlider"),
+  volReadout: document.getElementById("volReadout")
 };
 
 // ================================
@@ -2398,6 +2399,7 @@ function applySettingsToForm() {
   setTtsToggleUI(state.ttsAuto);
   setChunkToggleUI(state.chunkWords);
   dom.volumeSlider.value = Math.round(state.soundVolume * 100);
+  if (dom.volReadout) dom.volReadout.textContent = Math.round(state.soundVolume * 100) + "%";
   if (dom.volumeField) dom.volumeField.hidden = !state.soundEnabled;
   applyTheme();
 }
@@ -2766,6 +2768,7 @@ function attachEventListeners() {
 
   dom.volumeSlider.addEventListener("input", () => {
     setSetting("soundVolume", parseInt(dom.volumeSlider.value) / 100, { announce: false });
+    if (dom.volReadout) dom.volReadout.textContent = dom.volumeSlider.value + "%";
   });
 
   if (dom.addWordForm) {
