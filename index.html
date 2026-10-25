@@ -116,8 +116,9 @@
     <div class="state-banner" id="stateBanner" aria-hidden="true"><span id="stateBannerText"></span></div>
   </header>
 
-  <aside class="deck deck-left" aria-label="Controls">
+  <aside class="deck deck-left card" aria-label="Controls">
     <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-sliders"></use></svg>Controls</h2>
+    <p class="deck-sub">Customize your session</p>
   <section class="settings-panel" id="settingsPanel" hidden>
     <div class="deck-section settings-group">
       <form class="settings-form" id="settingsForm">
@@ -198,7 +199,7 @@
   </aside>
 
   <div class="center">
-  <main class="game-card" id="gameCard">
+  <main class="game-card card" id="gameCard">
     <div class="score-float" id="scoreFloat" aria-hidden="true"></div>
     <div class="game-top-bar">
       <div class="seg-row" id="segmentRow" role="img" aria-label="No answers yet this session">
@@ -285,8 +286,9 @@
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
   </div>
 
-  <aside class="deck deck-right" aria-label="Stats and review">
+  <aside class="deck deck-right card" aria-label="Stats and review">
     <h2 class="deck-title"><svg class="ico deck-title-ico" aria-hidden="true"><use href="#i-trophy"></use></svg>Stats</h2>
+    <p class="deck-sub">Track your progress</p>
 
     <details class="deck-group session-group" name="rightDeck" open>
       <summary class="section-head settings-heading"><span class="section-head-label"><svg class="ico" aria-hidden="true"><use href="#i-trophy"></use></svg>Performance</span><span class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"></use></svg></span></summary>
@@ -354,7 +356,7 @@
     </header>
 
     <div class="data-grid">
-      <section class="data-card" aria-labelledby="dataWordsHead">
+      <section class="data-card card" aria-labelledby="dataWordsHead">
         <h2 class="settings-heading" id="dataWordsHead"><svg class="ico" aria-hidden="true"><use href="#i-bookmark"></use></svg>My words</h2>
         <div class="data-toolbar">
           <input type="text" id="wordSearch" class="input input-sm" placeholder="Search your words" aria-label="Search your words">
@@ -394,7 +396,7 @@
         <ul class="mini-list" id="customWordsList"></ul>
       </section>
 
-      <section class="data-card" aria-labelledby="dataImportHead">
+      <section class="data-card card" aria-labelledby="dataImportHead">
         <h2 class="settings-heading" id="dataImportHead"><svg class="ico" aria-hidden="true"><use href="#i-upload"></use></svg>Import words</h2>
         <p class="panel-hint">CSV or TXT — one word per line, or &laquo;word, category, difficulty&raquo; rows. JSON — a list of words or objects with <code>word</code>/<code>category</code>/<code>difficulty</code>. A header row is detected and skipped automatically.</p>
         <div class="import-target-row">
@@ -421,13 +423,13 @@ turbulent,adjectives,hard</pre>
         <p class="panel-hint" id="importResult" aria-live="polite"></p>
       </section>
 
-      <section class="data-card" aria-labelledby="dataCategoryHead">
+      <section class="data-card card" aria-labelledby="dataCategoryHead">
         <h2 class="settings-heading" id="dataCategoryHead"><svg class="ico" aria-hidden="true"><use href="#i-bars"></use></svg>Categories</h2>
         <p class="panel-hint">Create categories in the My words card above. Locked categories are built in.</p>
         <ul class="mini-list" id="dataCategoryList"></ul>
       </section>
 
-      <section class="data-card" aria-labelledby="dataBackupHead">
+      <section class="data-card card" aria-labelledby="dataBackupHead">
         <h2 class="settings-heading" id="dataBackupHead"><svg class="ico" aria-hidden="true"><use href="#i-download"></use></svg>Backup</h2>
         <p class="panel-hint">Export your words, categories and SRS progress as JSON. Restoring a backup replaces those three, nothing else.</p>
         <div class="import-export-row">
@@ -437,7 +439,7 @@ turbulent,adjectives,hard</pre>
         </div>
       </section>
 
-      <section class="data-card data-danger" aria-labelledby="dataDangerHead">
+      <section class="data-card data-danger card" aria-labelledby="dataDangerHead">
         <h2 class="settings-heading" id="dataDangerHead"><svg class="ico" aria-hidden="true"><use href="#i-trash"></use></svg>Danger zone</h2>
         <div class="settings-actions">
           <button type="button" class="btn btn-quiet btn-sm" id="resetSessionBtn"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg>Reset session</button>

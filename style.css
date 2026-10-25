@@ -218,7 +218,7 @@ html[data-theme="dark"] .field select,html[data-theme="dark"] .add-word-row sele
 .game-card.incorrect{box-shadow:0 0 0 2px var(--incorrect),var(--shadow-md)}
 .game-card.new-high-score{box-shadow:0 0 0 2px var(--accent-strong),0 0 26px var(--accent-glow)}
 /* --- session strip: outcome segments + quiet metrics --- */
-.game-top-bar{width:100%;padding:12px 18px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:10px;background:var(--paper-raised)}
+.game-top-bar{width:100%;padding:12px 18px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:10px;background:transparent}
 .seg-row{display:flex;gap:4px;height:8px;width:100%}
 .seg{flex:1 1 0;border-radius:999px;background:var(--seg-empty);transition:background var(--dur-med) var(--ease)}
 .seg.is-correct{background:var(--correct)}
@@ -369,7 +369,7 @@ details[open] > .section-head{background:var(--paper)}
   .deck-left{position:relative;padding:0}
   .deck-right{position:relative;padding:0;margin-top:12px;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
   .deck-right .deck-group{padding:0}
-  .deck-title{clip:rect(0,0,0,0);clip-path:inset(50%);height:1px;width:1px;overflow:hidden;position:absolute;white-space:nowrap}
+  .deck-title,.deck-sub{clip:rect(0,0,0,0);clip-path:inset(50%);height:1px;width:1px;overflow:hidden;position:absolute;white-space:nowrap}
   .settings-panel{margin-top:0}
   body.settings-open .center,body.settings-open .deck-right{display:none}
   body.settings-open .deck-left .settings-panel{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;max-height:calc(100dvh - 140px)}
@@ -381,8 +381,8 @@ details[open] > .section-head{background:var(--paper)}
   .header{grid-column:1/-1;background:transparent}
   .deck{min-height:0;display:flex;flex-direction:column;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:14px}
   .deck-right{background:var(--paper-raised)}
-  .deck-title{font-size:14px;font-weight:800;margin:0 0 12px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;clip:auto;clip-path:none;height:auto;width:auto;overflow:visible;position:static}
-  .deck-title-ico{width:15px;height:15px;color:var(--accent-strong)}
+  .deck-title{font-size:17px;font-weight:800;margin:0 0 12px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;clip:auto;clip-path:none;height:auto;width:auto;overflow:visible;position:static}
+  .deck-title-ico{width:20px;height:20px;color:var(--accent-strong)}
   .deck .settings-panel{margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;overflow-y:auto;flex:1 1 auto}
   .deck .settings-panel[hidden]{display:block!important}
   .deck .deck-group{margin:0;padding:0}
@@ -407,9 +407,9 @@ details[open] > .section-head{background:var(--paper)}
 /* ============ Data management page (v33) ============ */
 /* full-screen page overlay; the [hidden] idiom controls visibility and the
    action dialog always stacks above it */
-.data-page{position:fixed;inset:0;z-index:40;background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.data-page{position:fixed;inset:0;z-index:40;background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow-y:auto;-webkit-overflow-scrolling:touch}
 .data-page-inner{max-width:1100px;margin:0 auto;padding:18px 16px 28px;display:flex;flex-direction:column;gap:18px;min-height:100%}
-.data-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;background:var(--paper);padding:4px 0 10px;border-bottom:1px solid var(--line-soft)}
+.data-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;background:var(--bg1);padding:4px 0 10px;border-bottom:1px solid var(--line-soft)}
 .data-title{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin:0;flex:1 1 auto;min-width:0}
 .data-title:focus-visible{outline-offset:4px}
 .data-stats{font-size:12px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -502,3 +502,25 @@ body::after{
 .phase-type.kb-compact .answer-form{gap:6px}
 .phase-type.kb-compact .input-large{padding:10px 12px;font-size:16px}
 .phase-type.kb-compact .type-hint{display:none}
+
+/* ============ ui/merge step 5: reference glass card system (.card) ============ */
+/* .card is appended LAST on purpose: as a lone class it ties (0,1,0) with the
+   earlier card-family rules (.deck/.game-card/.data-card above) and must win
+   them. State feedback (.game-card.correct etc.) is 0,2,0 and stays on top. */
+.card{background:var(--surf);border:1px solid var(--edge);border-radius:var(--r-lg);box-shadow:var(--sh),inset 0 1px 0 var(--edge);-webkit-backdrop-filter:blur(14px) saturate(1.15);backdrop-filter:blur(14px) saturate(1.15)}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .card{background:var(--paper-raised)}
+}
+.card.data-danger{border-color:var(--danger-text)}
+/* panel subtitles (reference .hd p) under the deck headers */
+.deck-sub{margin:2px 0 14px;font-size:12.5px;color:var(--muted)}
+/* ≤999px: deck-left turns into the settings drawer — keep its host
+   transparent (as before step 5) so the drawer panel stays the only surface */
+@media(max-width:999px){
+  .deck-left.card{background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+/* small screens: blur off, solid surface (perf/legibility — reference does it) */
+@media(max-width:640px){
+  .card{-webkit-backdrop-filter:none;backdrop-filter:none;background:color-mix(in srgb,var(--bg2) 92%,#fff)}
+  html[data-theme="dark"] .card{background:#18221e}
+}
