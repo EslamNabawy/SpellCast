@@ -31,7 +31,7 @@
   color-scheme:light;
   --bg1:#e6f0e8; --bg2:#f8f5ea;
   --mint:#a9dcc3; --teal:#1f8a72; --deep:#14574a; --lime:#dbe8a0;
-  --muted:#5f7a72;
+  --muted:#49655c; /* darkened from ref #5f7a72 — 3.77:1 on the glass → 4.5+:1 (WCAG 1.4.3) */
   --surf:rgba(255,255,255,.66); --edge:rgba(255,255,255,.8); --fld:rgba(255,255,255,.6);
   --ok:rgba(31,138,114,.14); --bad:rgba(214,69,53,.13);
   --wa:rgba(31,138,114,.4); --dot:rgba(31,110,90,.3);
@@ -179,7 +179,7 @@ html[data-theme="dark"] .ico-dark-only{display:block}
 .field select{appearance:none;-webkit-appearance:none;padding:11px 34px 11px 40px;border:1px solid var(--edge);border-radius:var(--r-md);background-color:var(--fld);box-shadow:inset 0 1px 0 var(--edge),0 6px 14px -10px rgba(20,70,55,.3);width:100%;font-weight:700;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235C6674' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center;background-size:14px 14px}
-.add-word-row select{appearance:none;-webkit-appearance:none;padding:11px 32px 11px 14px;border:1px solid var(--edge);border-radius:var(--r-md);background-color:var(--fld);box-shadow:inset 0 1px 0 var(--edge),0 6px 14px -10px rgba(20,70,55,.3);width:100%;font-weight:700;
+.add-word-row select{appearance:none;-webkit-appearance:none;padding:11px 32px 11px 14px;border:1px solid var(--edge);border-radius:var(--r-md);background-color:var(--fld);color:var(--ink);box-shadow:inset 0 1px 0 var(--edge),0 6px 14px -10px rgba(20,70,55,.3);width:100%;font-weight:700;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235C6674' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center;background-size:14px 14px}
 html[data-theme="dark"] .field select,html[data-theme="dark"] .add-word-row select{
@@ -249,7 +249,7 @@ html[data-theme="dark"] .field select,html[data-theme="dark"] .add-word-row sele
 /* --- session strip: outcome segments + quiet metrics --- */
 .game-top-bar{width:100%;padding:12px 18px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:10px;background:transparent}
 .seg-row{display:flex;gap:10px;height:6px;width:100%}
-.seg{flex:1 1 0;border-radius:9px;background:var(--line);transition:background var(--dur-med) var(--ease)}
+.seg{flex:1 1 0;border-radius:9px;background:var(--seg-empty);transition:background var(--dur-med) var(--ease)} /* --seg-empty pre-tuned for the 3:1 non-text pair vs fill (was var(--line), 1.32:1) */
 .seg.is-correct{background:var(--correct)}
 .seg.is-incorrect{background:var(--incorrect)}
 .session-strip{display:flex;align-items:center;justify-content:space-between;gap:12px}

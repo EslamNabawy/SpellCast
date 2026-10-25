@@ -136,20 +136,34 @@ async function run() {
 
       // explicit contrast probes
       const probes = await page.evaluate((rules) => {
-        // Effective background: the element's own background if opaque,
-        // otherwise the nearest ancestor that has one.
+        // Effective background: composite every non-transparent layer from the
+        // element outward (glass --surf/--fld chains) the way the renderer
+        // paints them, instead of reading one translucent layer as an opaque
+        // fill (that made rgba(255,255,255,.06) measure as pure white).
         const effectiveBg = (el) => {
+          const layers = [];
           let node = el;
           while (node && node !== document.documentElement) {
             const c = getComputedStyle(node).backgroundColor;
             const m = c.match(/rgba?\(([^)]+)\)/);
             if (m) {
               const p = m[1].split(",").map(parseFloat);
-              if (p.length < 4 || p[3] > 0) return c;
+              const a = p.length > 3 ? p[3] : 1;
+              if (a > 0) {
+                layers.push([p[0], p[1], p[2], a]);
+                if (a >= 1) break; // opaque — nothing behind it can show through
+              }
             }
             node = node.parentElement;
           }
-          return getComputedStyle(document.body).backgroundColor;
+          if (!layers.length) return getComputedStyle(document.body).backgroundColor;
+          let acc = null; // bottom-to-top: outermost first, innermost last
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const [r, g, b, a] = layers[i];
+            const base = acc || [255, 255, 255]; // worst case if the chain never turns opaque
+            acc = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a)];
+          }
+          return "rgb(" + acc.map((x) => Math.round(x)).join(",") + ")";
         };
         const out = [];
         for (const rule of rules) {
@@ -182,21 +196,33 @@ async function run() {
         if (!ok) report.problems.push(`contrast ${vp.name}/${theme} ${p.label}: ${ratio} (needs ${required})`);
       });
 
-      // non-text UI contrast (3:1) — the graphic itself against the surface it
-      // sits on (nearest opaque ancestor background).
+      // non-text UI contrast (3:1) — the graphic itself against the glass
+      // surface composited behind it.
       const nonText = await page.evaluate((rules) => {
         const effectiveBg = (el) => {
+          const layers = [];
           let node = el.parentElement;
           while (node && node !== document.documentElement) {
             const c = getComputedStyle(node).backgroundColor;
             const m = c.match(/rgba?\(([^)]+)\)/);
             if (m) {
               const p = m[1].split(",").map(parseFloat);
-              if (p.length < 4 || p[3] > 0) return c;
+              const a = p.length > 3 ? p[3] : 1;
+              if (a > 0) {
+                layers.push([p[0], p[1], p[2], a]);
+                if (a >= 1) break; // opaque — nothing behind it can show through
+              }
             }
             node = node.parentElement;
           }
-          return getComputedStyle(document.body).backgroundColor;
+          if (!layers.length) return getComputedStyle(document.body).backgroundColor;
+          let acc = null; // bottom-to-top: outermost first, innermost last
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const [r, g, b, a] = layers[i];
+            const base = acc || [255, 255, 255]; // worst case if the chain never turns opaque
+            acc = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a)];
+          }
+          return "rgb(" + acc.map((x) => Math.round(x)).join(",") + ")";
         };
         const out = [];
         for (const rule of rules) {
